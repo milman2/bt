@@ -671,7 +671,7 @@ namespace bt
         }
     }
 
-    void AsioClient::handle_send(const boost::system::error_code& error, size_t bytes_transferred)
+    void AsioClient::handle_send(const boost::system::error_code& error, size_t /* bytes_transferred */)
     {
         if (!error)
         {

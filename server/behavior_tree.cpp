@@ -250,7 +250,7 @@ namespace bt
     {
     }
 
-    BTNodeStatus BTDelay::execute(BTContext& context)
+    BTNodeStatus BTDelay::execute(BTContext& /* context */)
     {
         auto now = std::chrono::steady_clock::now();
 
@@ -436,7 +436,7 @@ namespace bt
         last_update_time_ = std::chrono::steady_clock::now();
     }
 
-    void MonsterAI::update(float delta_time)
+    void MonsterAI::update(float /* delta_time */)
     {
         static std::map<std::string, int> update_counts;
         std::string                       monster_name = name_; // AI 이름 사용

@@ -22,9 +22,9 @@ namespace bt
         , type_(type)
         , state_(MonsterState::IDLE)
         , position_(position)
-        , target_id_(0)
         , ai_name_("")
         , bt_name_("")
+        , target_id_(0)
         , current_patrol_index_(0)
         , spawn_position_(position)
     {
@@ -726,7 +726,7 @@ namespace bt
         }
     }
 
-    void MonsterManager::process_auto_spawn(float delta_time)
+    void MonsterManager::process_auto_spawn(float /* delta_time */)
     {
         if (!auto_spawn_enabled_.load())
         {
@@ -814,10 +814,9 @@ namespace bt
         }
     }
 
-    void MonsterManager::process_respawn(float delta_time)
+    void MonsterManager::process_respawn(float /* delta_time */)
     {
         std::lock_guard<std::mutex> lock(monsters_mutex_);
-        auto                        now = std::chrono::steady_clock::now();
 
         std::vector<uint32_t> dead_monsters;
         for (const auto& [id, monster] : monsters_)

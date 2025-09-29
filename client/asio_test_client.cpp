@@ -465,7 +465,7 @@ namespace bt
             client->set_verbose(false); // 스트레스 테스트에서는 상세 로그 비활성화
 
             client_threads.emplace_back(
-                [&client, i]()
+                [&client]()
                 {
                     if (client->connect())
                     {
