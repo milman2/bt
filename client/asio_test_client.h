@@ -1,5 +1,6 @@
 #pragma once
 
+#include "packet_protocol.h"
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
 #include <boost/shared_ptr.hpp>
@@ -20,43 +21,13 @@
 
 namespace bt {
 
-// 테스트 클라이언트 설정
+// 테스트 클라이언트 전용 설정 (공통 ClientConfig 확장)
 struct AsioClientConfig {
     std::string server_host = "127.0.0.1";
     uint16_t server_port = 8080;
     boost::chrono::milliseconds connection_timeout{5000};
     bool auto_reconnect = false;
     int max_reconnect_attempts = 3;
-};
-
-// 패킷 구조체 (서버와 동일)
-struct AsioTestPacket {
-    uint32_t size;
-    uint16_t type;
-    std::vector<uint8_t> data;
-    
-    AsioTestPacket() : size(0), type(0) {}
-    AsioTestPacket(uint16_t packet_type, const std::vector<uint8_t>& packet_data) 
-        : size(packet_data.size() + sizeof(uint16_t)), type(packet_type), data(packet_data) {}
-};
-
-// 패킷 타입 (서버와 동일)
-enum class AsioTestPacketType : uint16_t {
-    CONNECT_REQUEST = 0x0001,
-    CONNECT_RESPONSE = 0x0002,
-    DISCONNECT = 0x0003,
-    PLAYER_JOIN = 0x1000,
-    PLAYER_JOIN_RESPONSE = 0x1001,
-    PLAYER_MOVE = 0x2000,
-    PLAYER_ATTACK = 0x2001,
-    PLAYER_CHAT = 0x2002,
-    MONSTER_UPDATE = 0x3000,
-    MONSTER_ACTION = 0x3001,
-    MONSTER_DEATH = 0x3002,
-    BT_EXECUTE = 0x4000,
-    BT_RESULT = 0x4001,
-    BT_DEBUG = 0x4002,
-    ERROR_MESSAGE = 0xFF00
 };
 
 // 테스트 클라이언트 클래스
@@ -71,8 +42,8 @@ public:
     bool is_connected() const { return connected_.load(); }
 
     // 패킷 송수신
-    bool send_packet(const AsioTestPacket& packet);
-    bool receive_packet(AsioTestPacket& packet);
+    bool send_packet(const Packet& packet);
+    bool receive_packet(Packet& packet);
     
     // 테스트 시나리오
     bool test_connection();
@@ -97,15 +68,15 @@ private:
     void close_connection();
     
     // 패킷 처리
-    AsioTestPacket create_connect_request();
-    AsioTestPacket create_player_join_packet(const std::string& name);
-    AsioTestPacket create_player_move_packet(float x, float y, float z);
-    AsioTestPacket create_player_attack_packet(uint32_t target_id);
-    AsioTestPacket create_bt_execute_packet(const std::string& bt_name);
-    AsioTestPacket create_monster_update_packet();
-    AsioTestPacket create_disconnect_packet();
+    Packet create_connect_request();
+    Packet create_player_join_packet(const std::string& name);
+    Packet create_player_move_packet(float x, float y, float z);
+    Packet create_player_attack_packet(uint32_t target_id);
+    Packet create_bt_execute_packet(const std::string& bt_name);
+    Packet create_monster_update_packet();
+    Packet create_disconnect_packet();
     
-    bool parse_packet_response(const AsioTestPacket& packet);
+    bool parse_packet_response(const Packet& packet);
     
     // 테스트 결과
     void record_test_result(const std::string& test_name, bool success, const std::string& message = "");

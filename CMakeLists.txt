@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(BT_MMORPG_Server VERSION 1.0.0 LANGUAGES CXX)
+project(BT_MMORPG VERSION 1.0.0 LANGUAGES CXX)
 
 # C++ 표준 설정
 set(CMAKE_CXX_STANDARD 17)
@@ -14,36 +14,19 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
-# 헤더 파일 디렉토리
-include_directories(include)
-
-# 서버 소스 파일들 (테스트 클라이언트 제외)
-file(GLOB_RECURSE SOURCES "src/*.cpp")
-list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/test_client.cpp)
-list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/test_client_main.cpp)
-list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/websocket_server.cpp)
-list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/web_server.cpp)
-list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp)
-list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/asio_test_client_main.cpp)
-
-file(GLOB_RECURSE HEADERS "include/*.h")
-list(REMOVE_ITEM HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/include/test_client.h)
-list(REMOVE_ITEM HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/include/asio_test_client.h)
-
-# 서버 실행 파일 생성
-add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
-
-# 기존 테스트 클라이언트는 제거됨 (AsioTestClient로 대체)
-
-# Boost.Asio 테스트 클라이언트 소스 파일들
-file(GLOB_RECURSE ASIO_TEST_CLIENT_SOURCES "src/asio_test_client*.cpp")
-file(GLOB_RECURSE ASIO_TEST_CLIENT_HEADERS "include/asio_test_client.h")
-
-# Boost.Asio 테스트 클라이언트 실행 파일 생성
-add_executable(AsioTestClient ${ASIO_TEST_CLIENT_SOURCES} ${ASIO_TEST_CLIENT_HEADERS})
-
 # 패키지 매니저 설정 (vcpkg 또는 Conan)
 set(PACKAGE_MANAGER "auto" CACHE STRING "패키지 매니저 선택: auto, vcpkg, conan, system")
+
+# vcpkg 경로 설정
+if(CMAKE_TOOLCHAIN_FILE AND CMAKE_TOOLCHAIN_FILE MATCHES "vcpkg")
+    if(DEFINED ENV{VCPKG_ROOT})
+        set(CMAKE_PREFIX_PATH "$ENV{VCPKG_ROOT}/installed/x64-linux")
+        message(STATUS "vcpkg 경로 설정: ${CMAKE_PREFIX_PATH}")
+        # vcpkg에서 설치된 패키지들을 찾기 위해 경로 추가
+        set(CMAKE_MODULE_PATH "${CMAKE_PREFIX_PATH}/share")
+        set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH}" ${CMAKE_PREFIX_PATH})
+    endif()
+endif()
 
 if(PACKAGE_MANAGER STREQUAL "auto")
     # 자동 감지: vcpkg -> Conan -> system 순서
@@ -63,6 +46,13 @@ if(PACKAGE_MANAGER STREQUAL "vcpkg")
     if(DEFINED ENV{VCPKG_ROOT})
         set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
         message(STATUS "vcpkg 툴체인 설정: ${CMAKE_TOOLCHAIN_FILE}")
+        set(VCPKG_TOOLCHAIN TRUE)
+        # vcpkg 설치 경로 설정
+        set(VCPKG_INSTALLED_DIR "$ENV{VCPKG_ROOT}/installed/x64-linux")
+        message(STATUS "vcpkg 설치 경로: ${VCPKG_INSTALLED_DIR}")
+        # vcpkg 툴체인이 제대로 작동하도록 설정
+        set(CMAKE_PREFIX_PATH "${VCPKG_INSTALLED_DIR}")
+        set(CMAKE_MODULE_PATH "${VCPKG_INSTALLED_DIR}/share")
     else()
         message(FATAL_ERROR "vcpkg가 선택되었지만 VCPKG_ROOT 환경변수가 설정되지 않았습니다.")
     endif()
@@ -85,9 +75,7 @@ endif()
 
 # Boost 라이브러리 찾기 (필수)
 find_package(Boost REQUIRED COMPONENTS system thread)
-message(STATUS "Boost found: ${Boost_VERSION} (${PACKAGE_MANAGER}에서 설치됨)")
-add_definitions(-DHAVE_BOOST)
-add_definitions(-DBOOST_BIND_GLOBAL_PLACEHOLDERS)
+message(STATUS "Boost found: ${Boost_VERSION}")
 
 # nlohmann/json 라이브러리 찾기
 find_package(nlohmann_json REQUIRED)
@@ -96,12 +84,14 @@ message(STATUS "nlohmann/json found: ${nlohmann_json_VERSION}")
 # OpenSSL 라이브러리 찾기 (WebSocket용)
 find_package(OpenSSL REQUIRED)
 message(STATUS "OpenSSL found: ${OPENSSL_VERSION}")
+add_definitions(-DHAVE_BOOST)
+add_definitions(-DBOOST_BIND_GLOBAL_PLACEHOLDERS)
 
 # 필요한 라이브러리들
 find_package(Threads REQUIRED)
 
-# 라이브러리 링크
-target_link_libraries(${PROJECT_NAME} 
+# 공통 라이브러리 설정
+set(COMMON_LIBRARIES
     Threads::Threads 
     Boost::system 
     Boost::thread
@@ -109,24 +99,18 @@ target_link_libraries(${PROJECT_NAME}
     OpenSSL::SSL
     OpenSSL::Crypto
 )
-# TestClient는 제거됨
-target_link_libraries(AsioTestClient 
-    Threads::Threads 
-    Boost::system 
-    Boost::thread
-    nlohmann_json::nlohmann_json
-)
 
-# 플랫폼 독립적 네트워킹
+# 플랫폼 독립적 네트워킹 라이브러리
 if(WIN32)
-    target_link_libraries(${PROJECT_NAME} ws2_32 wsock32)
-    # TestClient는 제거됨
-    target_link_libraries(AsioTestClient ws2_32 wsock32)
+    list(APPEND COMMON_LIBRARIES ws2_32 wsock32)
 elseif(UNIX)
-    target_link_libraries(${PROJECT_NAME} pthread)
-    # TestClient는 제거됨
-    target_link_libraries(AsioTestClient pthread)
+    list(APPEND COMMON_LIBRARIES pthread)
 endif()
+
+# 서브디렉토리 추가
+add_subdirectory(shared)
+add_subdirectory(server)
+add_subdirectory(client)
 
 # 테스트 설정 (선택사항)
 option(BUILD_TESTS "Build tests" OFF)
@@ -136,7 +120,7 @@ if(BUILD_TESTS)
 endif()
 
 # 설치 설정
-install(TARGETS ${PROJECT_NAME}
+install(TARGETS BT_MMORPG_Server AsioTestClient
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "packet_protocol.h"
 #include <iostream>
 #include <memory>
 #include <thread>
@@ -25,15 +26,6 @@ class Client;
 class GameWorld;
 class PacketHandler;
 
-// 서버 설정 구조체
-struct ServerConfig {
-    std::string host = "0.0.0.0";
-    int port = 8080;
-    int max_clients = 1000;
-    int worker_threads = 4;
-    bool debug_mode = false;
-};
-
 // 클라이언트 정보 구조체
 struct ClientInfo {
     int socket_fd;
@@ -42,17 +34,6 @@ struct ClientInfo {
     std::chrono::steady_clock::time_point connect_time;
     bool is_authenticated;
     uint32_t player_id;
-};
-
-// 패킷 구조체
-struct Packet {
-    uint32_t size;
-    uint16_t type;
-    std::vector<uint8_t> data;
-    
-    Packet() : size(0), type(0) {}
-    Packet(uint16_t packet_type, const std::vector<uint8_t>& packet_data) 
-        : size(packet_data.size() + sizeof(uint16_t)), type(packet_type), data(packet_data) {}
 };
 
 // MMORPG 서버 클래스

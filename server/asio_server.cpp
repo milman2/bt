@@ -2,6 +2,7 @@
 #include "asio_server.h"
 #include "behavior_tree.h"
 #include "monster_ai.h"
+#include "player_manager.h"
 #include "simple_websocket_server.h"
 #include "player.h"
 #include <iostream>
@@ -282,7 +283,7 @@ void AsioServer::remove_client(boost::shared_ptr<AsioClient> client) {
     }
 }
 
-void AsioServer::broadcast_packet(const AsioPacket& packet, boost::shared_ptr<AsioClient> exclude_client) {
+void AsioServer::broadcast_packet(const Packet& packet, boost::shared_ptr<AsioClient> exclude_client) {
     boost::lock_guard<boost::mutex> lock(clients_mutex_);
     
     for (const auto& [client, info] : clients_) {
@@ -292,40 +293,40 @@ void AsioServer::broadcast_packet(const AsioPacket& packet, boost::shared_ptr<As
     }
 }
 
-void AsioServer::send_packet(boost::shared_ptr<AsioClient> client, const AsioPacket& packet) {
+void AsioServer::send_packet(boost::shared_ptr<AsioClient> client, const Packet& packet) {
     if (client && client->is_connected()) {
         client->send_packet(packet);
         total_packets_sent_.fetch_add(1);
     }
 }
 
-void AsioServer::process_packet(boost::shared_ptr<AsioClient> client, const AsioPacket& packet) {
+void AsioServer::process_packet(boost::shared_ptr<AsioClient> client, const Packet& packet) {
     total_packets_received_.fetch_add(1);
     
     // 패킷 타입에 따른 처리
-    switch (static_cast<AsioPacketType>(packet.type)) {
-        case AsioPacketType::CONNECT_REQUEST:
+    switch (static_cast<PacketType>(packet.type)) {
+        case PacketType::CONNECT_REQUEST:
             // 연결 요청 처리
             log_message("연결 요청 수신: " + client->get_ip_address());
             // 연결 응답 전송
             send_connect_response(client);
             break;
             
-        case AsioPacketType::MONSTER_SPAWN:
+        case PacketType::MONSTER_SPAWN:
             // 몬스터 스폰 요청 처리
             log_message("몬스터 스폰 요청 수신");
             // 몬스터 스폰 응답 전송
             send_monster_spawn_response(client, true);
             break;
             
-        case AsioPacketType::MONSTER_UPDATE:
+        case PacketType::MONSTER_UPDATE:
             // 몬스터 업데이트 처리
             log_message("몬스터 업데이트 요청 수신");
             // 몬스터 업데이트 응답 전송
             send_monster_update_response(client, true);
             break;
             
-        case AsioPacketType::BT_EXECUTE:
+        case PacketType::BT_EXECUTE:
             // Behavior Tree 실행 요청 처리
             log_message("BT 실행 요청 수신");
             if (bt_engine_) {
@@ -345,8 +346,8 @@ void AsioServer::process_packet(boost::shared_ptr<AsioClient> client, const Asio
 }
 
 void AsioServer::send_connect_response(boost::shared_ptr<AsioClient> client) {
-    AsioPacket response;
-    response.type = static_cast<uint32_t>(AsioPacketType::CONNECT_RESPONSE);
+    Packet response;
+    response.type = static_cast<uint32_t>(PacketType::CONNECT_RESPONSE);
     response.size = sizeof(uint32_t) * 2; // type + success
     response.data.resize(response.size);
     
@@ -360,8 +361,8 @@ void AsioServer::send_connect_response(boost::shared_ptr<AsioClient> client) {
 }
 
 void AsioServer::send_monster_spawn_response(boost::shared_ptr<AsioClient> client, bool success) {
-    AsioPacket response;
-    response.type = static_cast<uint32_t>(AsioPacketType::MONSTER_SPAWN_RESPONSE);
+    Packet response;
+    response.type = static_cast<uint32_t>(PacketType::CONNECT_RESPONSE);
     response.size = sizeof(uint32_t) * 2; // type + success
     response.data.resize(response.size);
     
@@ -375,8 +376,8 @@ void AsioServer::send_monster_spawn_response(boost::shared_ptr<AsioClient> clien
 }
 
 void AsioServer::send_monster_update_response(boost::shared_ptr<AsioClient> client, bool success) {
-    AsioPacket response;
-    response.type = static_cast<uint32_t>(AsioPacketType::MONSTER_UPDATE_RESPONSE);
+    Packet response;
+    response.type = static_cast<uint32_t>(PacketType::CONNECT_RESPONSE);
     response.size = sizeof(uint32_t) * 2; // type + success
     response.data.resize(response.size);
     
@@ -390,8 +391,8 @@ void AsioServer::send_monster_update_response(boost::shared_ptr<AsioClient> clie
 }
 
 void AsioServer::send_bt_execute_response(boost::shared_ptr<AsioClient> client, bool success) {
-    AsioPacket response;
-    response.type = static_cast<uint32_t>(AsioPacketType::BT_EXECUTE_RESPONSE);
+    Packet response;
+    response.type = static_cast<uint32_t>(PacketType::CONNECT_RESPONSE);
     response.size = sizeof(uint32_t) * 2; // type + success
     response.data.resize(response.size);
     
@@ -405,8 +406,8 @@ void AsioServer::send_bt_execute_response(boost::shared_ptr<AsioClient> client, 
 }
 
 void AsioServer::send_error_response(boost::shared_ptr<AsioClient> client, const std::string& error_message) {
-    AsioPacket response;
-    response.type = static_cast<uint32_t>(AsioPacketType::ERROR_RESPONSE);
+    Packet response;
+    response.type = static_cast<uint32_t>(PacketType::ERROR_MESSAGE);
     response.size = sizeof(uint32_t) + error_message.length(); // type + message
     response.data.resize(response.size);
     
@@ -508,7 +509,7 @@ void AsioClient::stop() {
     }
 }
 
-void AsioClient::send_packet(const AsioPacket& packet) {
+void AsioClient::send_packet(const Packet& packet) {
     if (!connected_.load()) {
         return;
     }
@@ -558,7 +559,7 @@ void AsioClient::handle_packet_size(const boost::system::error_code& error, size
 void AsioClient::handle_packet_data(const boost::system::error_code& error, size_t bytes_transferred) {
     if (!error && bytes_transferred == packet_buffer_.size()) {
         // 패킷 파싱
-        AsioPacket packet;
+        Packet packet;
         packet.size = expected_packet_size_;
         packet.type = *reinterpret_cast<uint16_t*>(packet_buffer_.data());
         packet.data.assign(packet_buffer_.begin() + sizeof(uint16_t), packet_buffer_.end());

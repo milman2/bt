@@ -1,6 +1,7 @@
 #pragma once
 
 #include "monster_ai.h"
+#include "player_manager.h"
 #include <memory>
 #include <string>
 #include <thread>

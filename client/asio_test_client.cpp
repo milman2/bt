@@ -37,7 +37,7 @@ bool AsioTestClient::connect() {
     log_message("서버 연결 성공");
     
     // 연결 요청 패킷 전송
-    AsioTestPacket connect_packet = create_connect_request();
+    Packet connect_packet = create_connect_request();
     if (!send_packet(connect_packet)) {
         log_message("연결 요청 패킷 전송 실패", true);
         disconnect();
@@ -45,7 +45,7 @@ bool AsioTestClient::connect() {
     }
     
     // 연결 응답 대기
-    AsioTestPacket response;
+    Packet response;
     if (!receive_packet(response)) {
         log_message("연결 응답 수신 실패", true);
         disconnect();
@@ -70,7 +70,7 @@ void AsioTestClient::disconnect() {
     log_message("서버 연결 해제 중");
     
     // 연결 해제 패킷 전송
-    AsioTestPacket disconnect_packet = create_disconnect_packet();
+    Packet disconnect_packet = create_disconnect_packet();
     send_packet(disconnect_packet);
     
     close_connection();
@@ -104,7 +104,7 @@ void AsioTestClient::close_connection() {
     }
 }
 
-bool AsioTestClient::send_packet(const AsioTestPacket& packet) {
+bool AsioTestClient::send_packet(const Packet& packet) {
     if (!connected_.load()) {
         log_message("연결되지 않은 상태에서 패킷 전송 시도", true);
         return false;
@@ -138,7 +138,7 @@ bool AsioTestClient::send_packet(const AsioTestPacket& packet) {
     }
 }
 
-bool AsioTestClient::receive_packet(AsioTestPacket& packet) {
+bool AsioTestClient::receive_packet(Packet& packet) {
     if (!connected_.load()) {
         log_message("연결되지 않은 상태에서 패킷 수신 시도", true);
         return false;
@@ -208,7 +208,7 @@ bool AsioTestClient::test_player_join(const std::string& player_name) {
     
     log_message("플레이어 접속 요청 전송 중...");
     // 플레이어 접속 요청 전송
-    AsioTestPacket join_packet = create_player_join_packet(player_name);
+    Packet join_packet = create_player_join_packet(player_name);
     if (!send_packet(join_packet)) {
         record_test_result("플레이어 접속 테스트", false, "접속 요청 전송 실패");
         disconnect();
@@ -217,7 +217,7 @@ bool AsioTestClient::test_player_join(const std::string& player_name) {
     
     log_message("서버 응답 대기 중...");
     // 응답 대기
-    AsioTestPacket response;
+    Packet response;
     if (!receive_packet(response)) {
         record_test_result("플레이어 접속 테스트", false, "응답 수신 실패");
         disconnect();
@@ -244,7 +244,7 @@ bool AsioTestClient::test_player_move(float x, float y, float z) {
     }
     
     // 플레이어 이동 요청 전송
-    AsioTestPacket move_packet = create_player_move_packet(x, y, z);
+    Packet move_packet = create_player_move_packet(x, y, z);
     if (!send_packet(move_packet)) {
         record_test_result("플레이어 이동 테스트", false, "이동 요청 전송 실패");
         disconnect();
@@ -266,7 +266,7 @@ bool AsioTestClient::test_player_attack(uint32_t target_id) {
     }
     
     // 플레이어 공격 요청 전송
-    AsioTestPacket attack_packet = create_player_attack_packet(target_id);
+    Packet attack_packet = create_player_attack_packet(target_id);
     if (!send_packet(attack_packet)) {
         record_test_result("플레이어 공격 테스트", false, "공격 요청 전송 실패");
         disconnect();
@@ -287,7 +287,7 @@ bool AsioTestClient::test_bt_execute(const std::string& bt_name) {
     }
     
     // BT 실행 요청 전송
-    AsioTestPacket bt_packet = create_bt_execute_packet(bt_name);
+    Packet bt_packet = create_bt_execute_packet(bt_name);
     if (!send_packet(bt_packet)) {
         record_test_result("BT 실행 테스트", false, "BT 요청 전송 실패");
         disconnect();
@@ -295,7 +295,7 @@ bool AsioTestClient::test_bt_execute(const std::string& bt_name) {
     }
     
     // 응답 대기
-    AsioTestPacket response;
+    Packet response;
     if (!receive_packet(response)) {
         record_test_result("BT 실행 테스트", false, "응답 수신 실패");
         disconnect();
@@ -318,7 +318,7 @@ bool AsioTestClient::test_monster_update() {
     }
     
     // 몬스터 업데이트 요청 전송
-    AsioTestPacket update_packet = create_monster_update_packet();
+    Packet update_packet = create_monster_update_packet();
     if (!send_packet(update_packet)) {
         record_test_result("몬스터 업데이트 테스트", false, "업데이트 요청 전송 실패");
         disconnect();
@@ -426,13 +426,13 @@ bool AsioTestClient::run_stress_test(int num_connections, int duration_seconds) 
     return true;
 }
 
-AsioTestPacket AsioTestClient::create_connect_request() {
+Packet AsioTestClient::create_connect_request() {
     std::vector<uint8_t> data;
     data.push_back(0x01); // 프로토콜 버전
-    return AsioTestPacket(static_cast<uint16_t>(AsioTestPacketType::CONNECT_REQUEST), data);
+    return Packet(static_cast<uint16_t>(PacketType::CONNECT_REQUEST), data);
 }
 
-AsioTestPacket AsioTestClient::create_player_join_packet(const std::string& name) {
+Packet AsioTestClient::create_player_join_packet(const std::string& name) {
     std::vector<uint8_t> data;
     
     // 플레이어 이름 길이와 데이터
@@ -441,10 +441,10 @@ AsioTestPacket AsioTestClient::create_player_join_packet(const std::string& name
     data.push_back((name_len >> 8) & 0xFF);
     data.insert(data.end(), name.begin(), name.end());
     
-    return AsioTestPacket(static_cast<uint16_t>(AsioTestPacketType::PLAYER_JOIN), data);
+    return Packet(static_cast<uint16_t>(PacketType::PLAYER_JOIN), data);
 }
 
-AsioTestPacket AsioTestClient::create_player_move_packet(float x, float y, float z) {
+Packet AsioTestClient::create_player_move_packet(float x, float y, float z) {
     std::vector<uint8_t> data;
     
     // 좌표 (float를 바이트로 변환)
@@ -467,10 +467,10 @@ AsioTestPacket AsioTestClient::create_player_move_packet(float x, float y, float
     data.push_back((z_bits >> 16) & 0xFF);
     data.push_back((z_bits >> 24) & 0xFF);
     
-    return AsioTestPacket(static_cast<uint16_t>(AsioTestPacketType::PLAYER_MOVE), data);
+    return Packet(static_cast<uint16_t>(PacketType::PLAYER_MOVE), data);
 }
 
-AsioTestPacket AsioTestClient::create_player_attack_packet(uint32_t target_id) {
+Packet AsioTestClient::create_player_attack_packet(uint32_t target_id) {
     std::vector<uint8_t> data;
     
     // 타겟 ID
@@ -479,10 +479,10 @@ AsioTestPacket AsioTestClient::create_player_attack_packet(uint32_t target_id) {
     data.push_back((target_id >> 16) & 0xFF);
     data.push_back((target_id >> 24) & 0xFF);
     
-    return AsioTestPacket(static_cast<uint16_t>(AsioTestPacketType::PLAYER_ATTACK), data);
+    return Packet(static_cast<uint16_t>(PacketType::PLAYER_ATTACK), data);
 }
 
-AsioTestPacket AsioTestClient::create_bt_execute_packet(const std::string& bt_name) {
+Packet AsioTestClient::create_bt_execute_packet(const std::string& bt_name) {
     std::vector<uint8_t> data;
     
     // BT 이름 길이와 데이터
@@ -491,21 +491,21 @@ AsioTestPacket AsioTestClient::create_bt_execute_packet(const std::string& bt_na
     data.push_back((name_len >> 8) & 0xFF);
     data.insert(data.end(), bt_name.begin(), bt_name.end());
     
-    return AsioTestPacket(static_cast<uint16_t>(AsioTestPacketType::BT_EXECUTE), data);
+    return Packet(static_cast<uint16_t>(PacketType::BT_EXECUTE), data);
 }
 
-AsioTestPacket AsioTestClient::create_monster_update_packet() {
+Packet AsioTestClient::create_monster_update_packet() {
     std::vector<uint8_t> data;
     data.push_back(0x01); // 업데이트 요청
-    return AsioTestPacket(static_cast<uint16_t>(AsioTestPacketType::MONSTER_UPDATE), data);
+    return Packet(static_cast<uint16_t>(PacketType::MONSTER_UPDATE), data);
 }
 
-AsioTestPacket AsioTestClient::create_disconnect_packet() {
+Packet AsioTestClient::create_disconnect_packet() {
     std::vector<uint8_t> data;
-    return AsioTestPacket(static_cast<uint16_t>(AsioTestPacketType::DISCONNECT), data);
+    return Packet(static_cast<uint16_t>(PacketType::DISCONNECT), data);
 }
 
-bool AsioTestClient::parse_packet_response(const AsioTestPacket& packet) {
+bool AsioTestClient::parse_packet_response(const Packet& packet) {
     if (packet.data.size() < sizeof(uint32_t)) {
         log_message("응답 패킷 크기가 너무 작음: " + std::to_string(packet.data.size()) + "바이트", true);
         return false;

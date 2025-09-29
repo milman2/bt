@@ -1,5 +1,6 @@
 #include "rest_api_server.h"
 #include "player.h"
+#include "player_manager.h"
 #include "simple_websocket_server.h"
 #include <iostream>
 #include <sstream>

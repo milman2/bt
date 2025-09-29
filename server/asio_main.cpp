@@ -1,6 +1,7 @@
 #include "asio_server.h"
 #include "behavior_tree.h"
 #include "monster_ai.h"
+#include "player_manager.h"
 #include "player.h"
 #include "logger.h"
 #include <iostream>
