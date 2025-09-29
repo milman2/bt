@@ -1,0 +1,162 @@
+# =============================================================================
+# clang-format 설정 파일
+# VS Code에서 C_Cpp.formatting=clangFormat, style=file로 사용
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 기본 스타일 설정
+# -----------------------------------------------------------------------------
+BasedOnStyle: Google
+Language: Cpp
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ColumnLimit: 120
+
+# -----------------------------------------------------------------------------
+# 중괄호 스타일
+# -----------------------------------------------------------------------------
+BreakBeforeBraces: Allman
+BraceWrapping:
+  AfterClass: true              # 클래스 선언 뒤 중괄호를 새 줄에
+  AfterFunction: true           # 함수 선언 뒤 중괄호를 새 줄에
+  AfterControlStatement: Always # if, for, while 등 뒤 중괄호를 새 줄에
+  AfterEnum: true               # enum 선언 뒤 중괄호를 새 줄에
+  AfterNamespace: true          # 네임스페이스 선언 뒤 중괄호를 새 줄에
+  BeforeCatch: true             # catch 앞에 중괄호를 새 줄에
+  BeforeElse: true              # else 앞에 중괄호를 새 줄에
+  IndentBraces: false           # 중괄호 자체를 들여쓰기할지 여부
+  SplitEmptyFunction: true      # 빈 함수 중괄호를 분리할지
+  SplitEmptyRecord: true        # 빈 클래스/구조체 중괄호를 분리할지
+  SplitEmptyNamespace: true     # 빈 네임스페이스 중괄호를 분리할지
+
+# -----------------------------------------------------------------------------
+# 함수 및 블록 스타일
+# -----------------------------------------------------------------------------
+AllowShortFunctionsOnASingleLine: Inline  # 짧은 함수를 한 줄에 허용
+AllowShortLambdasOnASingleLine: false     # 짧은 람다를 한 줄에 허용하지 않음
+AllowShortIfStatementsOnASingleLine: Never    # if문을 한 줄에 허용하지 않음
+AllowShortLoopsOnASingleLine: false       # 루프를 한 줄에 허용하지 않음
+AllowShortCaseLabelsOnASingleLine: false  # case 라벨을 한 줄에 허용하지 않음
+AllowShortBlocksOnASingleLine: Never      # 블록을 한 줄에 허용하지 않음
+
+# -----------------------------------------------------------------------------
+# 들여쓰기 및 공백
+# -----------------------------------------------------------------------------
+NamespaceIndentation: All                  # 네임스페이스 들여쓰기
+ContinuationIndentWidth: 4                 # 연속된 줄의 들여쓰기 너비
+AccessModifierOffset: -4                   # 접근 제어자 오프셋
+IndentAccessModifiers: false               # 접근 제어자 들여쓰기
+EmptyLineBeforeAccessModifier: Always      # 접근 제어자 앞에 빈 줄
+KeepEmptyLinesAtTheStartOfBlocks: false    # 블록 시작 부분의 빈 줄 유지
+MaxEmptyLinesToKeep: 1                     # 유지할 최대 빈 줄 수
+
+# -----------------------------------------------------------------------------
+# 포인터 및 참조 정렬
+# -----------------------------------------------------------------------------
+PointerAlignment: Left                     # 포인터 정렬 (왼쪽)
+DerivePointerAlignment: false              # 포인터 정렬 자동 유도 비활성화
+ReferenceAlignment: Left                   # 참조 정렬 (왼쪽)
+
+# -----------------------------------------------------------------------------
+# 괄호와 공백
+# -----------------------------------------------------------------------------
+SpacesInParentheses: false                 # 괄호 안 공백
+SpacesInAngles: false                      # 각도 괄호 안 공백
+SpacesInSquareBrackets: false              # 대괄호 안 공백
+SpaceBeforeParens: ControlStatements       # 괄호 앞 공백 (제어문만)
+SpaceAfterCStyleCast: false                # C 스타일 캐스팅 후 공백
+SpaceAfterTemplateKeyword: true            # template 키워드 후 공백
+SpaceBeforeAssignmentOperators: true       # 할당 연산자 앞 공백
+SpacesBeforeTrailingComments: 1            # 후행 주석 앞 공백
+
+# -----------------------------------------------------------------------------
+# 정렬 설정
+# -----------------------------------------------------------------------------
+AlignOperands: true                        # 피연산자 정렬
+AlignAfterOpenBracket: Align               # 열린 괄호 후 정렬
+AlignArrayOfStructures: Left               # 구조체 배열 정렬
+AlignTrailingComments:
+  Kind: Always                             # 후행 주석 정렬
+  OverEmptyLines: 0                        # 빈 줄을 넘어서 정렬하지 않음
+
+# 연속 선언 정렬
+AlignConsecutiveDeclarations:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: false
+  AlignCompound: false
+  AlignFunctionDeclarations: true
+  AlignFunctionPointers: false
+  PadOperators: false
+
+# 연속 할당 정렬
+AlignConsecutiveAssignments:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: false
+  AlignCompound: false
+  AlignFunctionPointers: false
+  PadOperators: true
+
+# 연속 매크로 정렬
+AlignConsecutiveMacros:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: false
+  AlignCompound: false
+  AlignFunctionPointers: false
+  PadOperators: false
+
+# 연속 비트 필드 정렬
+AlignConsecutiveBitFields:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: false
+  AlignCompound: false
+  AlignFunctionPointers: false
+  PadOperators: false
+
+# -----------------------------------------------------------------------------
+# 함수 인수 및 매개변수
+# -----------------------------------------------------------------------------
+BinPackArguments: false                    # 함수 인수들을 한 줄에 모두 넣지 않음
+BinPackParameters: false                   # 함수 매개변수들을 한 줄에 모두 넣지 않음
+BreakConstructorInitializersBeforeComma: true  # 생성자 초기화 리스트에서 콤마 전에 줄바꿈
+
+# -----------------------------------------------------------------------------
+# Include 파일 정렬
+# -----------------------------------------------------------------------------
+IncludeIsMainRegex: '^(.*\\/)?(\\w+)\\.h(pp)?$'  # 메인 헤더 정규식
+SortIncludes: true                         # include 정렬 활성화
+IncludeBlocks: Regroup                     # include 블록 재그룹화
+IncludeCategories:
+  # C++ 표준 헤더 (최우선)
+  - Regex: '^<(algorithm|array|atomic|bit|chrono|codecvt|compare|complex|concepts|condition_variable|coroutine|deque|exception|execution|expected|filesystem|format|forward_list|fstream|functional|future|initializer_list|iomanip|ios|iosfwd|iostream|istream|iterator|limits|list|locale|map|memory|memory_resource|mutex|new|numbers|numeric|optional|ostream|queue|random|ranges|ratio|regex|scoped_allocator|set|shared_mutex|span|sstream|stack|stdexcept|stop_token|streambuf|string|string_view|strstream|syncstream|system_error|thread|tuple|type_traits|typeindex|typeinfo|unordered_map|unordered_set|utility|valarray|variant|vector|version)>$'
+    Priority: 1
+    SortPriority: 1
+  # Boost 헤더
+  - Regex: '^<boost/.*>$'
+    Priority: 2
+    SortPriority: 2
+  # 기타 시스템 헤더
+  - Regex: '^<.*>$'
+    Priority: 3
+    SortPriority: 3
+  # 서드파티 라이브러리
+  - Regex: '^"third_party/.*"'
+    Priority: 4
+    SortPriority: 4
+  # 프로젝트 헤더
+  - Regex: '^".*"'
+    Priority: 5
+    SortPriority: 5
+
+# -----------------------------------------------------------------------------
+# 주석 및 기타
+# -----------------------------------------------------------------------------
+ReflowComments: true                       # 주석 재포맷팅
+CommentPragmas: '^@(verbatim|code|example)'  # 주석 프라그마
+Cpp11BracedListStyle: true                 # C++11 중괄호 초기화 스타일
+FixNamespaceComments: true                 # 네임스페이스 주석 수정
+SortUsingDeclarations: true                # using 선언 정렬
