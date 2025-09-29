@@ -1,4 +1,4 @@
-#include "web_server.h"
+#include "rest_api_server.h"
 #include "player.h"
 #include "simple_websocket_server.h"
 #include <iostream>
@@ -15,21 +15,21 @@
 
 namespace bt {
 
-WebServer::WebServer(uint16_t port) 
+RestApiServer::RestApiServer(uint16_t port) 
     : port_(port), running_(false), connected_clients_(0), total_requests_(0) {
 }
 
-WebServer::~WebServer() {
+RestApiServer::~RestApiServer() {
     stop();
 }
 
-bool WebServer::start() {
+bool RestApiServer::start() {
     if (running_.load()) {
         return true;
     }
     
     running_.store(true);
-    server_thread_ = std::thread(&WebServer::server_loop, this);
+    server_thread_ = std::thread(&RestApiServer::server_loop, this);
     
     std::cout << "웹 서버가 포트 " << port_ << "에서 시작되었습니다." << std::endl;
     std::cout << "브라우저에서 http://localhost:" << port_ << " 으로 접속하세요." << std::endl;
@@ -37,7 +37,7 @@ bool WebServer::start() {
     return true;
 }
 
-void WebServer::stop() {
+void RestApiServer::stop() {
     if (!running_.load()) {
         return;
     }
@@ -50,23 +50,23 @@ void WebServer::stop() {
     std::cout << "웹 서버가 중지되었습니다." << std::endl;
 }
 
-void WebServer::set_monster_manager(std::shared_ptr<MonsterManager> manager) {
+void RestApiServer::set_monster_manager(std::shared_ptr<MonsterManager> manager) {
     monster_manager_ = manager;
 }
 
-void WebServer::set_player_manager(std::shared_ptr<PlayerManager> manager) {
+void RestApiServer::set_player_manager(std::shared_ptr<PlayerManager> manager) {
     player_manager_ = manager;
 }
 
-void WebServer::set_bt_engine(std::shared_ptr<BehaviorTreeEngine> engine) {
+void RestApiServer::set_bt_engine(std::shared_ptr<BehaviorTreeEngine> engine) {
     bt_engine_ = engine;
 }
 
-void WebServer::set_websocket_server(std::shared_ptr<SimpleWebSocketServer> server) {
+void RestApiServer::set_websocket_server(std::shared_ptr<SimpleWebSocketServer> server) {
     websocket_server_ = server;
 }
 
-void WebServer::server_loop() {
+void RestApiServer::server_loop() {
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server_fd == 0) {
         std::cerr << "소켓 생성 실패" << std::endl;
@@ -160,7 +160,7 @@ void WebServer::server_loop() {
     close(server_fd);
 }
 
-void WebServer::handle_request(const std::string& request, std::string& response) {
+void RestApiServer::handle_request(const std::string& request, std::string& response) {
     std::string method = extract_method(request);
     std::string path = extract_path(request);
     
@@ -179,32 +179,32 @@ void WebServer::handle_request(const std::string& request, std::string& response
     }
 }
 
-void WebServer::handle_root(const std::string& request, std::string& response) {
+void RestApiServer::handle_root(const std::string& request, std::string& response) {
     response = create_http_response(get_dashboard_html());
 }
 
-void WebServer::handle_api_monsters(const std::string& request, std::string& response) {
+void RestApiServer::handle_api_monsters(const std::string& request, std::string& response) {
     std::string json = get_monster_status_json();
     response = create_json_response(json);
 }
 
-void WebServer::handle_api_monster_detail(const std::string& request, std::string& response) {
+void RestApiServer::handle_api_monster_detail(const std::string& request, std::string& response) {
     // 간단한 구현 - 모든 몬스터 정보 반환
     std::string json = get_monster_status_json();
     response = create_json_response(json);
 }
 
-void WebServer::handle_api_stats(const std::string& request, std::string& response) {
+void RestApiServer::handle_api_stats(const std::string& request, std::string& response) {
     std::string json = get_server_stats_json();
     response = create_json_response(json);
 }
 
-void WebServer::handle_api_players(const std::string& request, std::string& response) {
+void RestApiServer::handle_api_players(const std::string& request, std::string& response) {
     std::string json = get_player_status_json();
     response = create_json_response(json);
 }
 
-std::string WebServer::get_monster_status_json() const {
+std::string RestApiServer::get_monster_status_json() const {
     std::ostringstream json;
     json << "{\n";
     json << "  \"monsters\": [\n";
@@ -262,7 +262,7 @@ std::string WebServer::get_monster_status_json() const {
     return json.str();
 }
 
-std::string WebServer::get_server_stats_json() const {
+std::string RestApiServer::get_server_stats_json() const {
     std::ostringstream json;
     json << "{\n";
     
@@ -297,7 +297,7 @@ std::string WebServer::get_server_stats_json() const {
     return json.str();
 }
 
-std::string WebServer::get_player_status_json() const {
+std::string RestApiServer::get_player_status_json() const {
     std::ostringstream json;
     json << "{\n";
     json << "  \"players\": [\n";
@@ -339,7 +339,7 @@ std::string WebServer::get_player_status_json() const {
     return json.str();
 }
 
-std::string WebServer::monster_type_to_string(MonsterType type) const {
+std::string RestApiServer::monster_type_to_string(MonsterType type) const {
     switch (type) {
         case MonsterType::GOBLIN: return "GOBLIN";
         case MonsterType::ORC: return "ORC";
@@ -352,7 +352,7 @@ std::string WebServer::monster_type_to_string(MonsterType type) const {
     }
 }
 
-std::string WebServer::monster_state_to_string(MonsterState state) const {
+std::string RestApiServer::monster_state_to_string(MonsterState state) const {
     switch (state) {
         case MonsterState::IDLE: return "IDLE";
         case MonsterState::PATROL: return "PATROL";
@@ -364,7 +364,7 @@ std::string WebServer::monster_state_to_string(MonsterState state) const {
     }
 }
 
-std::string WebServer::extract_path(const std::string& request) const {
+std::string RestApiServer::extract_path(const std::string& request) const {
     size_t start = request.find(' ');
     if (start == std::string::npos) return "/";
     
@@ -374,14 +374,14 @@ std::string WebServer::extract_path(const std::string& request) const {
     return request.substr(start + 1, end - start - 1);
 }
 
-std::string WebServer::extract_method(const std::string& request) const {
+std::string RestApiServer::extract_method(const std::string& request) const {
     size_t end = request.find(' ');
     if (end == std::string::npos) return "GET";
     
     return request.substr(0, end);
 }
 
-std::string WebServer::create_http_response(const std::string& content, const std::string& content_type) const {
+std::string RestApiServer::create_http_response(const std::string& content, const std::string& content_type) const {
     std::ostringstream response;
     response << "HTTP/1.1 200 OK\r\n";
     response << "Content-Type: " << content_type << "; charset=utf-8\r\n";
@@ -396,11 +396,11 @@ std::string WebServer::create_http_response(const std::string& content, const st
     return response.str();
 }
 
-std::string WebServer::create_json_response(const std::string& json) const {
+std::string RestApiServer::create_json_response(const std::string& json) const {
     return create_http_response(json, "application/json");
 }
 
-std::string WebServer::create_error_response(int status_code, const std::string& message) const {
+std::string RestApiServer::create_error_response(int status_code, const std::string& message) const {
     std::ostringstream response;
     response << "HTTP/1.1 " << status_code << " " << message << "\r\n";
     response << "Content-Type: text/plain\r\n";
@@ -412,7 +412,7 @@ std::string WebServer::create_error_response(int status_code, const std::string&
     return response.str();
 }
 
-std::string WebServer::get_dashboard_html() const {
+std::string RestApiServer::get_dashboard_html() const {
     std::ifstream file("web/dashboard.html");
     if (!file.is_open()) {
         return "<html><body><h1>Error: Dashboard file not found</h1></body></html>";

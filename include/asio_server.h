@@ -30,7 +30,7 @@ class BehaviorTreeEngine;
 class MonsterAI;
 class MonsterManager;
 class PlayerManager;
-class WebServer;
+class RestApiServer;
 class SimpleWebSocketServer;
 
 // 서버 설정 구조체
@@ -97,6 +97,17 @@ struct AsioClientInfo {
     std::string client_type; // "player", "monster", "tester"
 };
 
+// 서버 헬스 정보 구조체
+struct ServerHealthInfo {
+    bool is_healthy;
+    size_t connected_clients;
+    size_t total_packets_sent;
+    size_t total_packets_received;
+    size_t worker_threads;
+    size_t max_clients;
+    uint64_t uptime_seconds;
+};
+
 // Asio 기반 서버 클래스
 class AsioServer {
 public:
@@ -122,7 +133,7 @@ public:
     std::shared_ptr<PlayerManager> get_player_manager() const { return player_manager_; }
     
     // 웹 서버 접근
-    std::shared_ptr<WebServer> get_web_server() const { return web_server_; }
+    std::shared_ptr<RestApiServer> get_rest_api_server() const { return rest_api_server_; }
     
     // WebSocket 서버 접근
     std::shared_ptr<SimpleWebSocketServer> get_websocket_server() const { return websocket_server_; }
@@ -134,6 +145,10 @@ public:
     size_t get_connected_clients() const;
     size_t get_total_packets_sent() const { return total_packets_sent_.load(); }
     size_t get_total_packets_received() const { return total_packets_received_.load(); }
+    
+    // 헬스체크 및 모니터링
+    bool is_healthy() const;
+    ServerHealthInfo get_health_info() const;
 
 private:
     // 서버 초기화
@@ -178,7 +193,7 @@ private:
     std::shared_ptr<PlayerManager> player_manager_;
     
     // 웹 서버
-    std::shared_ptr<WebServer> web_server_;
+    std::shared_ptr<RestApiServer> rest_api_server_;
     
     // WebSocket 서버
     std::shared_ptr<SimpleWebSocketServer> websocket_server_;
@@ -186,6 +201,9 @@ private:
     // 통계
     std::atomic<size_t> total_packets_sent_;
     std::atomic<size_t> total_packets_received_;
+    
+    // 서버 시작 시간 (헬스체크용)
+    std::chrono::steady_clock::time_point server_start_time_;
     
     // 로깅
     mutable boost::mutex log_mutex_;

@@ -21,10 +21,10 @@ include_directories(include)
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/test_client.cpp)
 list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/test_client_main.cpp)
-list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/asio_test_client.cpp)
-list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/asio_test_client_main.cpp)
-list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp)
 list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/websocket_server.cpp)
+list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/web_server.cpp)
+list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp)
+list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/asio_test_client_main.cpp)
 
 file(GLOB_RECURSE HEADERS "include/*.h")
 list(REMOVE_ITEM HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/include/test_client.h)
@@ -109,12 +109,7 @@ target_link_libraries(${PROJECT_NAME}
     OpenSSL::SSL
     OpenSSL::Crypto
 )
-target_link_libraries(TestClient 
-    Threads::Threads 
-    Boost::system 
-    Boost::thread
-    nlohmann_json::nlohmann_json
-)
+# TestClient는 제거됨
 target_link_libraries(AsioTestClient 
     Threads::Threads 
     Boost::system 
@@ -125,11 +120,11 @@ target_link_libraries(AsioTestClient
 # 플랫폼 독립적 네트워킹
 if(WIN32)
     target_link_libraries(${PROJECT_NAME} ws2_32 wsock32)
-    target_link_libraries(TestClient ws2_32 wsock32)
+    # TestClient는 제거됨
     target_link_libraries(AsioTestClient ws2_32 wsock32)
 elseif(UNIX)
     target_link_libraries(${PROJECT_NAME} pthread)
-    target_link_libraries(TestClient pthread)
+    # TestClient는 제거됨
     target_link_libraries(AsioTestClient pthread)
 endif()
 

@@ -39,11 +39,11 @@ struct ServerStats {
     std::chrono::steady_clock::time_point last_update;
 };
 
-// 웹 서버 클래스
-class WebServer {
+// REST API 서버 클래스 (실제로는 REST API + 정적 파일 서빙)
+class RestApiServer {
 public:
-    WebServer(uint16_t port = 8080);
-    ~WebServer();
+    RestApiServer(uint16_t port = 8080);
+    ~RestApiServer();
 
     // 서버 시작/중지
     bool start();

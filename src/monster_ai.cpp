@@ -560,10 +560,15 @@ void MonsterManager::process_auto_spawn(float delta_time) {
         std::cout << "자동 스폰 처리 중... 설정된 스폰 설정 수: " << spawn_configs_.size() << std::endl;
     }
     
-    std::cout << "현재 스폰 설정 수: " << spawn_configs_.size() << std::endl;
+    // 10초마다 스폰 설정 수 로그 출력 (성능 개선)
+    if (debug_count % 100 == 0) {
+        std::cout << "현재 스폰 설정 수: " << spawn_configs_.size() << std::endl;
+    }
     for (const auto& config : spawn_configs_) {
         if (!config.auto_spawn) {
-            std::cout << "스폰 설정 " << config.name << "은 자동 스폰이 비활성화되어 있습니다." << std::endl;
+            if (debug_count % 100 == 0) {
+                std::cout << "스폰 설정 " << config.name << "은 자동 스폰이 비활성화되어 있습니다." << std::endl;
+            }
             continue;
         }
         
@@ -571,9 +576,14 @@ void MonsterManager::process_auto_spawn(float delta_time) {
         
         // 현재 이름의 몬스터 수 확인
         size_t current_count = get_monster_count_by_name(config.name);
-        std::cout << "스폰 설정 " << config.name << " - 현재 몬스터 수: " << current_count << ", 최대 수: " << config.max_count << std::endl;
+        // 10초마다 스폰 상태 로그 출력 (성능 개선)
+        if (debug_count % 100 == 0) {
+            std::cout << "스폰 설정 " << config.name << " - 현재 몬스터 수: " << current_count << ", 최대 수: " << config.max_count << std::endl;
+        }
         if (current_count >= config.max_count) {
-            std::cout << "스폰 설정 " << config.name << " - 최대 수에 도달했습니다." << std::endl;
+            if (debug_count % 100 == 0) {
+                std::cout << "스폰 설정 " << config.name << " - 최대 수에 도달했습니다." << std::endl;
+            }
             continue;
         }
         
@@ -625,8 +635,10 @@ void MonsterManager::update(float delta_time) {
     static int update_count = 0;
     update_count++;
     
-    // 매번 로그 출력 (디버깅용)
-    std::cout << "MonsterManager::update 호출됨 (카운트: " << update_count << ", 몬스터 수: " << monsters_.size() << ")" << std::endl;
+    // 10초마다 로그 출력 (성능 개선)
+    if (update_count % 100 == 0) {
+        std::cout << "MonsterManager::update 호출됨 (카운트: " << update_count << ", 몬스터 수: " << monsters_.size() << ")" << std::endl;
+    }
     
     process_auto_spawn(delta_time);
     process_respawn(delta_time);

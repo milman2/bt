@@ -1,7 +1,7 @@
+#include "rest_api_server.h"
 #include "asio_server.h"
 #include "behavior_tree.h"
 #include "monster_ai.h"
-#include "web_server.h"
 #include "simple_websocket_server.h"
 #include "player.h"
 #include <iostream>
@@ -22,18 +22,18 @@ AsioServer::AsioServer(const AsioServerConfig& config)
     player_manager_ = std::make_shared<PlayerManager>();
     
     // 웹 서버 초기화
-    web_server_ = std::make_shared<WebServer>(8081); // 웹 서버는 8081 포트 사용
-    web_server_->set_monster_manager(monster_manager_);
-    web_server_->set_player_manager(player_manager_);
+    rest_api_server_ = std::make_shared<RestApiServer>(8081); // REST API 서버는 8081 포트 사용
+    rest_api_server_->set_monster_manager(monster_manager_);
+    rest_api_server_->set_player_manager(player_manager_);
     // bt_engine_을 shared_ptr로 변환 (원본은 유지)
     std::shared_ptr<BehaviorTreeEngine> shared_bt_engine(bt_engine_.get(), [](BehaviorTreeEngine*){});
-    web_server_->set_bt_engine(shared_bt_engine);
+    rest_api_server_->set_bt_engine(shared_bt_engine);
     
     // WebSocket 서버 초기화
     websocket_server_ = std::make_shared<SimpleWebSocketServer>(8082); // WebSocket 서버는 8082 포트 사용
     
-    // WebServer에 WebSocket 서버 참조 설정
-    web_server_->set_websocket_server(websocket_server_);
+    // RestApiServer에 WebSocket 서버 참조 설정
+    rest_api_server_->set_websocket_server(websocket_server_);
     
     // MonsterManager에 WebSocket 서버 설정
     monster_manager_->set_websocket_server(websocket_server_);
@@ -79,6 +79,9 @@ bool AsioServer::start() {
         // running_ 플래그를 먼저 설정
         running_.store(true);
         
+        // 서버 시작 시간 기록
+        server_start_time_ = std::chrono::steady_clock::now();
+        
         // 연결 수락 시작 (워커 스레드 시작 전에)
         start_accept();
         
@@ -91,9 +94,9 @@ bool AsioServer::start() {
             });
         }
         
-        // 웹 서버 시작
-        if (web_server_) {
-            web_server_->start();
+        // REST API 서버 시작
+        if (rest_api_server_) {
+            rest_api_server_->start();
         }
         
         // WebSocket 서버 시작
@@ -102,7 +105,7 @@ bool AsioServer::start() {
         }
         
         log_message("서버가 성공적으로 시작되었습니다. 포트: " + std::to_string(config_.port));
-        log_message("웹 모니터링 대시보드: http://localhost:8081");
+        log_message("REST API 서버: http://localhost:8081");
         log_message("WebSocket 실시간 연결: ws://localhost:8082");
         
         return true;
@@ -140,9 +143,9 @@ void AsioServer::stop() {
         // 워커 스레드 종료
         worker_threads_.join_all();
         
-        // 웹 서버 중지
-        if (web_server_) {
-            web_server_->stop();
+        // REST API 서버 중지
+        if (rest_api_server_) {
+            rest_api_server_->stop();
         }
         
         // WebSocket 서버 중지
@@ -434,6 +437,46 @@ void AsioServer::log_message(const std::string& message, bool is_error) {
         std::cout << "[INFO] ";
     }
     std::cout << message << std::endl;
+}
+
+// 서버 상태 모니터링을 위한 헬스체크 추가
+bool AsioServer::is_healthy() const {
+    try {
+        // 기본적인 서버 상태 확인
+        if (!running_.load()) {
+            return false;
+        }
+        
+        // IO 컨텍스트가 정상적으로 동작하는지 확인
+        if (io_context_.stopped()) {
+            return false;
+        }
+        
+        // 워커 스레드가 정상적으로 동작하는지 확인
+        if (worker_threads_.size() == 0) {
+            return false;
+        }
+        
+        return true;
+    } catch (const std::exception& e) {
+        // const 메서드에서는 로그 출력 불가, 단순히 false 반환
+        return false;
+    }
+}
+
+// 서버 통계 정보 반환
+ServerHealthInfo AsioServer::get_health_info() const {
+    ServerHealthInfo info;
+    info.is_healthy = is_healthy();
+    info.connected_clients = get_connected_clients();
+    info.total_packets_sent = total_packets_sent_.load();
+    info.total_packets_received = total_packets_received_.load();
+    info.worker_threads = config_.worker_threads;
+    info.max_clients = config_.max_clients;
+    info.uptime_seconds = std::chrono::duration_cast<std::chrono::seconds>(
+        std::chrono::steady_clock::now() - server_start_time_).count();
+    
+    return info;
 }
 
 // AsioClient 구현
