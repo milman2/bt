@@ -144,10 +144,7 @@ void SimpleWebSocketServer::stop() {
     // 모든 세션 종료
     {
         std::lock_guard<std::mutex> lock(sessions_mutex_);
-        for (auto& session : sessions_) {
-            session->~SimpleWebSocketSession();
-        }
-        sessions_.clear();
+        sessions_.clear(); // shared_ptr이 자동으로 소멸자를 호출함
     }
     
     // 서버 소켓 종료
@@ -186,11 +183,14 @@ void SimpleWebSocketServer::server_loop() {
             if (running_.load()) {
                 std::cerr << "select 오류" << std::endl;
             }
-            continue;
+            break; // 오류 시 루프 종료
         }
         
         if (activity == 0) {
-            // 타임아웃 - 계속 실행
+            // 타임아웃 - running 상태 확인 후 계속
+            if (!running_.load()) {
+                break;
+            }
             continue;
         }
         
