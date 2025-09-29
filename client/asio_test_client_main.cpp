@@ -14,7 +14,7 @@ namespace bt
         std::cout << "사용법: " << program_name << " [옵션]\n\n";
         std::cout << "옵션:\n";
         std::cout << "  --host <호스트>        서버 호스트 (기본값: 127.0.0.1)\n";
-        std::cout << "  --port <포트>          서버 포트 (기본값: 8080)\n";
+        std::cout << "  --port <포트>          서버 포트 (기본값: 7000)\n";
         std::cout << "  --test <테스트명>      실행할 테스트\n";
         std::cout << "    연결 테스트: connection\n";
         std::cout << "    플레이어 접속 테스트: join\n";

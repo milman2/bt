@@ -55,7 +55,7 @@ int main(int argc, char* argv[])
     // 서버 설정
     AsioServerConfig config;
     config.host           = "0.0.0.0";
-    config.port           = 8080;
+    config.port           = 7000;
     config.max_clients    = 1000;
     config.worker_threads = 4;
     config.debug_mode     = true;
@@ -88,7 +88,7 @@ int main(int argc, char* argv[])
         {
             std::cout << "사용법: " << argv[0] << " [옵션]\n";
             std::cout << "옵션:\n";
-            std::cout << "  --port <포트>        서버 포트 (기본값: 8080)\n";
+            std::cout << "  --port <포트>        서버 포트 (기본값: 7000)\n";
             std::cout << "  --host <호스트>      서버 호스트 (기본값: 0.0.0.0)\n";
             std::cout << "  --max-clients <수>   최대 클라이언트 수 (기본값: 1000)\n";
             std::cout << "  --threads <수>       워커 스레드 수 (기본값: 4)\n";

@@ -27,7 +27,7 @@ namespace bt
     struct AsioClientConfig
     {
         std::string                 server_host = "127.0.0.1";
-        uint16_t                    server_port = 8080;
+        uint16_t                    server_port = 7000;
         boost::chrono::milliseconds connection_timeout{5000};
         bool                        auto_reconnect         = false;
         int                         max_reconnect_attempts = 3;
