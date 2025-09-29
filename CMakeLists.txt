@@ -33,12 +33,7 @@ list(REMOVE_ITEM HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/include/asio_test_client.h)
 # 서버 실행 파일 생성
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 
-# 기존 테스트 클라이언트 소스 파일들
-file(GLOB_RECURSE TEST_CLIENT_SOURCES "src/test_client*.cpp")
-file(GLOB_RECURSE TEST_CLIENT_HEADERS "include/test_client.h")
-
-# 기존 테스트 클라이언트 실행 파일 생성
-add_executable(TestClient ${TEST_CLIENT_SOURCES} ${TEST_CLIENT_HEADERS})
+# 기존 테스트 클라이언트는 제거됨 (AsioTestClient로 대체)
 
 # Boost.Asio 테스트 클라이언트 소스 파일들
 file(GLOB_RECURSE ASIO_TEST_CLIENT_SOURCES "src/asio_test_client*.cpp")
