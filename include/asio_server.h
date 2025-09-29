@@ -1,0 +1,246 @@
+#pragma once
+
+#include <boost/asio.hpp>
+#include <boost/thread.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/make_shared.hpp>
+#include <boost/bind.hpp>
+#include <boost/array.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/condition_variable.hpp>
+#include <boost/chrono.hpp>
+
+#include <memory>
+#include <vector>
+#include <unordered_map>
+#include <queue>
+#include <atomic>
+#include <functional>
+#include <string>
+#include <iostream>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+
+namespace bt {
+
+// 전방 선언
+class AsioClient;
+class BehaviorTreeEngine;
+class MonsterAI;
+class MonsterManager;
+class PlayerManager;
+class WebServer;
+class SimpleWebSocketServer;
+
+// 서버 설정 구조체
+struct AsioServerConfig {
+    std::string host = "0.0.0.0";
+    uint16_t port = 8080;
+    size_t max_clients = 1000;
+    size_t worker_threads = 4;
+    bool debug_mode = false;
+    size_t max_packet_size = 4096;
+    boost::chrono::milliseconds connection_timeout{30000}; // 30초
+};
+
+// 패킷 구조체
+struct AsioPacket {
+    uint32_t size;
+    uint16_t type;
+    std::vector<uint8_t> data;
+    
+    AsioPacket() : size(0), type(0) {}
+    AsioPacket(uint16_t packet_type, const std::vector<uint8_t>& packet_data) 
+        : size(packet_data.size() + sizeof(uint16_t)), type(packet_type), data(packet_data) {}
+};
+
+// 패킷 타입 정의
+enum class AsioPacketType : uint16_t {
+    // 연결 관련
+    CONNECT_REQUEST = 0x0001,
+    CONNECT_RESPONSE = 0x0002,
+    DISCONNECT = 0x0003,
+    
+    // 몬스터 AI 관련
+    MONSTER_SPAWN = 0x1000,
+    MONSTER_SPAWN_RESPONSE = 0x1001,
+    MONSTER_UPDATE = 0x1002,
+    MONSTER_UPDATE_RESPONSE = 0x1003,
+    MONSTER_ACTION = 0x1004,
+    MONSTER_DEATH = 0x1005,
+    
+    // 플레이어 관련
+    PLAYER_MOVE = 0x2000,
+    PLAYER_ATTACK = 0x2001,
+    PLAYER_CHAT = 0x2002,
+    
+    // Behavior Tree 관련
+    BT_EXECUTE = 0x3000,
+    BT_EXECUTE_RESPONSE = 0x3001,
+    BT_RESULT = 0x3002,
+    BT_DEBUG = 0x3003,
+    
+    // 에러 관련
+    ERROR_RESPONSE = 0xFF00,
+    ERROR_MESSAGE = 0xFF01
+};
+
+// 클라이언트 정보 구조체
+struct AsioClientInfo {
+    boost::shared_ptr<AsioClient> client;
+    std::string ip_address;
+    uint16_t port;
+    boost::chrono::steady_clock::time_point connect_time;
+    bool is_authenticated;
+    uint32_t player_id;
+    std::string client_type; // "player", "monster", "tester"
+};
+
+// Asio 기반 서버 클래스
+class AsioServer {
+public:
+    AsioServer(const AsioServerConfig& config);
+    ~AsioServer();
+
+    // 서버 시작/중지
+    bool start();
+    void stop();
+    bool is_running() const { return running_.load(); }
+
+    // 클라이언트 관리
+    void add_client(boost::shared_ptr<AsioClient> client);
+    void remove_client(boost::shared_ptr<AsioClient> client);
+    void broadcast_packet(const AsioPacket& packet, boost::shared_ptr<AsioClient> exclude_client = nullptr);
+    void send_packet(boost::shared_ptr<AsioClient> client, const AsioPacket& packet);
+
+    // Behavior Tree 엔진 접근
+    BehaviorTreeEngine* get_bt_engine() { return bt_engine_.get(); }
+    
+    // 매니저 접근
+    std::shared_ptr<MonsterManager> get_monster_manager() const { return monster_manager_; }
+    std::shared_ptr<PlayerManager> get_player_manager() const { return player_manager_; }
+    
+    // 웹 서버 접근
+    std::shared_ptr<WebServer> get_web_server() const { return web_server_; }
+    
+    // WebSocket 서버 접근
+    std::shared_ptr<SimpleWebSocketServer> get_websocket_server() const { return websocket_server_; }
+
+    // 설정 접근
+    const AsioServerConfig& get_config() const { return config_; }
+
+    // 통계 정보
+    size_t get_connected_clients() const;
+    size_t get_total_packets_sent() const { return total_packets_sent_.load(); }
+    size_t get_total_packets_received() const { return total_packets_received_.load(); }
+
+private:
+    // 서버 초기화
+    void start_accept();
+    void handle_accept(boost::shared_ptr<AsioClient> client, const boost::system::error_code& error);
+    
+    // 워커 스레드
+    void worker_thread_function();
+    
+    // 패킷 처리
+public:
+    void process_packet(boost::shared_ptr<AsioClient> client, const AsioPacket& packet);
+private:
+    // 응답 전송 함수들
+    void send_connect_response(boost::shared_ptr<AsioClient> client);
+    void send_monster_spawn_response(boost::shared_ptr<AsioClient> client, bool success);
+    void send_monster_update_response(boost::shared_ptr<AsioClient> client, bool success);
+    void send_bt_execute_response(boost::shared_ptr<AsioClient> client, bool success);
+    void send_error_response(boost::shared_ptr<AsioClient> client, const std::string& error_message);
+    
+    // 로깅
+    void log_message(const std::string& message, bool is_error = false);
+
+private:
+    AsioServerConfig config_;
+    std::atomic<bool> running_;
+    
+    // Boost.Asio 관련
+    boost::asio::io_context io_context_;
+    boost::asio::ip::tcp::acceptor acceptor_;
+    boost::thread_group worker_threads_;
+    
+    // 클라이언트 관리
+    std::unordered_map<boost::shared_ptr<AsioClient>, AsioClientInfo> clients_;
+    mutable boost::mutex clients_mutex_;
+    
+    // Behavior Tree 엔진
+    std::unique_ptr<BehaviorTreeEngine> bt_engine_;
+    
+    // 몬스터 및 플레이어 매니저
+    std::shared_ptr<MonsterManager> monster_manager_;
+    std::shared_ptr<PlayerManager> player_manager_;
+    
+    // 웹 서버
+    std::shared_ptr<WebServer> web_server_;
+    
+    // WebSocket 서버
+    std::shared_ptr<SimpleWebSocketServer> websocket_server_;
+    
+    // 통계
+    std::atomic<size_t> total_packets_sent_;
+    std::atomic<size_t> total_packets_received_;
+    
+    // 로깅
+    mutable boost::mutex log_mutex_;
+};
+
+// Asio 기반 클라이언트 클래스
+class AsioClient : public boost::enable_shared_from_this<AsioClient> {
+public:
+    AsioClient(boost::asio::io_context& io_context, AsioServer* server);
+    ~AsioClient();
+
+    // 연결 관리
+    void start();
+    void stop();
+    bool is_connected() const { return connected_.load(); }
+
+    // 패킷 송수신
+    void send_packet(const AsioPacket& packet);
+    void receive_packet();
+
+    // 소켓 접근
+    boost::asio::ip::tcp::socket& socket() { return socket_; }
+    const boost::asio::ip::tcp::socket& socket() const { return socket_; }
+
+    // 클라이언트 정보
+    std::string get_ip_address() const;
+    uint16_t get_port() const;
+    boost::chrono::steady_clock::time_point get_connect_time() const { return connect_time_; }
+
+private:
+    // 패킷 처리
+    void handle_packet_size(const boost::system::error_code& error, size_t bytes_transferred);
+    void handle_packet_data(const boost::system::error_code& error, size_t bytes_transferred);
+    void handle_send(const boost::system::error_code& error, size_t bytes_transferred);
+
+    // 연결 관리
+    void handle_disconnect();
+
+private:
+    boost::asio::io_context& io_context_;
+    boost::asio::ip::tcp::socket socket_;
+    AsioServer* server_;
+    
+    std::atomic<bool> connected_;
+    boost::chrono::steady_clock::time_point connect_time_;
+    
+    // 패킷 수신 버퍼
+    boost::array<uint8_t, 4096> receive_buffer_;
+    uint32_t expected_packet_size_;
+    std::vector<uint8_t> packet_buffer_;
+    
+    // 패킷 전송 큐
+    std::queue<AsioPacket> send_queue_;
+    boost::mutex send_queue_mutex_;
+    bool sending_;
+};
+
+} // namespace bt

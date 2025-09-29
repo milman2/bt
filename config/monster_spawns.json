@@ -1,0 +1,220 @@
+{
+  "monster_spawns": [
+    {
+      "type": "GOBLIN",
+      "name": "goblin_1",
+      "position": {
+        "x": 100.0,
+        "y": 0.0,
+        "z": 100.0,
+        "rotation": 0.0
+      },
+      "respawn_time": 30.0,
+      "max_count": 3,
+      "spawn_radius": 10.0,
+      "auto_spawn": true,
+      "patrol_points": [
+        {"x": 100.0, "y": 0.0, "z": 100.0},
+        {"x": 120.0, "y": 0.0, "z": 100.0},
+        {"x": 120.0, "y": 0.0, "z": 120.0},
+        {"x": 100.0, "y": 0.0, "z": 120.0}
+      ],
+      "detection_range": 15.0,
+      "attack_range": 3.0,
+      "chase_range": 25.0,
+      "health": 50,
+      "damage": 10,
+      "move_speed": 2.0
+    },
+    {
+      "type": "GOBLIN",
+      "name": "goblin_2",
+      "position": {
+        "x": 150.0,
+        "y": 0.0,
+        "z": 150.0,
+        "rotation": 0.0
+      },
+      "respawn_time": 25.0,
+      "max_count": 2,
+      "spawn_radius": 8.0,
+      "auto_spawn": true,
+      "patrol_points": [
+        {"x": 150.0, "y": 0.0, "z": 150.0},
+        {"x": 170.0, "y": 0.0, "z": 150.0},
+        {"x": 170.0, "y": 0.0, "z": 170.0},
+        {"x": 150.0, "y": 0.0, "z": 170.0}
+      ],
+      "detection_range": 15.0,
+      "attack_range": 3.0,
+      "chase_range": 25.0,
+      "health": 50,
+      "damage": 10,
+      "move_speed": 2.0
+    },
+    {
+      "type": "ORC",
+      "name": "orc_1",
+      "position": {
+        "x": 200.0,
+        "y": 0.0,
+        "z": 200.0,
+        "rotation": 0.0
+      },
+      "respawn_time": 60.0,
+      "max_count": 2,
+      "spawn_radius": 15.0,
+      "auto_spawn": true,
+      "patrol_points": [
+        {"x": 200.0, "y": 0.0, "z": 200.0},
+        {"x": 220.0, "y": 0.0, "z": 200.0},
+        {"x": 220.0, "y": 0.0, "z": 220.0},
+        {"x": 200.0, "y": 0.0, "z": 220.0}
+      ],
+      "detection_range": 20.0,
+      "attack_range": 4.0,
+      "chase_range": 30.0,
+      "health": 100,
+      "damage": 20,
+      "move_speed": 1.5
+    },
+    {
+      "type": "ORC",
+      "name": "orc_2",
+      "position": {
+        "x": 250.0,
+        "y": 0.0,
+        "z": 250.0,
+        "rotation": 0.0
+      },
+      "respawn_time": 45.0,
+      "max_count": 1,
+      "spawn_radius": 12.0,
+      "auto_spawn": true,
+      "patrol_points": [
+        {"x": 250.0, "y": 0.0, "z": 250.0},
+        {"x": 270.0, "y": 0.0, "z": 250.0},
+        {"x": 270.0, "y": 0.0, "z": 270.0},
+        {"x": 250.0, "y": 0.0, "z": 270.0}
+      ],
+      "detection_range": 20.0,
+      "attack_range": 4.0,
+      "chase_range": 30.0,
+      "health": 100,
+      "damage": 20,
+      "move_speed": 1.5
+    },
+    {
+      "type": "SKELETON",
+      "name": "skeleton_1",
+      "position": {
+        "x": 300.0,
+        "y": 0.0,
+        "z": 300.0,
+        "rotation": 0.0
+      },
+      "respawn_time": 40.0,
+      "max_count": 2,
+      "spawn_radius": 10.0,
+      "auto_spawn": true,
+      "patrol_points": [
+        {"x": 300.0, "y": 0.0, "z": 300.0},
+        {"x": 320.0, "y": 0.0, "z": 300.0},
+        {"x": 320.0, "y": 0.0, "z": 320.0},
+        {"x": 300.0, "y": 0.0, "z": 320.0}
+      ],
+      "detection_range": 18.0,
+      "attack_range": 3.5,
+      "chase_range": 28.0,
+      "health": 80,
+      "damage": 15,
+      "move_speed": 1.8
+    },
+    {
+      "type": "ZOMBIE",
+      "name": "zombie_1",
+      "position": {
+        "x": 350.0,
+        "y": 0.0,
+        "z": 350.0,
+        "rotation": 0.0
+      },
+      "respawn_time": 35.0,
+      "max_count": 2,
+      "spawn_radius": 8.0,
+      "auto_spawn": true,
+      "patrol_points": [
+        {"x": 350.0, "y": 0.0, "z": 350.0},
+        {"x": 370.0, "y": 0.0, "z": 350.0},
+        {"x": 370.0, "y": 0.0, "z": 370.0},
+        {"x": 350.0, "y": 0.0, "z": 370.0}
+      ],
+      "detection_range": 12.0,
+      "attack_range": 2.5,
+      "chase_range": 20.0,
+      "health": 60,
+      "damage": 12,
+      "move_speed": 1.2
+    },
+    {
+      "type": "DRAGON",
+      "name": "dragon_1",
+      "position": {
+        "x": 500.0,
+        "y": 0.0,
+        "z": 500.0,
+        "rotation": 0.0
+      },
+      "respawn_time": 300.0,
+      "max_count": 1,
+      "spawn_radius": 20.0,
+      "auto_spawn": true,
+      "patrol_points": [
+        {"x": 500.0, "y": 0.0, "z": 500.0},
+        {"x": 550.0, "y": 0.0, "z": 500.0},
+        {"x": 550.0, "y": 0.0, "z": 550.0},
+        {"x": 500.0, "y": 0.0, "z": 550.0}
+      ],
+      "detection_range": 50.0,
+      "attack_range": 8.0,
+      "chase_range": 60.0,
+      "health": 500,
+      "damage": 50,
+      "move_speed": 3.0
+    },
+    {
+      "type": "NPC_MERCHANT",
+      "name": "merchant_1",
+      "position": {
+        "x": 50.0,
+        "y": 0.0,
+        "z": 50.0,
+        "rotation": 0.0
+      },
+      "respawn_time": 0.0,
+      "max_count": 1,
+      "spawn_radius": 0.0,
+      "auto_spawn": false
+    },
+    {
+      "type": "NPC_GUARD",
+      "name": "guard_1",
+      "position": {
+        "x": 75.0,
+        "y": 0.0,
+        "z": 75.0,
+        "rotation": 0.0
+      },
+      "respawn_time": 0.0,
+      "max_count": 1,
+      "spawn_radius": 0.0,
+      "auto_spawn": false
+    }
+  ],
+  "player_respawn_points": [
+    {"x": 0.0, "y": 0.0, "z": 0.0},
+    {"x": 50.0, "y": 0.0, "z": 50.0},
+    {"x": 100.0, "y": 0.0, "z": 0.0},
+    {"x": 0.0, "y": 0.0, "z": 100.0}
+  ]
+}
