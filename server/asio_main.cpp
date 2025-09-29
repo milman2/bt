@@ -2,6 +2,7 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+#include <thread>
 
 #include <csignal>
 #include <signal.h>
@@ -27,6 +28,13 @@ namespace bt
         {
             g_server->stop();
         }
+        
+        // 5초 후 강제 종료
+        std::thread([]() {
+            std::this_thread::sleep_for(std::chrono::seconds(5));
+            std::cout << "강제 종료합니다...\n";
+            std::exit(0);
+        }).detach();
     }
 
 } // namespace bt

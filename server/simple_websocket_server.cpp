@@ -194,6 +194,13 @@ namespace bt
 
         while (running_.load())
         {
+            // 서버 소켓이 유효한지 확인
+            if (server_socket_ < 0 || server_socket_ >= FD_SETSIZE)
+            {
+                std::cerr << "WebSocket 서버 소켓이 유효하지 않습니다: " << server_socket_ << std::endl;
+                break;
+            }
+
             struct sockaddr_in client_address;
             socklen_t          addrlen = sizeof(client_address);
 
