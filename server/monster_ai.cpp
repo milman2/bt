@@ -91,12 +91,22 @@ void Monster::update_environment_info(const std::vector<std::shared_ptr<Player>>
             std::pow(player_pos.z - position_.z, 2)
         );
         
+        // 디버깅: 플레이어와의 거리 로그 (더 자주 출력)
+        static int debug_count = 0;
+        if (debug_count++ % 20 == 0) { // 2초마다 로그 출력
+            std::cout << "Monster " << name_ << " - Player " << player->get_id() 
+                      << " 거리: " << distance << " (탐지범위: " << stats_.detection_range << ")" << std::endl;
+        }
+        
         if (distance <= stats_.detection_range) {
             environment_info_.nearby_players.push_back(player->get_id());
             
             if (environment_info_.nearest_enemy_distance < 0 || distance < environment_info_.nearest_enemy_distance) {
                 environment_info_.nearest_enemy_distance = distance;
                 environment_info_.nearest_enemy_id = player->get_id();
+                
+                std::cout << "Monster " << name_ << " - Player " << player->get_id() 
+                          << " 탐지됨! 거리: " << distance << std::endl;
             }
         }
     }
@@ -121,19 +131,94 @@ void Monster::update_environment_info(const std::vector<std::shared_ptr<Player>>
     environment_info_.has_line_of_sight = true; // TODO: 실제 시야 계산 구현
 }
 
+// 환경 인지 헬퍼 메서드들 구현
+bool Monster::has_enemy_in_range(float range) const {
+    return environment_info_.nearest_enemy_distance >= 0 && 
+           environment_info_.nearest_enemy_distance <= range;
+}
+
+bool Monster::has_enemy_in_attack_range() const {
+    return has_enemy_in_range(stats_.attack_range);
+}
+
+bool Monster::has_enemy_in_detection_range() const {
+    return has_enemy_in_range(stats_.detection_range);
+}
+
+bool Monster::has_enemy_in_chase_range() const {
+    return has_enemy_in_range(chase_range_);
+}
+
+float Monster::get_distance_to_nearest_enemy() const {
+    return environment_info_.nearest_enemy_distance;
+}
+
+uint32_t Monster::get_nearest_enemy_id() const {
+    return environment_info_.nearest_enemy_id;
+}
+
+bool Monster::can_see_target(uint32_t target_id) const {
+    // 간단한 시야 구현: 거리와 시야 확보 여부 확인
+    if (target_id == 0) return false;
+    
+    // 현재 타겟이 가장 가까운 적인지 확인
+    if (target_id == environment_info_.nearest_enemy_id) {
+        return environment_info_.has_line_of_sight && 
+               environment_info_.nearest_enemy_distance <= stats_.detection_range;
+    }
+    
+    return false;
+}
+
+bool Monster::is_target_in_range(uint32_t target_id, float range) const {
+    if (target_id == 0) return false;
+    
+    // 현재 타겟이 가장 가까운 적인지 확인
+    if (target_id == environment_info_.nearest_enemy_id) {
+        return environment_info_.nearest_enemy_distance <= range;
+    }
+    
+    return false;
+}
+
+float Monster::get_distance_to_target(uint32_t target_id) const {
+    if (target_id == 0) return -1.0f;
+    
+    // 현재 타겟이 가장 가까운 적인지 확인
+    if (target_id == environment_info_.nearest_enemy_id) {
+        return environment_info_.nearest_enemy_distance;
+    }
+    
+    return -1.0f;
+}
+
+void Monster::attack_target() {
+    if (!has_target()) return;
+    
+    // TODO: 실제 타겟에게 데미지 주기 (PlayerManager를 통해)
+    std::cout << "Monster " << name_ << " attacks target " << target_id_ 
+              << " for " << damage_ << " damage!" << std::endl;
+    
+    // 공격 상태로 변경
+    set_state(MonsterState::ATTACK);
+}
+
 void Monster::update(float delta_time) {
     static std::map<std::string, int> update_counts;
     update_counts[name_]++;
     
-    if (update_counts[name_] % 100 == 0) { // 10초마다 로그 출력
+    if (update_counts[name_] % 50 == 0) { // 5초마다 로그 출력
         std::cout << "Monster::update 호출됨: " << name_ << " (카운트: " << update_counts[name_] << ")" << std::endl;
     }
     
     // AI 업데이트
     if (ai_) {
         ai_->update(delta_time);
+        if (update_counts[name_] % 50 == 0) {
+            std::cout << "Monster::update - AI 업데이트 완료: " << name_ << std::endl;
+        }
     } else {
-        if (update_counts[name_] % 100 == 0) {
+        if (update_counts[name_] % 50 == 0) {
             std::cout << "Monster::update - AI가 없음: " << name_ << std::endl;
         }
     }
@@ -205,7 +290,7 @@ MonsterStats MonsterFactory::get_default_stats(MonsterType type) {
             stats.defense = 3;
             stats.move_speed = 1.2f;
             stats.attack_range = 1.5f;
-            stats.detection_range = 8.0f;
+            stats.detection_range = 50.0f; // 탐지 범위 증가
             break;
             
         case MonsterType::ORC:
@@ -218,7 +303,7 @@ MonsterStats MonsterFactory::get_default_stats(MonsterType type) {
             stats.defense = 8;
             stats.move_speed = 1.0f;
             stats.attack_range = 2.0f;
-            stats.detection_range = 10.0f;
+            stats.detection_range = 60.0f; // 탐지 범위 증가
             break;
             
         case MonsterType::DRAGON:
@@ -645,7 +730,23 @@ void MonsterManager::update(float delta_time) {
     process_respawn(delta_time);
     
     std::lock_guard<std::mutex> lock(monsters_mutex_);
+    
+    // 모든 몬스터와 플레이어 정보 수집
+    std::vector<std::shared_ptr<Monster>> all_monsters;
+    std::vector<std::shared_ptr<Player>> all_players;
+    
     for (const auto& [id, monster] : monsters_) {
+        all_monsters.push_back(monster);
+    }
+    
+    // PlayerManager에서 플레이어 정보 가져오기
+    if (player_manager_) {
+        all_players = player_manager_->get_all_players();
+    }
+    
+    // 각 몬스터의 환경 정보 업데이트
+    for (const auto& [id, monster] : monsters_) {
+        monster->update_environment_info(all_players, all_monsters);
         monster->update(delta_time);
     }
     
@@ -746,7 +847,7 @@ namespace MonsterBTs {
         // 적 탐지 시퀀스
         auto detection_sequence = std::make_shared<BTSequence>("detection_sequence");
         detection_sequence->add_child(std::make_shared<BTCondition>("enemy_in_range", MonsterConditions::is_enemy_in_detection_range));
-    detection_sequence->add_child(std::make_shared<BTAction>("set_target", MonsterActions::idle));
+        detection_sequence->add_child(std::make_shared<BTAction>("set_target", MonsterActions::set_target));
         
         // 순찰
         auto patrol_action = std::make_shared<BTAction>("patrol", MonsterActions::patrol);
@@ -890,44 +991,143 @@ namespace MonsterActions {
 
 BTNodeStatus attack(BTContext& context) {
     // 공격 로직 구현
-    std::cout << "MonsterActions::attack 호출됨" << std::endl;
+    auto monster_ai = context.get_monster_ai();
+    if (!monster_ai) return BTNodeStatus::FAILURE;
+    
+    auto monster = monster_ai->get_monster();
+    if (!monster || !monster->has_target()) return BTNodeStatus::FAILURE;
+    
+    // 공격 실행
+    monster->attack_target();
+    std::cout << "MonsterActions::attack - " << monster->get_name() 
+              << "이(가) 타겟 " << monster->get_target_id() << "을(를) 공격했습니다." << std::endl;
+    
     return BTNodeStatus::SUCCESS;
 }
 
 BTNodeStatus move_to_target(BTContext& context) {
     // 타겟으로 이동 로직 구현
-    std::cout << "MonsterActions::move_to_target 호출됨" << std::endl;
-    return BTNodeStatus::SUCCESS;
+    auto monster_ai = context.get_monster_ai();
+    if (!monster_ai) return BTNodeStatus::FAILURE;
+    
+    auto monster = monster_ai->get_monster();
+    if (!monster || !monster->has_target()) return BTNodeStatus::FAILURE;
+    
+    // 타겟 방향으로 이동 (간단한 구현)
+    uint32_t target_id = monster->get_nearest_enemy_id();
+    if (target_id != 0) {
+        // TODO: 실제 타겟 위치로 이동 구현
+        std::cout << "MonsterActions::move_to_target - " << monster->get_name() 
+                  << "이(가) 타겟 " << target_id << "을(를) 향해 이동합니다." << std::endl;
+        return BTNodeStatus::SUCCESS;
+    }
+    
+    return BTNodeStatus::FAILURE;
 }
 
 BTNodeStatus patrol(BTContext& context) {
     // 순찰 로직 구현
-    std::cout << "MonsterActions::patrol 호출됨" << std::endl;
-    return BTNodeStatus::SUCCESS;
+    auto monster_ai = context.get_monster_ai();
+    if (!monster_ai) return BTNodeStatus::FAILURE;
+    
+    auto monster = monster_ai->get_monster();
+    if (!monster) return BTNodeStatus::FAILURE;
+    
+    if (monster->has_patrol_points()) {
+        MonsterPosition next_point = monster->get_next_patrol_point();
+        monster->move_to(next_point.x, next_point.y, next_point.z, next_point.rotation);
+        std::cout << "MonsterActions::patrol - " << monster->get_name() 
+                  << "이(가) 순찰 중입니다." << std::endl;
+        return BTNodeStatus::SUCCESS;
+    }
+    
+    return BTNodeStatus::FAILURE;
 }
 
 BTNodeStatus idle(BTContext& context) {
     // 대기 로직 구현
-    std::cout << "MonsterActions::idle 호출됨" << std::endl;
+    auto monster_ai = context.get_monster_ai();
+    if (!monster_ai) return BTNodeStatus::SUCCESS;
+    
+    auto monster = monster_ai->get_monster();
+    if (!monster) return BTNodeStatus::SUCCESS;
+    
+    // 대기 상태 (아무것도 하지 않음)
+    std::cout << "MonsterActions::idle - " << monster->get_name() 
+              << "이(가) 대기 중입니다." << std::endl;
+    
     return BTNodeStatus::SUCCESS;
 }
 
 BTNodeStatus flee(BTContext& context) {
     // 도망 로직 구현
-    std::cout << "MonsterActions::flee 호출됨" << std::endl;
+    auto monster_ai = context.get_monster_ai();
+    if (!monster_ai) return BTNodeStatus::FAILURE;
+    
+    auto monster = monster_ai->get_monster();
+    if (!monster) return BTNodeStatus::FAILURE;
+    
+    // 타겟과 반대 방향으로 이동
+    std::cout << "MonsterActions::flee - " << monster->get_name() 
+              << "이(가) 도망치고 있습니다." << std::endl;
+    
     return BTNodeStatus::SUCCESS;
 }
 
 BTNodeStatus die(BTContext& context) {
     // 사망 로직 구현
-    std::cout << "MonsterActions::die 호출됨" << std::endl;
+    auto monster_ai = context.get_monster_ai();
+    if (!monster_ai) return BTNodeStatus::SUCCESS;
+    
+    auto monster = monster_ai->get_monster();
+    if (!monster) return BTNodeStatus::SUCCESS;
+    
+    // 사망 처리
+    monster->set_state(MonsterState::DEAD);
+    std::cout << "MonsterActions::die - " << monster->get_name() 
+              << "이(가) 사망했습니다." << std::endl;
+    
     return BTNodeStatus::SUCCESS;
 }
 
 BTNodeStatus return_to_patrol(BTContext& context) {
     // 순찰 복귀 로직 구현
-    std::cout << "MonsterActions::return_to_patrol 호출됨" << std::endl;
+    auto monster_ai = context.get_monster_ai();
+    if (!monster_ai) return BTNodeStatus::FAILURE;
+    
+    auto monster = monster_ai->get_monster();
+    if (!monster) return BTNodeStatus::FAILURE;
+    
+    // 타겟 초기화하고 순찰 상태로 복귀
+    monster->clear_target();
+    monster->set_state(MonsterState::PATROL);
+    monster->reset_patrol_index();
+    
+    std::cout << "MonsterActions::return_to_patrol - " << monster->get_name() 
+              << "이(가) 순찰로 복귀했습니다." << std::endl;
+    
     return BTNodeStatus::SUCCESS;
+}
+
+BTNodeStatus set_target(BTContext& context) {
+    // 타겟 설정 로직 구현
+    auto monster_ai = context.get_monster_ai();
+    if (!monster_ai) return BTNodeStatus::FAILURE;
+    
+    auto monster = monster_ai->get_monster();
+    if (!monster) return BTNodeStatus::FAILURE;
+    
+    // 가장 가까운 적을 타겟으로 설정
+    uint32_t nearest_enemy_id = monster->get_nearest_enemy_id();
+    if (nearest_enemy_id != 0) {
+        monster->set_target_id(nearest_enemy_id);
+        monster->set_state(MonsterState::CHASE);
+        std::cout << "MonsterActions::set_target - " << monster->get_name() 
+                  << "이(가) 타겟 " << nearest_enemy_id << "을(를) 설정했습니다." << std::endl;
+        return BTNodeStatus::SUCCESS;
+    }
+    
+    return BTNodeStatus::FAILURE;
 }
 
 } // namespace MonsterActions
@@ -937,127 +1137,294 @@ namespace MonsterConditions {
 
 bool has_target(BTContext& context) {
     // 타겟 존재 확인
-    return true; // 임시로 항상 true 반환
+    auto monster_ai = context.get_monster_ai();
+    if (!monster_ai) return false;
+    
+    auto monster = monster_ai->get_monster();
+    if (!monster) return false;
+    
+    return monster->has_target();
 }
 
 bool is_target_in_range(BTContext& context) {
     // 타겟이 범위 내에 있는지 확인
-    return true; // 임시로 항상 true 반환
+    auto monster_ai = context.get_monster_ai();
+    if (!monster_ai) return false;
+    
+    auto monster = monster_ai->get_monster();
+    if (!monster || !monster->has_target()) return false;
+    
+    uint32_t target_id = monster->get_target_id();
+    return monster->is_target_in_range(target_id, monster->get_stats().attack_range);
 }
 
 bool is_target_visible(BTContext& context) {
     // 타겟이 보이는지 확인
-    return true; // 임시로 항상 true 반환
+    auto monster_ai = context.get_monster_ai();
+    if (!monster_ai) return false;
+    
+    auto monster = monster_ai->get_monster();
+    if (!monster || !monster->has_target()) return false;
+    
+    uint32_t target_id = monster->get_target_id();
+    return monster->can_see_target(target_id);
 }
 
 bool is_health_low(BTContext& context) {
-    // 체력이 낮은지 확인
-    return false; // 임시로 항상 false 반환
+    // 체력이 낮은지 확인 (30% 이하)
+    auto monster_ai = context.get_monster_ai();
+    if (!monster_ai) return false;
+    
+    auto monster = monster_ai->get_monster();
+    if (!monster) return false;
+    
+    const auto& stats = monster->get_stats();
+    return stats.health <= (stats.max_health * 0.3f);
 }
 
 bool is_health_critical(BTContext& context) {
-    // 체력이 위험한지 확인
-    return false; // 임시로 항상 false 반환
+    // 체력이 위험한지 확인 (10% 이하)
+    auto monster_ai = context.get_monster_ai();
+    if (!monster_ai) return false;
+    
+    auto monster = monster_ai->get_monster();
+    if (!monster) return false;
+    
+    const auto& stats = monster->get_stats();
+    return stats.health <= (stats.max_health * 0.1f);
 }
 
 bool is_mana_low(BTContext& context) {
-    // 마나가 낮은지 확인
-    return false; // 임시로 항상 false 반환
+    // 마나가 낮은지 확인 (20% 이하)
+    auto monster_ai = context.get_monster_ai();
+    if (!monster_ai) return false;
+    
+    auto monster = monster_ai->get_monster();
+    if (!monster) return false;
+    
+    const auto& stats = monster->get_stats();
+    return stats.mana <= (stats.max_mana * 0.2f);
 }
 
 bool is_in_combat(BTContext& context) {
-    // 전투 중인지 확인
-    return false; // 임시로 항상 false 반환
+    // 전투 중인지 확인 (타겟이 있고 공격 범위 내에 있음)
+    auto monster_ai = context.get_monster_ai();
+    if (!monster_ai) return false;
+    
+    auto monster = monster_ai->get_monster();
+    if (!monster) return false;
+    
+    return monster->has_target() && monster->has_enemy_in_attack_range();
 }
 
 bool is_dead(BTContext& context) {
     // 사망했는지 확인
-    return false; // 임시로 항상 false 반환
+    auto monster_ai = context.get_monster_ai();
+    if (!monster_ai) return false;
+    
+    auto monster = monster_ai->get_monster();
+    if (!monster) return false;
+    
+    return !monster->is_alive();
 }
 
 bool can_see_enemy(BTContext& context) {
     // 적을 볼 수 있는지 확인
-    return true; // 임시로 항상 true 반환
+    auto monster_ai = context.get_monster_ai();
+    if (!monster_ai) return false;
+    
+    auto monster = monster_ai->get_monster();
+    if (!monster) return false;
+    
+    // 가장 가까운 적이 탐지 범위 내에 있고 시야가 확보되어 있는지 확인
+    return monster->has_enemy_in_detection_range() && 
+           monster->get_environment_info().has_line_of_sight;
 }
 
 bool is_enemy_in_detection_range(BTContext& context) {
     // 적이 탐지 범위 내에 있는지 확인
-    return true; // 임시로 항상 true 반환
+    auto monster_ai = context.get_monster_ai();
+    if (!monster_ai) return false;
+    
+    auto monster = monster_ai->get_monster();
+    if (!monster) return false;
+    
+    return monster->has_enemy_in_detection_range();
 }
 
 bool is_enemy_in_attack_range(BTContext& context) {
     // 적이 공격 범위 내에 있는지 확인
-    return true; // 임시로 항상 true 반환
+    auto monster_ai = context.get_monster_ai();
+    if (!monster_ai) return false;
+    
+    auto monster = monster_ai->get_monster();
+    if (!monster) return false;
+    
+    return monster->has_enemy_in_attack_range();
 }
 
 bool is_enemy_in_chase_range(BTContext& context) {
     // 적이 추적 범위 내에 있는지 확인
-    return true; // 임시로 항상 true 반환
+    auto monster_ai = context.get_monster_ai();
+    if (!monster_ai) return false;
+    
+    auto monster = monster_ai->get_monster();
+    if (!monster) return false;
+    
+    return monster->has_enemy_in_chase_range();
 }
 
 bool has_line_of_sight(BTContext& context) {
     // 시야가 확보되어 있는지 확인
-    return true; // 임시로 항상 true 반환
+    auto monster_ai = context.get_monster_ai();
+    if (!monster_ai) return false;
+    
+    auto monster = monster_ai->get_monster();
+    if (!monster) return false;
+    
+    return monster->get_environment_info().has_line_of_sight;
 }
 
 bool is_path_clear(BTContext& context) {
-    // 경로가 막혀있지 않은지 확인
-    return true; // 임시로 항상 true 반환
+    // 경로가 막혀있지 않은지 확인 (간단한 구현)
+    auto monster_ai = context.get_monster_ai();
+    if (!monster_ai) return true; // 기본적으로 경로가 막혀있지 않음
+    
+    auto monster = monster_ai->get_monster();
+    if (!monster) return true;
+    
+    // TODO: 실제 경로 탐색 구현
+    return true;
 }
 
 bool has_enemy_target(BTContext& context) {
     // 적 타겟이 있는지 확인
-    return true; // 임시로 항상 true 반환
+    auto monster_ai = context.get_monster_ai();
+    if (!monster_ai) return false;
+    
+    auto monster = monster_ai->get_monster();
+    if (!monster) return false;
+    
+    return monster->has_target() && monster->get_nearest_enemy_id() != 0;
 }
 
 bool is_target_alive(BTContext& context) {
     // 타겟이 살아있는지 확인
-    return true; // 임시로 항상 true 반환
+    auto monster_ai = context.get_monster_ai();
+    if (!monster_ai) return false;
+    
+    auto monster = monster_ai->get_monster();
+    if (!monster || !monster->has_target()) return false;
+    
+    // TODO: 실제 타겟 생존 여부 확인 (PlayerManager를 통해)
+    return true; // 임시로 항상 살아있다고 가정
 }
 
 bool is_target_in_attack_range(BTContext& context) {
     // 타겟이 공격 범위 내에 있는지 확인
-    return true; // 임시로 항상 true 반환
+    auto monster_ai = context.get_monster_ai();
+    if (!monster_ai) return false;
+    
+    auto monster = monster_ai->get_monster();
+    if (!monster || !monster->has_target()) return false;
+    
+    uint32_t target_id = monster->get_target_id();
+    return monster->is_target_in_range(target_id, monster->get_stats().attack_range);
 }
 
 bool is_target_in_detection_range(BTContext& context) {
     // 타겟이 탐지 범위 내에 있는지 확인
-    return true; // 임시로 항상 true 반환
+    auto monster_ai = context.get_monster_ai();
+    if (!monster_ai) return false;
+    
+    auto monster = monster_ai->get_monster();
+    if (!monster || !monster->has_target()) return false;
+    
+    uint32_t target_id = monster->get_target_id();
+    return monster->is_target_in_range(target_id, monster->get_stats().detection_range);
 }
 
 bool is_target_in_chase_range(BTContext& context) {
     // 타겟이 추적 범위 내에 있는지 확인
-    return true; // 임시로 항상 true 반환
+    auto monster_ai = context.get_monster_ai();
+    if (!monster_ai) return false;
+    
+    auto monster = monster_ai->get_monster();
+    if (!monster || !monster->has_target()) return false;
+    
+    uint32_t target_id = monster->get_target_id();
+    return monster->is_target_in_range(target_id, monster->get_chase_range());
 }
 
 bool should_return_to_patrol(BTContext& context) {
-    // 순찰로 돌아가야 하는지 확인
-    return false; // 임시로 항상 false 반환
+    // 순찰로 돌아가야 하는지 확인 (타겟이 없거나 너무 멀리 떨어져 있을 때)
+    auto monster_ai = context.get_monster_ai();
+    if (!monster_ai) return true;
+    
+    auto monster = monster_ai->get_monster();
+    if (!monster) return true;
+    
+    // 타겟이 없거나 추적 범위를 벗어났을 때
+    return !monster->has_target() || !monster->has_enemy_in_chase_range();
 }
 
 bool can_cast_spell(BTContext& context) {
-    // 스킬을 사용할 수 있는지 확인
-    return true; // 임시로 항상 true 반환
+    // 스킬을 사용할 수 있는지 확인 (마나가 충분하고 타겟이 있을 때)
+    auto monster_ai = context.get_monster_ai();
+    if (!monster_ai) return false;
+    
+    auto monster = monster_ai->get_monster();
+    if (!monster) return false;
+    
+    const auto& stats = monster->get_stats();
+    return stats.mana >= 10 && monster->has_target(); // 최소 마나 10 필요
 }
 
 bool can_summon_minion(BTContext& context) {
-    // 미니언을 소환할 수 있는지 확인
-    return false; // 임시로 항상 false 반환
+    // 미니언을 소환할 수 있는지 확인 (마나가 충분하고 특정 조건 만족)
+    auto monster_ai = context.get_monster_ai();
+    if (!monster_ai) return false;
+    
+    auto monster = monster_ai->get_monster();
+    if (!monster) return false;
+    
+    const auto& stats = monster->get_stats();
+    return stats.mana >= 50 && monster->get_type() == MonsterType::DRAGON; // 드래곤만 소환 가능
 }
 
 bool has_usable_item(BTContext& context) {
     // 사용 가능한 아이템이 있는지 확인
-    return false; // 임시로 항상 false 반환
+    auto monster_ai = context.get_monster_ai();
+    if (!monster_ai) return false;
+    
+    // TODO: 실제 아이템 시스템 구현
+    return false; // 현재는 아이템 시스템이 없음
 }
 
 bool is_target_stronger(BTContext& context) {
     // 타겟이 더 강한지 확인
-    return false; // 임시로 항상 false 반환
+    auto monster_ai = context.get_monster_ai();
+    if (!monster_ai) return false;
+    
+    auto monster = monster_ai->get_monster();
+    if (!monster || !monster->has_target()) return false;
+    
+    // TODO: 실제 타겟 강도 비교 구현
+    return false; // 임시로 항상 약하다고 가정
 }
 
 bool is_night_time(BTContext& context) {
     // 밤 시간인지 확인
-    return false; // 임시로 항상 false 반환
+    auto monster_ai = context.get_monster_ai();
+    if (!monster_ai) return false;
+    
+    // TODO: 실제 시간 시스템 구현
+    auto now = std::chrono::system_clock::now();
+    auto time_t = std::chrono::system_clock::to_time_t(now);
+    auto tm = *std::localtime(&time_t);
+    
+    // 18시부터 6시까지를 밤으로 간주
+    return tm.tm_hour >= 18 || tm.tm_hour < 6;
 }
 
 } // namespace MonsterConditions

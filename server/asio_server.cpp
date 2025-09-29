@@ -247,7 +247,7 @@ void AsioServer::add_client(boost::shared_ptr<AsioClient> client) {
         std::string player_name = "Player_" + info.ip_address.substr(info.ip_address.find_last_of('.') + 1);
         
         // 기본 위치 설정 (스폰 지점)
-        MonsterPosition spawn_position = {100.0f, 0.0f, 100.0f, 0.0f};
+        MonsterPosition spawn_position = {0.0f, 0.0f, 0.0f, 0.0f};
         
         // 플레이어 생성
         auto player = player_manager_->create_player_for_client(client_id, player_name, spawn_position);

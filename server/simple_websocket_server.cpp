@@ -93,7 +93,7 @@ bool SimpleWebSocketServer::start() {
         
         // 소켓 옵션 설정
         int opt = 1;
-        if (setsockopt(server_socket_, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))) {
+        if (setsockopt(server_socket_, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt))) {
             std::cerr << "소켓 옵션 설정 실패" << std::endl;
             close(server_socket_);
             return false;

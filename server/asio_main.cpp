@@ -121,23 +121,23 @@ int main(int argc, char* argv[]) {
             LOG_WARNING("몬스터 스폰 설정 파일 로드 실패: " + config_file);
             LOG_INFO("기본 설정으로 폴백합니다.");
             
-            // 폴백: 기본 설정 추가
+            // 폴백: 기본 설정 추가 (플레이어 근처에 스폰)
             MonsterSpawnConfig goblin_spawn;
             goblin_spawn.type = MonsterType::GOBLIN;
             goblin_spawn.name = "goblin_default";
-            goblin_spawn.position = {100.0f, 0.0f, 100.0f, 0.0f};
+            goblin_spawn.position = {5.0f, 0.0f, 5.0f, 0.0f}; // 플레이어 매우 근처
             goblin_spawn.respawn_time = 30.0f;
             goblin_spawn.max_count = 3;
-            goblin_spawn.spawn_radius = 10.0f;
+            goblin_spawn.spawn_radius = 3.0f;
             monster_manager->add_spawn_config(goblin_spawn);
             
             MonsterSpawnConfig orc_spawn;
             orc_spawn.type = MonsterType::ORC;
             orc_spawn.name = "orc_default";
-            orc_spawn.position = {200.0f, 0.0f, 200.0f, 0.0f};
+            orc_spawn.position = {10.0f, 0.0f, 10.0f, 0.0f}; // 플레이어 매우 근처
             orc_spawn.respawn_time = 60.0f;
             orc_spawn.max_count = 2;
-            orc_spawn.spawn_radius = 15.0f;
+            orc_spawn.spawn_radius = 5.0f;
             monster_manager->add_spawn_config(orc_spawn);
         }
         

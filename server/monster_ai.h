@@ -135,7 +135,6 @@ public:
     bool is_in_attack_range(uint32_t target_id) const;
     bool is_in_detection_range(uint32_t target_id) const;
     bool is_in_chase_range(uint32_t target_id) const;
-    float get_distance_to_target(uint32_t target_id) const;
     
     // 리스폰 관련
     void set_respawn_time(float time) { respawn_time_ = time; }
@@ -148,6 +147,18 @@ public:
     EnvironmentInfo get_environment_info() const { return environment_info_; }
     void update_environment_info(const std::vector<std::shared_ptr<Player>>& players, 
                                 const std::vector<std::shared_ptr<Monster>>& monsters);
+    
+    // 환경 인지 헬퍼 메서드들
+    bool has_enemy_in_range(float range) const;
+    bool has_enemy_in_attack_range() const;
+    bool has_enemy_in_detection_range() const;
+    bool has_enemy_in_chase_range() const;
+    float get_distance_to_nearest_enemy() const;
+    uint32_t get_nearest_enemy_id() const;
+    bool can_see_target(uint32_t target_id) const;
+    bool is_target_in_range(uint32_t target_id, float range) const;
+    float get_distance_to_target(uint32_t target_id) const;
+    float get_chase_range() const { return chase_range_; }
     
     // 순찰 관련
     void set_patrol_points(const std::vector<MonsterPosition>& points);
@@ -294,6 +305,7 @@ namespace MonsterActions {
     BTNodeStatus chase_target(BTContext& context);
     BTNodeStatus detect_enemy(BTContext& context);
     BTNodeStatus return_to_patrol(BTContext& context);
+    BTNodeStatus set_target(BTContext& context);
     
     // 특수 액션들
     BTNodeStatus cast_spell(BTContext& context);
