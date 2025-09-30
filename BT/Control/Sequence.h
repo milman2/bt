@@ -22,10 +22,17 @@ namespace bt
             // 하나라도 실패하면 실패 반환
             for (auto& child : children_)
             {
+                if (!child)
+                    continue;
+                    
                 NodeStatus status = child->Execute(context);
-                if (status != NodeStatus::SUCCESS)
+                if (status == NodeStatus::FAILURE)
                 {
-                    return status;
+                    return NodeStatus::FAILURE;
+                }
+                else if (status == NodeStatus::RUNNING)
+                {
+                    return NodeStatus::RUNNING;
                 }
             }
             return NodeStatus::SUCCESS;

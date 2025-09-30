@@ -27,6 +27,10 @@ namespace bt
                     {
                         return NodeStatus::SUCCESS;
                     }
+                    else if (status == NodeStatus::RUNNING)
+                    {
+                        return NodeStatus::RUNNING;
+                    }
                 }
             }
             return NodeStatus::FAILURE;

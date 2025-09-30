@@ -4,6 +4,7 @@ file(GLOB_RECURSE CLIENT_SOURCES "*.cpp")
 # 헤더 파일 디렉토리 설정
 include_directories(${CMAKE_SOURCE_DIR}/shared)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_SOURCE_DIR}/BT)
 
 # 클라이언트 실행 파일 생성
 add_executable(AsioTestClient ${CLIENT_SOURCES})

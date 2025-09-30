@@ -292,9 +292,16 @@ namespace bt
             return spawn_position_;
         }
 
-        MonsterPosition point = patrol_points_[current_patrol_index_];
-        current_patrol_index_ = (current_patrol_index_ + 1) % patrol_points_.size();
-        return point;
+        // 현재 순찰점을 반환 (인덱스는 변경하지 않음)
+        return patrol_points_[current_patrol_index_];
+    }
+
+    void Monster::AdvanceToNextPatrolPoint()
+    {
+        if (!patrol_points_.empty())
+        {
+            current_patrol_index_ = (current_patrol_index_ + 1) % patrol_points_.size();
+        }
     }
 
 } // namespace bt

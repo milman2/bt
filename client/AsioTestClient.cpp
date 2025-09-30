@@ -3,23 +3,57 @@
 #include <iostream>
 #include <sstream>
 #include <thread>
+#include <cmath>
+#include <random>
 
 #include "AsioTestClient.h"
 
 namespace bt
 {
 
-    AsioTestClient::AsioTestClient(const AsioClientConfig& config)
-        : config_(config), connected_(false), verbose_(false), tests_passed_(0), tests_failed_(0)
+    AsioTestClient::AsioTestClient(const PlayerAIConfig& config)
+        : config_(config), connected_(false), verbose_(false), ai_running_(false),
+          bt_name_("player_bt"), position_(config.spawn_x, 0, config.spawn_z), 
+          spawn_position_(config.spawn_x, 0, config.spawn_z), current_patrol_index_(0), 
+          player_id_(0), target_id_(0), health_(config.health), 
+          max_health_(config.health), last_attack_time_(0.0f), attack_cooldown_(2.0f),
+          last_monster_update_(0.0f)
     {
         socket_ = boost::make_shared<boost::asio::ip::tcp::socket>(io_context_);
-        LogMessage("AsioTestClient 생성됨");
+        
+        // 순찰점 생성 (스폰 위치 주변)
+        CreatePatrolPoints();
+        
+        // Behavior Tree 생성
+        behavior_tree_ = PlayerBTs::CreatePlayerBT();
+        context_.SetAI(std::shared_ptr<AsioTestClient>(this, [](AsioTestClient*){}));
+        
+        LogMessage("AI 플레이어 클라이언트 생성됨: " + config_.player_name);
     }
 
     AsioTestClient::~AsioTestClient()
     {
+        StopAI();
         Disconnect();
-        LogMessage("AsioTestClient 소멸됨");
+        LogMessage("AI 플레이어 클라이언트 소멸됨");
+    }
+
+    void AsioTestClient::CreatePatrolPoints()
+    {
+        patrol_points_.clear();
+        
+        // 스폰 위치를 중심으로 4방향 순찰점 생성
+        float radius = config_.patrol_radius;
+        
+        patrol_points_.push_back({spawn_position_.x, spawn_position_.y, spawn_position_.z});
+        patrol_points_.push_back({spawn_position_.x + radius, spawn_position_.y, spawn_position_.z});
+        patrol_points_.push_back({spawn_position_.x, spawn_position_.y, spawn_position_.z + radius});
+        patrol_points_.push_back({spawn_position_.x - radius, spawn_position_.y, spawn_position_.z});
+        patrol_points_.push_back({spawn_position_.x, spawn_position_.y, spawn_position_.z - radius});
+        
+        current_patrol_index_ = 0;
+        
+        LogMessage("순찰점 " + std::to_string(patrol_points_.size()) + "개 생성 완료");
     }
 
     bool AsioTestClient::Connect()
@@ -41,61 +75,48 @@ namespace bt
         connected_.store(true);
         LogMessage("서버 연결 성공");
 
-        // 연결 요청 패킷 전송
-        Packet connect_packet = CreateConnectRequest();
-        if (!SendPacket(connect_packet))
+        // 게임 참여
+        if (!JoinGame())
         {
-            LogMessage("연결 요청 패킷 전송 실패", true);
+            LogMessage("게임 참여 실패", true);
             Disconnect();
             return false;
         }
 
-        // 연결 응답 대기
-        Packet response;
-        if (!ReceivePacket(response))
-        {
-            LogMessage("연결 응답 수신 실패", true);
-            Disconnect();
-            return false;
-        }
-
-        if (!ParsePacketResponse(response))
-        {
-            LogMessage("연결 응답 파싱 실패", true);
-            Disconnect();
-            return false;
-        }
-
-        LogMessage("연결 완료");
         return true;
     }
 
     void AsioTestClient::Disconnect()
     {
         if (!connected_.load())
-        {
             return;
+
+        StopAI();
+        
+        if (socket_ && socket_->is_open())
+        {
+            try
+            {
+                Packet disconnect_packet = CreateDisconnectPacket();
+                SendPacket(disconnect_packet);
+                socket_->close();
+            }
+            catch (const std::exception& e)
+            {
+                LogMessage("연결 종료 중 오류: " + std::string(e.what()), true);
+            }
         }
 
-        LogMessage("서버 연결 해제 중");
-
-        // 연결 해제 패킷 전송
-        Packet disconnect_packet = CreateDisconnectPacket();
-        SendPacket(disconnect_packet);
-
-        CloseConnection();
         connected_.store(false);
-
-        LogMessage("서버 연결 해제 완료");
+        LogMessage("서버 연결 종료");
     }
 
     bool AsioTestClient::CreateConnection()
     {
         try
         {
-            boost::asio::ip::tcp::resolver               resolver(io_context_);
-            boost::asio::ip::tcp::resolver::results_type endpoints =
-                resolver.resolve(config_.server_host, std::to_string(config_.server_port));
+            boost::asio::ip::tcp::resolver resolver(io_context_);
+            auto endpoints = resolver.resolve(config_.server_host, std::to_string(config_.server_port));
 
             boost::asio::connect(*socket_, endpoints);
             return true;
@@ -122,36 +143,390 @@ namespace bt
         }
     }
 
-    bool AsioTestClient::SendPacket(const Packet& packet)
+    bool AsioTestClient::JoinGame()
     {
-        if (!connected_.load())
+        Packet join_packet = CreatePlayerJoinPacket(config_.player_name);
+        if (!SendPacket(join_packet))
         {
-            LogMessage("연결되지 않은 상태에서 패킷 전송 시도", true);
+            LogMessage("게임 참여 패킷 전송 실패", true);
             return false;
         }
 
-        try
+        // 응답 대기
+        Packet response;
+        if (ReceivePacket(response))
         {
-            // 패킷 크기 + 타입 + 데이터 전송
-            uint32_t             total_size = sizeof(uint32_t) + sizeof(uint16_t) + packet.data.size();
-            std::vector<uint8_t> send_buffer(total_size);
+            if (ParsePacketResponse(response))
+            {
+                LogMessage("게임 참여 성공: " + config_.player_name);
+                return true;
+            }
+        }
 
-            // 패킷 크기
-            *reinterpret_cast<uint32_t*>(send_buffer.data()) = total_size;
-            // 패킷 타입
-            *reinterpret_cast<uint16_t*>(send_buffer.data() + sizeof(uint32_t)) = packet.type;
-            // 패킷 데이터
-            std::copy(
-                packet.data.begin(), packet.data.end(), send_buffer.begin() + sizeof(uint32_t) + sizeof(uint16_t));
+        LogMessage("게임 참여 실패", true);
+            return false;
+    }
 
-            boost::asio::write(*socket_, boost::asio::buffer(send_buffer));
+    bool AsioTestClient::MoveTo(float x, float y, float z)
+    {
+        if (!connected_.load())
+            return false;
 
+        position_.x = x;
+        position_.y = y;
+        position_.z = z;
+
+        Packet move_packet = CreatePlayerMovePacket(x, y, z);
+        if (SendPacket(move_packet))
+        {
             if (verbose_)
             {
-                LogMessage("패킷 전송: 타입=" + std::to_string(packet.type) + ", 크기=" + std::to_string(total_size) +
-                            "바이트");
+                LogMessage("이동: (" + std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z) + ")");
             }
+            return true;
+        }
+            return false;
+        }
 
+    bool AsioTestClient::AttackTarget(uint32_t target_id)
+    {
+        if (!connected_.load() || !IsAlive())
+            return false;
+
+        float current_time = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::steady_clock::now().time_since_epoch()).count() / 1000.0f;
+
+        if (current_time - last_attack_time_ < attack_cooldown_)
+            return false;
+
+        Packet attack_packet = CreatePlayerAttackPacket(target_id);
+        if (SendPacket(attack_packet))
+        {
+            last_attack_time_ = current_time;
+            if (verbose_)
+            {
+                LogMessage("공격: 타겟 ID " + std::to_string(target_id));
+            }
+            return true;
+        }
+        return false;
+    }
+
+    bool AsioTestClient::Respawn()
+        {
+        if (!connected_.load())
+            return false;
+
+        // 부활 위치로 이동
+        position_ = spawn_position_;
+        health_ = max_health_;
+        target_id_ = 0;
+
+        if (MoveTo(spawn_position_.x, spawn_position_.y, spawn_position_.z))
+        {
+            LogMessage("부활 완료: " + config_.player_name);
+            return true;
+        }
+        return false;
+    }
+
+    void AsioTestClient::StartAI()
+    {
+        if (ai_running_.load())
+            return;
+
+        ai_running_.store(true);
+        LogMessage("AI 시작: " + config_.player_name);
+    }
+
+    void AsioTestClient::StopAI()
+    {
+        if (!ai_running_.load())
+            return;
+
+        ai_running_.store(false);
+        LogMessage("AI 중지: " + config_.player_name);
+    }
+
+    void AsioTestClient::UpdateAI(float delta_time)
+    {
+        if (!ai_running_.load() || !connected_.load())
+            return;
+
+        // 패킷 수신 처리
+        Packet packet;
+        while (ReceivePacket(packet))
+        {
+            ParsePacketResponse(packet);
+        }
+
+        // Behavior Tree 실행
+        if (behavior_tree_)
+        {
+            behavior_tree_->Execute(context_);
+        }
+    }
+
+    // IExecutor 인터페이스 구현
+    void AsioTestClient::Update(float delta_time)
+    {
+        UpdateAI(delta_time);
+    }
+
+    void AsioTestClient::SetBehaviorTree(std::shared_ptr<Tree> tree)
+    {
+        behavior_tree_ = tree;
+    }
+
+    std::shared_ptr<Tree> AsioTestClient::GetBehaviorTree() const
+    {
+        return behavior_tree_;
+    }
+
+    Context& AsioTestClient::GetContext()
+    {
+        return context_;
+    }
+
+    const Context& AsioTestClient::GetContext() const
+    {
+        return context_;
+    }
+
+    const std::string& AsioTestClient::GetName() const
+    {
+        return config_.player_name;
+    }
+
+    const std::string& AsioTestClient::GetBTName() const
+    {
+        return bt_name_;
+    }
+
+    bool AsioTestClient::IsActive() const
+    {
+        return ai_running_.load();
+    }
+
+    void AsioTestClient::SetActive(bool active)
+    {
+        if (active)
+        {
+            StartAI();
+        }
+        else
+        {
+            StopAI();
+        }
+    }
+
+    void AsioTestClient::UpdatePatrol(float delta_time)
+    {
+        if (HasTarget() || !IsAlive())
+            return;
+
+        if (patrol_points_.empty())
+            return;
+
+        auto target_point = patrol_points_[current_patrol_index_];
+        
+        // 목표 지점까지의 거리 계산
+        float dx = target_point.x - position_.x;
+        float dz = target_point.z - position_.z;
+        float distance = std::sqrt(dx * dx + dz * dz);
+
+        const float arrival_threshold = 5.0f;
+
+        if (distance <= arrival_threshold)
+        {
+            // 다음 순찰점으로 이동
+            current_patrol_index_ = (current_patrol_index_ + 1) % patrol_points_.size();
+            if (verbose_)
+            {
+                LogMessage("순찰점 도착: " + std::to_string(current_patrol_index_));
+            }
+        }
+        else
+        {
+            // 목표 지점으로 이동
+            float step_size = config_.move_speed * delta_time;
+            float normalized_dx = dx / distance;
+            float normalized_dz = dz / distance;
+            
+            float new_x = position_.x + normalized_dx * step_size;
+            float new_z = position_.z + normalized_dz * step_size;
+            
+            MoveTo(new_x, position_.y, new_z);
+        }
+    }
+
+    void AsioTestClient::UpdateCombat(float delta_time)
+    {
+        if (!IsAlive())
+        {
+            // 사망 시 부활
+            Respawn();
+            return;
+        }
+
+        // 가장 가까운 몬스터 찾기
+        FindNearestMonster();
+
+        if (HasTarget())
+        {
+            float distance = GetDistanceToTarget();
+            
+            if (distance <= config_.attack_range)
+            {
+                // 공격 범위 내 - 공격
+                AttackTarget(target_id_);
+            }
+            else if (distance <= config_.detection_range)
+            {
+                // 탐지 범위 내 - 추적
+                auto target_pos = monsters_[target_id_];
+                float dx = target_pos.x - position_.x;
+                float dz = target_pos.z - position_.z;
+                float dist = std::sqrt(dx * dx + dz * dz);
+                
+                if (dist > 0.1f)
+                {
+                    float step_size = config_.move_speed * delta_time;
+                    float normalized_dx = dx / dist;
+                    float normalized_dz = dz / dist;
+                    
+                    float new_x = position_.x + normalized_dx * step_size;
+                    float new_z = position_.z + normalized_dz * step_size;
+                    
+                    MoveTo(new_x, position_.y, new_z);
+                }
+            }
+            else
+            {
+                // 탐지 범위 밖 - 타겟 해제
+                target_id_ = 0;
+            }
+        }
+    }
+
+    void AsioTestClient::FindNearestMonster()
+    {
+        if (monsters_.empty())
+            return;
+
+        uint32_t nearest_id = 0;
+        float nearest_distance = std::numeric_limits<float>::max();
+
+        for (const auto& [id, pos] : monsters_)
+        {
+            float dx = pos.x - position_.x;
+            float dz = pos.z - position_.z;
+            float distance = std::sqrt(dx * dx + dz * dz);
+
+            if (distance < nearest_distance && distance <= config_.detection_range)
+            {
+                nearest_distance = distance;
+                nearest_id = id;
+            }
+        }
+
+        if (nearest_id != 0)
+        {
+            target_id_ = nearest_id;
+        }
+    }
+
+    float AsioTestClient::GetDistanceToTarget() const
+    {
+        if (!HasTarget())
+            return std::numeric_limits<float>::max();
+
+        auto it = monsters_.find(target_id_);
+        if (it == monsters_.end())
+            return std::numeric_limits<float>::max();
+
+        float dx = it->second.x - position_.x;
+        float dz = it->second.z - position_.z;
+        return std::sqrt(dx * dx + dz * dz);
+    }
+
+    uint32_t AsioTestClient::GetNearestMonster() const
+    {
+        if (monsters_.empty())
+            return 0;
+
+        uint32_t nearest_id = 0;
+        float nearest_distance = std::numeric_limits<float>::max();
+
+        for (const auto& [id, pos] : monsters_)
+        {
+            float dx = pos.x - position_.x;
+            float dz = pos.z - position_.z;
+            float distance = std::sqrt(dx * dx + dz * dz);
+
+            if (distance < nearest_distance)
+            {
+                nearest_distance = distance;
+                nearest_id = id;
+            }
+        }
+
+        return nearest_id;
+    }
+
+    bool AsioTestClient::IsInRange(float x, float z, float range) const
+    {
+        float dx = x - position_.x;
+        float dz = z - position_.z;
+        float distance = std::sqrt(dx * dx + dz * dz);
+        return distance <= range;
+    }
+
+    PlayerPosition AsioTestClient::GetNextPatrolPoint() const
+    {
+        if (patrol_points_.empty())
+        {
+            return spawn_position_;
+        }
+
+        // 현재 순찰점을 반환 (인덱스는 변경하지 않음)
+        return patrol_points_[current_patrol_index_];
+    }
+
+    void AsioTestClient::AdvanceToNextPatrolPoint()
+    {
+        if (!patrol_points_.empty())
+        {
+            current_patrol_index_ = (current_patrol_index_ + 1) % patrol_points_.size();
+        }
+    }
+
+    bool AsioTestClient::SendPacket(const Packet& packet)
+    {
+        if (!connected_.load() || !socket_ || !socket_->is_open())
+            return false;
+
+        try
+        {
+            // 패킷 헤더 생성
+            uint32_t total_size = sizeof(uint32_t) + sizeof(uint16_t) + packet.data.size();
+            std::vector<uint8_t> buffer;
+            buffer.resize(total_size);
+            
+            size_t offset = 0;
+            
+            // 크기 (4바이트)
+            *reinterpret_cast<uint32_t*>(buffer.data() + offset) = total_size;
+            offset += sizeof(uint32_t);
+            
+            // 타입 (2바이트)
+            *reinterpret_cast<uint16_t*>(buffer.data() + offset) = packet.type;
+            offset += sizeof(uint16_t);
+            
+            // 데이터
+            std::memcpy(buffer.data() + offset, packet.data.data(), packet.data.size());
+            
+            boost::asio::write(*socket_, boost::asio::buffer(buffer));
             return true;
         }
         catch (const std::exception& e)
@@ -163,335 +538,59 @@ namespace bt
 
     bool AsioTestClient::ReceivePacket(Packet& packet)
     {
-        if (!connected_.load())
-        {
-            LogMessage("연결되지 않은 상태에서 패킷 수신 시도", true);
+        if (!connected_.load() || !socket_ || !socket_->is_open())
             return false;
-        }
 
         try
         {
-            // 패킷 크기 수신
-            uint32_t packet_size;
-            boost::asio::read(*socket_, boost::asio::buffer(&packet_size, sizeof(packet_size)));
-
-            // 나머지 패킷 데이터 수신
-            std::vector<uint8_t> buffer(packet_size - sizeof(uint32_t));
-            boost::asio::read(*socket_, boost::asio::buffer(buffer));
-
-            // 패킷 파싱
-            packet.size = packet_size;
-            packet.type = *reinterpret_cast<uint16_t*>(buffer.data());
-            packet.data.assign(buffer.begin() + sizeof(uint16_t), buffer.end());
-
-            if (verbose_)
+            boost::array<uint8_t, 1024> buffer;
+            size_t bytes_read = socket_->read_some(boost::asio::buffer(buffer));
+            
+            if (bytes_read > 0)
             {
-                LogMessage("패킷 수신: 타입=" + std::to_string(packet.type) + ", 크기=" + std::to_string(packet_size) +
-                            "바이트");
+                size_t offset = 0;
+                
+                // 크기 읽기
+                if (bytes_read < sizeof(uint32_t))
+                    return false;
+                    
+                uint32_t size = *reinterpret_cast<uint32_t*>(buffer.data() + offset);
+                offset += sizeof(uint32_t);
+                
+                // 타입 읽기
+                if (bytes_read < offset + sizeof(uint16_t))
+                    return false;
+                    
+                uint16_t type = *reinterpret_cast<uint16_t*>(buffer.data() + offset);
+                offset += sizeof(uint16_t);
+                
+                // 데이터 읽기
+                size_t data_size = bytes_read - offset;
+                std::vector<uint8_t> data(buffer.data() + offset, buffer.data() + offset + data_size);
+                
+                packet = Packet(type, data);
+                return true;
             }
-
-            return true;
+        }
+        catch (const boost::system::system_error& e)
+        {
+            if (e.code() != boost::asio::error::would_block)
+            {
+                LogMessage("패킷 수신 실패: " + std::string(e.what()), true);
+            }
         }
         catch (const std::exception& e)
         {
-            LogMessage("패킷 수신 실패: " + std::string(e.what()), true);
-            return false;
-        }
-    }
-
-    bool AsioTestClient::TestConnection()
-    {
-        LogMessage("=== 연결 테스트 시작 ===");
-
-        bool success = Connect();
-        if (success)
-        {
-            LogMessage("연결 성공! 연결 유지 테스트 중...");
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-            if (IsConnected())
-            {
-                LogMessage("연결 유지 확인됨");
-            }
-            else
-            {
-                LogMessage("연결이 끊어짐");
-                success = false;
-            }
-
-            LogMessage("연결 해제 중...");
-            Disconnect();
-            LogMessage("연결 테스트 완료");
-        }
-        else
-        {
-            LogMessage("연결 실패");
+            LogMessage("패킷 수신 오류: " + std::string(e.what()), true);
         }
 
-        RecordTestResult("연결 테스트", success, success ? "연결 성공" : "연결 실패");
-        return success;
-    }
-
-    bool AsioTestClient::TestPlayerJoin(const std::string& player_name)
-    {
-        LogMessage("=== 플레이어 접속 테스트 시작 ===");
-        LogMessage("플레이어 이름: " + player_name);
-
-        if (!Connect())
-        {
-            RecordTestResult("플레이어 접속 테스트", false, "연결 실패");
-            return false;
-        }
-
-        LogMessage("플레이어 접속 요청 전송 중...");
-        // 플레이어 접속 요청 전송
-        Packet join_packet = CreatePlayerJoinPacket(player_name);
-        if (!SendPacket(join_packet))
-        {
-            RecordTestResult("플레이어 접속 테스트", false, "접속 요청 전송 실패");
-            Disconnect();
-            return false;
-        }
-
-        LogMessage("서버 응답 대기 중...");
-        // 응답 대기
-        Packet response;
-        if (!ReceivePacket(response))
-        {
-            RecordTestResult("플레이어 접속 테스트", false, "응답 수신 실패");
-            Disconnect();
-            return false;
-        }
-
-        bool success = ParsePacketResponse(response);
-        LogMessage("플레이어 접속 " + std::string(success ? "성공" : "실패"));
-        RecordTestResult("플레이어 접속 테스트", success, success ? "접속 성공" : "접속 실패");
-
-        LogMessage("연결 해제 중...");
-        Disconnect();
-        LogMessage("플레이어 접속 테스트 완료");
-        return success;
-    }
-
-    bool AsioTestClient::TestPlayerMove(float x, float y, float z)
-    {
-        LogMessage("=== 플레이어 이동 테스트 시작 ===");
-        LogMessage("이동 좌표: (" + std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z) + ")");
-
-        if (!Connect())
-        {
-            RecordTestResult("플레이어 이동 테스트", false, "연결 실패");
-            return false;
-        }
-
-        // 플레이어 이동 요청 전송
-        Packet move_packet = CreatePlayerMovePacket(x, y, z);
-        if (!SendPacket(move_packet))
-        {
-            RecordTestResult("플레이어 이동 테스트", false, "이동 요청 전송 실패");
-            Disconnect();
-            return false;
-        }
-
-        RecordTestResult("플레이어 이동 테스트", true, "이동 요청 전송 성공");
-        Disconnect();
-        return true;
-    }
-
-    bool AsioTestClient::TestPlayerAttack(uint32_t target_id)
-    {
-        LogMessage("=== 플레이어 공격 테스트 시작 ===");
-        LogMessage("공격 대상 ID: " + std::to_string(target_id));
-
-        if (!Connect())
-        {
-            RecordTestResult("플레이어 공격 테스트", false, "연결 실패");
-            return false;
-        }
-
-        // 플레이어 공격 요청 전송
-        Packet attack_packet = CreatePlayerAttackPacket(target_id);
-        if (!SendPacket(attack_packet))
-        {
-            RecordTestResult("플레이어 공격 테스트", false, "공격 요청 전송 실패");
-            Disconnect();
-            return false;
-        }
-
-        RecordTestResult("플레이어 공격 테스트", true, "공격 요청 전송 성공");
-        Disconnect();
-        return true;
-    }
-
-    bool AsioTestClient::TestBTExecute(const std::string& bt_name)
-    {
-        LogMessage("=== Behavior Tree 실행 테스트 시작 ===");
-
-        if (!Connect())
-        {
-            RecordTestResult("BT 실행 테스트", false, "연결 실패");
-            return false;
-        }
-
-        // BT 실행 요청 전송
-        Packet bt_packet = CreateBTExecutePacket(bt_name);
-        if (!SendPacket(bt_packet))
-        {
-            RecordTestResult("BT 실행 테스트", false, "BT 요청 전송 실패");
-            Disconnect();
-            return false;
-        }
-
-        // 응답 대기
-        Packet response;
-        if (!ReceivePacket(response))
-        {
-            RecordTestResult("BT 실행 테스트", false, "응답 수신 실패");
-            Disconnect();
-            return false;
-        }
-
-        bool success = ParsePacketResponse(response);
-        RecordTestResult("BT 실행 테스트", success, success ? "BT 실행 성공" : "BT 실행 실패");
-
-        Disconnect();
-        return success;
-    }
-
-    bool AsioTestClient::TestMonsterUpdate()
-    {
-        LogMessage("=== 몬스터 업데이트 테스트 시작 ===");
-
-        if (!Connect())
-        {
-            RecordTestResult("몬스터 업데이트 테스트", false, "연결 실패");
-            return false;
-        }
-
-        // 몬스터 업데이트 요청 전송
-        Packet update_packet = CreateMonsterUpdatePacket();
-        if (!SendPacket(update_packet))
-        {
-            RecordTestResult("몬스터 업데이트 테스트", false, "업데이트 요청 전송 실패");
-            Disconnect();
-            return false;
-        }
-
-        RecordTestResult("몬스터 업데이트 테스트", true, "업데이트 요청 전송 성공");
-        Disconnect();
-        return true;
-    }
-
-    bool AsioTestClient::TestDisconnect()
-    {
-        LogMessage("=== 연결 해제 테스트 시작 ===");
-
-        if (!Connect())
-        {
-            RecordTestResult("연결 해제 테스트", false, "연결 실패");
-            return false;
-        }
-
-        Disconnect();
-        RecordTestResult("연결 해제 테스트", true, "연결 해제 성공");
-        return true;
-    }
-
-    bool AsioTestClient::RunAutomatedTest()
-    {
-        LogMessage("=== 자동화된 테스트 시작 ===");
-        LogMessage("총 5개 테스트를 순차적으로 실행합니다.");
-
-        tests_passed_ = 0;
-        tests_failed_ = 0;
-        test_results_.clear();
-
-        // 1. 연결 테스트
-        LogMessage("\n[1/6] 연결 테스트 실행 중...");
-        TestConnection();
-
-        // 2. 플레이어 접속 테스트
-        LogMessage("\n[2/6] 플레이어 접속 테스트 실행 중...");
-        TestPlayerJoin("test_player");
-
-        // 3. 플레이어 이동 테스트
-        LogMessage("\n[3/6] 플레이어 이동 테스트 실행 중...");
-        TestPlayerMove(100.0f, 200.0f, 300.0f);
-
-        // 4. 플레이어 공격 테스트
-        LogMessage("\n[4/6] 플레이어 공격 테스트 실행 중...");
-        TestPlayerAttack(1);
-
-        // 5. Behavior Tree 실행 테스트
-        LogMessage("\n[5/6] Behavior Tree 실행 테스트 실행 중...");
-        TestBTExecute("goblin_bt");
-
-        // 6. 연결 해제 테스트
-        LogMessage("\n[6/6] 연결 해제 테스트 실행 중...");
-        TestDisconnect();
-
-        // 테스트 결과 출력
-        LogMessage("\n=== 테스트 결과 요약 ===");
-        LogMessage("성공: " + std::to_string(tests_passed_) + "개");
-        LogMessage("실패: " + std::to_string(tests_failed_) + "개");
-
-        LogMessage("\n=== 상세 결과 ===");
-        for (const auto& result : test_results_)
-        {
-            LogMessage(result);
-        }
-
-        bool all_passed = (tests_failed_ == 0);
-        LogMessage("\n=== 전체 테스트 결과 ===");
-        LogMessage("결과: " + std::string(all_passed ? "✅ 모든 테스트 성공" : "❌ 일부 테스트 실패"));
-        LogMessage("자동화된 테스트 완료");
-
-        return all_passed;
-    }
-
-    bool AsioTestClient::RunStressTest(int num_connections, int duration_seconds)
-    {
-        LogMessage("=== 스트레스 테스트 시작 ===");
-        LogMessage("연결 수: " + std::to_string(num_connections) + ", 지속 시간: " + std::to_string(duration_seconds) +
-                    "초");
-
-        std::vector<std::unique_ptr<AsioTestClient>> clients;
-        std::vector<std::thread>                     client_threads;
-
-        // 클라이언트 생성 및 연결
-        for (int i = 0; i < num_connections; ++i)
-        {
-            auto client = std::make_unique<AsioTestClient>(config_);
-            client->SetVerbose(false); // 스트레스 테스트에서는 상세 로그 비활성화
-
-            client_threads.emplace_back(
-                [&client]()
-                {
-                    if (client->Connect())
-                    {
-                        // 연결 유지
-                        std::this_thread::sleep_for(std::chrono::seconds(1));
-                        client->Disconnect();
-                    }
-                });
-
-            clients.push_back(std::move(client));
-        }
-
-        // 모든 스레드 완료 대기
-        for (auto& thread : client_threads)
-        {
-            thread.join();
-        }
-
-        LogMessage("스트레스 테스트 완료");
-        return true;
+        return false;
     }
 
     Packet AsioTestClient::CreateConnectRequest()
     {
         std::vector<uint8_t> data;
-        data.push_back(0x01); // 프로토콜 버전
+        data.insert(data.end(), config_.player_name.begin(), config_.player_name.end());
         return Packet(static_cast<uint16_t>(PacketType::CONNECT_REQUEST), data);
     }
 
@@ -499,11 +598,16 @@ namespace bt
     {
         std::vector<uint8_t> data;
 
-        // 플레이어 이름 길이와 데이터
-        uint16_t name_len = name.length();
-        data.push_back(name_len & 0xFF);
-        data.push_back((name_len >> 8) & 0xFF);
+        // 이름 길이 + 이름
+        uint32_t name_len = name.length();
+        data.insert(data.end(), reinterpret_cast<uint8_t*>(&name_len), reinterpret_cast<uint8_t*>(&name_len) + sizeof(uint32_t));
         data.insert(data.end(), name.begin(), name.end());
+        
+        // 위치
+        data.insert(data.end(), reinterpret_cast<uint8_t*>(&position_.x), reinterpret_cast<uint8_t*>(&position_.x) + sizeof(float));
+        data.insert(data.end(), reinterpret_cast<uint8_t*>(&position_.y), reinterpret_cast<uint8_t*>(&position_.y) + sizeof(float));
+        data.insert(data.end(), reinterpret_cast<uint8_t*>(&position_.z), reinterpret_cast<uint8_t*>(&position_.z) + sizeof(float));
+        data.insert(data.end(), reinterpret_cast<uint8_t*>(&position_.rotation), reinterpret_cast<uint8_t*>(&position_.rotation) + sizeof(float));
 
         return Packet(static_cast<uint16_t>(PacketType::PLAYER_JOIN), data);
     }
@@ -512,25 +616,11 @@ namespace bt
     {
         std::vector<uint8_t> data;
 
-        // 좌표 (float를 바이트로 변환)
-        uint32_t x_bits = *reinterpret_cast<const uint32_t*>(&x);
-        uint32_t y_bits = *reinterpret_cast<const uint32_t*>(&y);
-        uint32_t z_bits = *reinterpret_cast<const uint32_t*>(&z);
-
-        data.push_back(x_bits & 0xFF);
-        data.push_back((x_bits >> 8) & 0xFF);
-        data.push_back((x_bits >> 16) & 0xFF);
-        data.push_back((x_bits >> 24) & 0xFF);
-
-        data.push_back(y_bits & 0xFF);
-        data.push_back((y_bits >> 8) & 0xFF);
-        data.push_back((y_bits >> 16) & 0xFF);
-        data.push_back((y_bits >> 24) & 0xFF);
-
-        data.push_back(z_bits & 0xFF);
-        data.push_back((z_bits >> 8) & 0xFF);
-        data.push_back((z_bits >> 16) & 0xFF);
-        data.push_back((z_bits >> 24) & 0xFF);
+        data.insert(data.end(), reinterpret_cast<uint8_t*>(&player_id_), reinterpret_cast<uint8_t*>(&player_id_) + sizeof(uint32_t));
+        data.insert(data.end(), reinterpret_cast<uint8_t*>(&x), reinterpret_cast<uint8_t*>(&x) + sizeof(float));
+        data.insert(data.end(), reinterpret_cast<uint8_t*>(&y), reinterpret_cast<uint8_t*>(&y) + sizeof(float));
+        data.insert(data.end(), reinterpret_cast<uint8_t*>(&z), reinterpret_cast<uint8_t*>(&z) + sizeof(float));
+        data.insert(data.end(), reinterpret_cast<uint8_t*>(&position_.rotation), reinterpret_cast<uint8_t*>(&position_.rotation) + sizeof(float));
 
         return Packet(static_cast<uint16_t>(PacketType::PLAYER_MOVE), data);
     }
@@ -539,75 +629,138 @@ namespace bt
     {
         std::vector<uint8_t> data;
 
-        // 타겟 ID
-        data.push_back(target_id & 0xFF);
-        data.push_back((target_id >> 8) & 0xFF);
-        data.push_back((target_id >> 16) & 0xFF);
-        data.push_back((target_id >> 24) & 0xFF);
+        data.insert(data.end(), reinterpret_cast<uint8_t*>(&player_id_), reinterpret_cast<uint8_t*>(&player_id_) + sizeof(uint32_t));
+        data.insert(data.end(), reinterpret_cast<uint8_t*>(&target_id), reinterpret_cast<uint8_t*>(&target_id) + sizeof(uint32_t));
+        data.insert(data.end(), reinterpret_cast<uint8_t*>(&config_.damage), reinterpret_cast<uint8_t*>(&config_.damage) + sizeof(uint32_t));
 
         return Packet(static_cast<uint16_t>(PacketType::PLAYER_ATTACK), data);
-    }
-
-    Packet AsioTestClient::CreateBTExecutePacket(const std::string& bt_name)
-    {
-        std::vector<uint8_t> data;
-
-        // BT 이름 길이와 데이터
-        uint16_t name_len = bt_name.length();
-        data.push_back(name_len & 0xFF);
-        data.push_back((name_len >> 8) & 0xFF);
-        data.insert(data.end(), bt_name.begin(), bt_name.end());
-
-        return Packet(static_cast<uint16_t>(PacketType::BT_EXECUTE), data);
-    }
-
-    Packet AsioTestClient::CreateMonsterUpdatePacket()
-    {
-        std::vector<uint8_t> data;
-        data.push_back(0x01); // 업데이트 요청
-        return Packet(static_cast<uint16_t>(PacketType::MONSTER_UPDATE), data);
     }
 
     Packet AsioTestClient::CreateDisconnectPacket()
     {
         std::vector<uint8_t> data;
+        data.insert(data.end(), reinterpret_cast<uint8_t*>(&player_id_), reinterpret_cast<uint8_t*>(&player_id_) + sizeof(uint32_t));
         return Packet(static_cast<uint16_t>(PacketType::DISCONNECT), data);
     }
 
     bool AsioTestClient::ParsePacketResponse(const Packet& packet)
     {
-        if (packet.data.size() < sizeof(uint32_t))
-        {
-            LogMessage("응답 패킷 크기가 너무 작음: " + std::to_string(packet.data.size()) + "바이트", true);
+        if (packet.data.empty())
             return false;
-        }
 
-        // 서버 응답 형식: [패킷 타입(4바이트)][성공 여부(4바이트)]
-        uint32_t packet_type   = *reinterpret_cast<const uint32_t*>(packet.data.data());
-        uint32_t success_value = *reinterpret_cast<const uint32_t*>(packet.data.data() + sizeof(uint32_t));
-
-        bool success = (success_value == 1);
-
-        if (verbose_)
+        switch (static_cast<PacketType>(packet.type))
         {
-            LogMessage("응답 패킷 파싱: 타입=" + std::to_string(packet_type) +
-                        ", 성공=" + std::string(success ? "true" : "false"));
+            case PacketType::CONNECT_RESPONSE:
+                {
+                    if (packet.data.size() >= sizeof(uint8_t) + sizeof(uint32_t))
+                    {
+                        uint8_t success = packet.data[0];
+                        if (success)
+                        {
+                            player_id_ = *reinterpret_cast<const uint32_t*>(packet.data.data() + 1);
+                            LogMessage("서버 연결 응답 성공, 플레이어 ID: " + std::to_string(player_id_));
+                            return true;
+                        }
+                        else
+                        {
+                            LogMessage("서버 연결 응답 실패", true);
+            return false;
+                        }
+                    }
+                }
+                break;
+
+            case PacketType::MONSTER_UPDATE:
+                HandleMonsterUpdate(packet);
+                break;
+
+            case PacketType::PLAYER_STATS:
+                HandlePlayerUpdate(packet);
+                break;
+
+            case PacketType::BT_RESULT:
+                HandleCombatResult(packet);
+                break;
+
+            default:
+                if (verbose_)
+                {
+                    LogMessage("알 수 없는 패킷 타입: " + std::to_string(packet.type));
+                }
+                break;
         }
 
-        return success;
+        return true;
     }
 
-    void AsioTestClient::RecordTestResult(const std::string& test_name, bool success, const std::string& message)
+    void AsioTestClient::HandleMonsterUpdate(const Packet& packet)
     {
-        if (success)
+        if (packet.data.size() < sizeof(uint32_t))
+            return;
+            
+        uint32_t monster_count = *reinterpret_cast<const uint32_t*>(packet.data.data());
+        monsters_.clear();
+
+        size_t offset = sizeof(uint32_t);
+        for (uint32_t i = 0; i < monster_count && offset < packet.data.size(); ++i)
         {
-            tests_passed_++;
-            test_results_.push_back("✓ " + test_name + ": " + message);
+            if (offset + sizeof(uint32_t) > packet.data.size())
+                break;
+                
+            uint32_t id = *reinterpret_cast<const uint32_t*>(packet.data.data() + offset);
+            offset += sizeof(uint32_t);
+            
+            if (offset + sizeof(float) * 4 > packet.data.size())
+                break;
+                
+            float x = *reinterpret_cast<const float*>(packet.data.data() + offset);
+            offset += sizeof(float);
+            float y = *reinterpret_cast<const float*>(packet.data.data() + offset);
+            offset += sizeof(float);
+            float z = *reinterpret_cast<const float*>(packet.data.data() + offset);
+            offset += sizeof(float);
+            float rotation = *reinterpret_cast<const float*>(packet.data.data() + offset);
+            offset += sizeof(float);
+
+            monsters_[id] = PlayerPosition(x, y, z, rotation);
         }
-        else
+
+        last_monster_update_ = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::steady_clock::now().time_since_epoch()).count() / 1000.0f;
+    }
+
+    void AsioTestClient::HandlePlayerUpdate(const Packet& packet)
+    {
+        // 플레이어 업데이트 처리 (필요시 구현)
+    }
+
+    void AsioTestClient::HandleCombatResult(const Packet& packet)
+    {
+        if (packet.data.size() < sizeof(uint32_t) * 4)
+            return;
+            
+        uint32_t attacker_id = *reinterpret_cast<const uint32_t*>(packet.data.data());
+        uint32_t target_id = *reinterpret_cast<const uint32_t*>(packet.data.data() + sizeof(uint32_t));
+        uint32_t damage = *reinterpret_cast<const uint32_t*>(packet.data.data() + sizeof(uint32_t) * 2);
+        uint32_t remaining_health = *reinterpret_cast<const uint32_t*>(packet.data.data() + sizeof(uint32_t) * 3);
+
+        if (attacker_id == player_id_)
         {
-            tests_failed_++;
-            test_results_.push_back("✗ " + test_name + ": " + message);
+            if (verbose_)
+            {
+                LogMessage("공격 결과: 타겟 " + std::to_string(target_id) + 
+                          ", 데미지 " + std::to_string(damage) + 
+                          ", 남은 체력 " + std::to_string(remaining_health));
+            }
+        }
+        else if (target_id == player_id_)
+        {
+            health_ = remaining_health;
+            if (health_ <= 0)
+            {
+                LogMessage("플레이어 사망!", true);
+                target_id_ = 0;
+            }
         }
     }
 
@@ -615,20 +768,27 @@ namespace bt
     {
         boost::lock_guard<boost::mutex> lock(log_mutex_);
 
-        auto now    = std::chrono::system_clock::now();
+        auto now = std::chrono::system_clock::now();
         auto time_t = std::chrono::system_clock::to_time_t(now);
-        auto tm     = *std::localtime(&time_t);
+        auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+            now.time_since_epoch()) % 1000;
 
-        std::cout << "[" << std::put_time(&tm, "%H:%M:%S") << "] ";
+        std::ostringstream oss;
+        oss << "[" << std::put_time(std::localtime(&time_t), "%H:%M:%S") 
+            << "." << std::setfill('0') << std::setw(3) << ms.count() << "] ";
+        
         if (is_error)
         {
-            std::cout << "[ERROR] ";
+            oss << "[ERROR] ";
         }
         else
         {
-            std::cout << "[CLIENT] ";
+            oss << "[INFO] ";
         }
-        std::cout << message << std::endl;
+        
+        oss << "[" << config_.player_name << "] " << message;
+        
+        std::cout << oss.str() << std::endl;
     }
 
 } // namespace bt

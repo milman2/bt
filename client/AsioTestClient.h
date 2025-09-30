@@ -8,6 +8,8 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <cmath>
+#include <random>
 
 #include <boost/array.hpp>
 #include <boost/asio.hpp>
@@ -19,25 +21,45 @@
 #include <boost/thread/mutex.hpp>
 
 #include "PacketProtocol.h"
+#include "../BT/Node.h"
+#include "../BT/Tree.h"
+#include "../BT/Context.h"
+#include "../BT/Engine.h"
+#include "../BT/IExecutor.h"
+#include "BT/PlayerBTs.h"
 
 namespace bt
 {
 
-    // 테스트 클라이언트 전용 설정 (공통 ClientConfig 확장)
-    struct AsioClientConfig
+    // 플레이어 AI 클라이언트 설정
+    struct PlayerAIConfig
     {
         std::string                 server_host = "127.0.0.1";
         uint16_t                    server_port = 7000;
-        boost::chrono::milliseconds connection_timeout{5000};
-        bool                        auto_reconnect         = false;
-        int                         max_reconnect_attempts = 3;
+        std::string                 player_name = "AI_Player";
+        float                       spawn_x = 0.0f;
+        float                       spawn_z = 0.0f;
+        float                       patrol_radius = 50.0f;
+        float                       detection_range = 30.0f;
+        float                       attack_range = 5.0f;
+        float                       move_speed = 3.0f;
+        int                         health = 100;
+        int                         damage = 20;
     };
 
-    // 테스트 클라이언트 클래스
-    class AsioTestClient
+    // 플레이어 위치 정보
+    struct PlayerPosition
+    {
+        float x, y, z, rotation;
+        PlayerPosition(float x = 0, float y = 0, float z = 0, float r = 0) 
+            : x(x), y(y), z(z), rotation(r) {}
+    };
+
+    // 플레이어 AI 클라이언트 클래스
+    class AsioTestClient : public IExecutor
     {
     public:
-        AsioTestClient(const AsioClientConfig& config);
+        AsioTestClient(const PlayerAIConfig& config);
         ~AsioTestClient();
 
         // 연결 관리
@@ -45,22 +67,47 @@ namespace bt
         void Disconnect();
         bool IsConnected() const { return connected_.load(); }
 
+        // AI 동작
+        void StartAI();
+        void StopAI();
+        void UpdateAI(float delta_time);
+
+        // IExecutor 인터페이스 구현
+        void Update(float delta_time) override;
+        void SetBehaviorTree(std::shared_ptr<Tree> tree) override;
+        std::shared_ptr<Tree> GetBehaviorTree() const override;
+        Context& GetContext() override;
+        const Context& GetContext() const override;
+        const std::string& GetName() const override;
+        const std::string& GetBTName() const override;
+        bool IsActive() const override;
+        void SetActive(bool active) override;
+
         // 패킷 송수신
         bool SendPacket(const Packet& packet);
         bool ReceivePacket(Packet& packet);
 
-        // 테스트 시나리오
-        bool TestConnection();
-        bool TestPlayerJoin(const std::string& player_name);
-        bool TestPlayerMove(float x, float y, float z);
-        bool TestPlayerAttack(uint32_t target_id);
-        bool TestBTExecute(const std::string& bt_name);
-        bool TestMonsterUpdate();
-        bool TestDisconnect();
+        // 플레이어 액션
+        bool JoinGame();
+        bool MoveTo(float x, float y, float z);
+        bool AttackTarget(uint32_t target_id);
+        bool Respawn();
 
-        // 자동 테스트
-        bool RunAutomatedTest();
-        bool RunStressTest(int num_connections, int duration_seconds);
+        // AI 상태
+        bool IsAlive() const { return health_ > 0; }
+        bool HasTarget() const { return target_id_ != 0; }
+        float GetDistanceToTarget() const;
+        uint32_t GetNearestMonster() const;
+        
+        // BT 노드에서 사용할 헬퍼 메서드들
+        bool HasPatrolPoints() const { return !patrol_points_.empty(); }
+        PlayerPosition GetNextPatrolPoint() const;
+        void AdvanceToNextPatrolPoint();
+        PlayerPosition GetPosition() const { return position_; }
+        uint32_t GetTargetID() const { return target_id_; }
+        float GetMoveSpeed() const { return config_.move_speed; }
+        float GetAttackRange() const { return config_.attack_range; }
+        float GetDetectionRange() const { return config_.detection_range; }
 
         // 유틸리티
         void SetVerbose(bool verbose) { verbose_ = verbose; }
@@ -76,26 +123,50 @@ namespace bt
         Packet CreatePlayerJoinPacket(const std::string& name);
         Packet CreatePlayerMovePacket(float x, float y, float z);
         Packet CreatePlayerAttackPacket(uint32_t target_id);
-        Packet CreateBTExecutePacket(const std::string& bt_name);
-        Packet CreateMonsterUpdatePacket();
         Packet CreateDisconnectPacket();
 
         bool ParsePacketResponse(const Packet& packet);
 
-        // 테스트 결과
-        void RecordTestResult(const std::string& test_name, bool success, const std::string& message = "");
+        // AI 로직
+        void CreatePatrolPoints();
+        void UpdatePatrol(float delta_time);
+        void UpdateCombat(float delta_time);
+        void FindNearestMonster();
+        bool IsInRange(float x, float z, float range) const;
+
+        // 패킷 처리
+        void HandleMonsterUpdate(const Packet& packet);
+        void HandlePlayerUpdate(const Packet& packet);
+        void HandleCombatResult(const Packet& packet);
 
     private:
-        AsioClientConfig                                config_;
+        PlayerAIConfig                                  config_;
         std::atomic<bool>                               connected_;
         boost::asio::io_context                         io_context_;
         boost::shared_ptr<boost::asio::ip::tcp::socket> socket_;
         bool                                            verbose_;
 
-        // 테스트 통계
-        int                      tests_passed_;
-        int                      tests_failed_;
-        std::vector<std::string> test_results_;
+        // AI 상태
+        std::atomic<bool>                               ai_running_;
+        std::shared_ptr<Tree>                           behavior_tree_;
+        Context                                         context_;
+        std::string                                     bt_name_;
+        PlayerPosition                                  position_;
+        PlayerPosition                                  spawn_position_;
+        std::vector<PlayerPosition>                     patrol_points_;
+        size_t                                         current_patrol_index_;
+        
+        // 전투 상태
+        uint32_t                                        player_id_;
+        uint32_t                                        target_id_;
+        int                                             health_;
+        int                                             max_health_;
+        float                                           last_attack_time_;
+        float                                           attack_cooldown_;
+        
+        // 몬스터 정보
+        std::map<uint32_t, PlayerPosition>             monsters_;
+        float                                           last_monster_update_;
 
         // 로깅
         boost::mutex log_mutex_;

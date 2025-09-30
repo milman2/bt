@@ -97,6 +97,7 @@ namespace bt
         void            SetPatrolPoints(const std::vector<MonsterPosition>& points);
         void            AddPatrolPoint(const MonsterPosition& point);
         MonsterPosition GetNextPatrolPoint();
+        void            AdvanceToNextPatrolPoint();
         bool            HasPatrolPoints() const { return !patrol_points_.empty(); }
         void            ResetPatrolIndex() { current_patrol_index_ = 0; }
 
