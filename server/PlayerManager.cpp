@@ -330,7 +330,9 @@ namespace bt
             return;
         }
 
-        // 근처 몬스터를 찾아서 공격하는 로직 (MonsterManager와 연동 필요)
+        // 근처 몬스터를 찾아서 공격하는 로직
+        // 주의: MonsterManager 직접 호출 시 데드락 위험 있음
+        // 대신 이벤트 시스템이나 비동기 메시지 사용 권장
         std::cout << "플레이어 " << player_id << " 근처 몬스터 공격 시도" << std::endl;
     }
 

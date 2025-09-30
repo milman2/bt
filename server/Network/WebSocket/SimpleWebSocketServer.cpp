@@ -409,9 +409,14 @@ namespace bt
             }
         }
         
+        // 연결 상태 로깅 (연결된 클라이언트가 없어도 로그 출력)
         if (connected_count > 0)
         {
             std::cout << "WebSocket 브로드캐스트: " << connected_count << "개 연결 중 " << sent_count << "개 전송 성공" << std::endl;
+        }
+        else
+        {
+            std::cout << "WebSocket 브로드캐스트: 연결된 클라이언트 없음 (0개 연결)" << std::endl;
         }
     }
 

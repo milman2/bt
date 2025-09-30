@@ -411,28 +411,30 @@ namespace bt
         ProcessAutoSpawn(delta_time);
         ProcessRespawn(delta_time);
 
-        std::lock_guard<std::mutex> lock(monsters_mutex_);
-
-        // 모든 몬스터와 플레이어 정보 수집
+        // 모든 몬스터와 플레이어 정보 수집 (락 순서 주의: 데드락 방지)
         std::vector<std::shared_ptr<Monster>> all_monsters;
         std::vector<std::shared_ptr<Player>>  all_players;
 
-        for (const auto& [id, monster] : monsters_)
-        {
-            all_monsters.push_back(monster);
-        }
-
-        // PlayerManager에서 플레이어 정보 가져오기
+        // 락 순서: players_mutex_ 먼저, monsters_mutex_ 나중에 (데드락 방지)
         if (player_manager_)
         {
             all_players = player_manager_->GetAllPlayers();
         }
 
-        // 각 몬스터의 환경 정보 업데이트
-        for (const auto& [id, monster] : monsters_)
+        // 몬스터 정보 수집 및 업데이트
         {
-            monster->UpdateEnvironmentInfo(all_players, all_monsters);
-            monster->Update(delta_time);
+            std::lock_guard<std::mutex> lock(monsters_mutex_);
+            for (const auto& [id, monster] : monsters_)
+            {
+                all_monsters.push_back(monster);
+            }
+
+            // 각 몬스터의 환경 정보 업데이트
+            for (const auto& [id, monster] : monsters_)
+            {
+                monster->UpdateEnvironmentInfo(all_players, all_monsters);
+                monster->Update(delta_time);
+            }
         }
 
         // 주기적으로 WebSocket으로 몬스터 상태 업데이트 브로드캐스트

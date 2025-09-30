@@ -185,7 +185,7 @@ namespace bt
         }
 
         LogMessage("게임 참여 타임아웃", true);
-        return false;
+            return false;
     }
 
     bool AsioTestClient::MoveTo(float x, float y, float z)
@@ -279,6 +279,14 @@ namespace bt
         while (ReceivePacket(packet))
         {
             ParsePacketResponse(packet);
+        }
+        
+        // 연결이 끊어진 경우 AI 종료
+        if (!connected_.load())
+        {
+            LogMessage("서버 연결이 끊어져 AI를 종료합니다.", true);
+            ai_running_.store(false);
+            return;
         }
 
         // 환경 인지 정보 업데이트
@@ -569,6 +577,18 @@ namespace bt
         catch (const std::exception& e)
         {
             LogMessage("패킷 전송 실패: " + std::string(e.what()), true);
+            
+            // 서버 연결이 끊어진 경우 클라이언트 종료
+            std::string error_msg = e.what();
+            if (error_msg.find("Broken pipe") != std::string::npos ||
+                error_msg.find("Connection reset") != std::string::npos ||
+                error_msg.find("End of file") != std::string::npos)
+            {
+                LogMessage("서버 연결이 끊어졌습니다. 클라이언트를 종료합니다.", true);
+                connected_.store(false);
+                ai_running_.store(false);
+            }
+            
             return false;
         }
     }
@@ -595,6 +615,18 @@ namespace bt
             if (ec)
             {
                 LogMessage("패킷 수신 오류: " + ec.message(), true);
+                
+                // 서버 연결이 끊어진 경우 클라이언트 종료
+                if (ec == boost::asio::error::eof || 
+                    ec == boost::asio::error::connection_reset ||
+                    ec == boost::asio::error::broken_pipe)
+                {
+                    LogMessage("서버 연결이 끊어졌습니다. 클라이언트를 종료합니다.", true);
+                    connected_.store(false);
+                    ai_running_.store(false);
+            return false;
+        }
+
                 return false;
             }
             
