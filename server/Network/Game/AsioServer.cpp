@@ -7,7 +7,7 @@
 #include "BT/Monster/MonsterTypes.h"
 #include "Player.h"
 #include "PlayerManager.h"
-#include "RestApiServer.h"
+#include "Network/RestAPI/RestApiServer.h"
 #include "Network/WebSocket/SimpleWebSocketServer.h"
 
 namespace bt
