@@ -11,10 +11,10 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include "player.h"
-#include "player_manager.h"
-#include "rest_api_server.h"
-#include "simple_websocket_server.h"
+#include "Player.h"
+#include "PlayerManager.h"
+#include "RestApiServer.h"
+#include "SimpleWebSocketServer.h"
 
 namespace bt
 {

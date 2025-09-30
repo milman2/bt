@@ -7,10 +7,11 @@
 #include <cmath>
 #include <nlohmann/json.hpp>
 
-#include "monster_ai.h"
-#include "player.h"
-#include "player_manager.h"
-#include "simple_websocket_server.h"
+#include "MonsterAI.h"
+#include "MonsterFactory.h"
+#include "Player.h"
+#include "PlayerManager.h"
+#include "SimpleWebSocketServer.h"
 
 namespace bt
 {
@@ -318,147 +319,8 @@ namespace bt
         return point;
     }
 
-    // MonsterFactory 구현
-    std::shared_ptr<Monster> MonsterFactory::create_monster(MonsterType            type,
-                                                            const std::string&     name,
-                                                            const MonsterPosition& position)
-    {
-        auto monster = std::make_shared<Monster>(name, type, position);
 
-        // 몬스터 타입에 따른 AI 생성 및 연결
-        std::string bt_name = get_bt_name(type);
-        auto        ai      = std::make_shared<MonsterAI>(name, bt_name);
-        monster->set_ai(ai);
-        ai->set_monster(monster); // AI에서 몬스터 참조 설정
 
-        std::cout << "몬스터 AI 연결: " << name << " -> " << bt_name << std::endl;
-
-        return monster;
-    }
-
-    MonsterStats MonsterFactory::get_default_stats(MonsterType type)
-    {
-        MonsterStats stats;
-
-        switch (type)
-        {
-            case MonsterType::GOBLIN:
-                stats.level           = 1;
-                stats.health          = 50;
-                stats.max_health      = 50;
-                stats.mana            = 20;
-                stats.max_mana        = 20;
-                stats.attack_power    = 8;
-                stats.defense         = 3;
-                stats.move_speed      = 1.2f;
-                stats.attack_range    = 1.5f;
-                stats.detection_range = 50.0f; // 탐지 범위 증가
-                break;
-
-            case MonsterType::ORC:
-                stats.level           = 3;
-                stats.health          = 120;
-                stats.max_health      = 120;
-                stats.mana            = 40;
-                stats.max_mana        = 40;
-                stats.attack_power    = 15;
-                stats.defense         = 8;
-                stats.move_speed      = 1.0f;
-                stats.attack_range    = 2.0f;
-                stats.detection_range = 60.0f; // 탐지 범위 증가
-                break;
-
-            case MonsterType::DRAGON:
-                stats.level           = 20;
-                stats.health          = 2000;
-                stats.max_health      = 2000;
-                stats.mana            = 500;
-                stats.max_mana        = 500;
-                stats.attack_power    = 100;
-                stats.defense         = 50;
-                stats.move_speed      = 2.0f;
-                stats.attack_range    = 5.0f;
-                stats.detection_range = 20.0f;
-                break;
-
-            case MonsterType::SKELETON:
-                stats.level           = 2;
-                stats.health          = 80;
-                stats.max_health      = 80;
-                stats.mana            = 30;
-                stats.max_mana        = 30;
-                stats.attack_power    = 12;
-                stats.defense         = 5;
-                stats.move_speed      = 0.8f;
-                stats.attack_range    = 1.8f;
-                stats.detection_range = 9.0f;
-                break;
-
-            case MonsterType::ZOMBIE:
-                stats.level           = 1;
-                stats.health          = 100;
-                stats.max_health      = 100;
-                stats.mana            = 10;
-                stats.max_mana        = 10;
-                stats.attack_power    = 10;
-                stats.defense         = 4;
-                stats.move_speed      = 0.5f;
-                stats.attack_range    = 1.2f;
-                stats.detection_range = 6.0f;
-                break;
-
-            case MonsterType::NPC_MERCHANT:
-                stats.level           = 1;
-                stats.health          = 50;
-                stats.max_health      = 50;
-                stats.mana            = 100;
-                stats.max_mana        = 100;
-                stats.attack_power    = 5;
-                stats.defense         = 2;
-                stats.move_speed      = 1.0f;
-                stats.attack_range    = 0.0f;
-                stats.detection_range = 5.0f;
-                break;
-
-            case MonsterType::NPC_GUARD:
-                stats.level           = 5;
-                stats.health          = 200;
-                stats.max_health      = 200;
-                stats.mana            = 80;
-                stats.max_mana        = 80;
-                stats.attack_power    = 25;
-                stats.defense         = 15;
-                stats.move_speed      = 1.5f;
-                stats.attack_range    = 3.0f;
-                stats.detection_range = 15.0f;
-                break;
-        }
-
-        return stats;
-    }
-
-    std::string MonsterFactory::get_bt_name(MonsterType type)
-    {
-        switch (type)
-        {
-            case MonsterType::GOBLIN:
-                return "goblin_bt";
-            case MonsterType::ORC:
-                return "orc_bt";
-            case MonsterType::DRAGON:
-                return "dragon_bt";
-            case MonsterType::SKELETON:
-                return "skeleton_bt";
-            case MonsterType::ZOMBIE:
-                return "zombie_bt";
-            case MonsterType::NPC_MERCHANT:
-                return "merchant_bt";
-            case MonsterType::NPC_GUARD:
-                return "guard_bt";
-            default:
-                return "default_bt";
-        }
-    }
 
     // MonsterManager 구현
     MonsterManager::MonsterManager() : next_monster_id_(1), auto_spawn_enabled_(false) {}
@@ -1684,60 +1546,7 @@ namespace bt
 
     } // namespace MonsterConditions
 
-    // MonsterFactory 클래스 구현
-    std::shared_ptr<Monster> MonsterFactory::create_monster(const MonsterSpawnConfig& config)
-    {
-        auto monster = std::make_shared<Monster>(config.name, config.type, config.position);
-        monster->set_position(config.position.x, config.position.y, config.position.z, config.position.rotation);
-        monster->heal(config.health);                                          // 체력 설정
-        monster->take_damage(monster->get_stats().max_health - config.health); // 현재 체력 설정
-        // TODO: 데미지, 이동 속도 등 다른 스탯 설정
-        monster->set_patrol_points(config.patrol_points);
-        // TODO: detection_range, attack_range, chase_range 설정
 
-        return monster;
-    }
 
-    std::string MonsterFactory::monster_type_to_string(MonsterType type)
-    {
-        switch (type)
-        {
-            case MonsterType::GOBLIN:
-                return "goblin";
-            case MonsterType::ORC:
-                return "orc";
-            case MonsterType::DRAGON:
-                return "dragon";
-            case MonsterType::SKELETON:
-                return "skeleton";
-            case MonsterType::ZOMBIE:
-                return "zombie";
-            case MonsterType::NPC_MERCHANT:
-                return "merchant";
-            case MonsterType::NPC_GUARD:
-                return "guard";
-            default:
-                return "unknown";
-        }
-    }
-
-    MonsterType MonsterFactory::string_to_monster_type(const std::string& str)
-    {
-        if (str == "goblin")
-            return MonsterType::GOBLIN;
-        if (str == "orc")
-            return MonsterType::ORC;
-        if (str == "dragon")
-            return MonsterType::DRAGON;
-        if (str == "skeleton")
-            return MonsterType::SKELETON;
-        if (str == "zombie")
-            return MonsterType::ZOMBIE;
-        if (str == "merchant")
-            return MonsterType::NPC_MERCHANT;
-        if (str == "guard")
-            return MonsterType::NPC_GUARD;
-        return MonsterType::GOBLIN; // 기본값
-    }
 
 } // namespace bt

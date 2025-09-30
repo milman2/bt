@@ -1,4 +1,4 @@
-#include "logger.h"
+#include "../shared/logger.h"
 
 // Logger 클래스는 헤더에서 완전히 구현되어 있으므로 별도의 구현 파일이 필요하지 않습니다.
 // 하지만 CMake에서 빌드하기 위해 빈 파일을 생성합니다.

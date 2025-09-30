@@ -2,32 +2,15 @@
 #include <iostream>
 #include <thread>
 
-#include "game_world.h"
-#include "player.h"
+#include "GameWorld.h"
+#include "Map.h"
+#include "NPC.h"
+#include "Player.h"
 
 namespace bt
 {
 
-    // 전방 선언된 클래스들의 기본 구현
-    class Map
-    {
-    public:
-        Map(uint32_t id) : id_(id) {}
-        uint32_t get_id() const { return id_; }
-
-    private:
-        uint32_t id_;
-    };
-
-    class NPC
-    {
-    public:
-        NPC(uint32_t id) : id_(id) {}
-        uint32_t get_id() const { return id_; }
-
-    private:
-        uint32_t id_;
-    };
+    // Map과 NPC 클래스는 이제 별도 파일에 정의됨
 
     GameWorld::GameWorld() : running_(false)
     {

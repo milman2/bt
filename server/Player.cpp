@@ -1,7 +1,7 @@
 #include <chrono>
 #include <iostream>
 
-#include "player.h"
+#include "Player.h"
 
 namespace bt
 {

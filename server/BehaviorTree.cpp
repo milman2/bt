@@ -3,7 +3,7 @@
 #include <map>
 #include <random>
 
-#include "behavior_tree.h"
+#include "BehaviorTree.h"
 
 namespace bt
 {

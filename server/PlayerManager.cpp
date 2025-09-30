@@ -2,8 +2,8 @@
 #include <iostream>
 #include <random>
 
-#include "player_manager.h"
-#include "simple_websocket_server.h"
+#include "PlayerManager.h"
+#include "SimpleWebSocketServer.h"
 
 namespace bt
 {

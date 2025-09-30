@@ -2,13 +2,13 @@
 #include <iostream>
 #include <sstream>
 
-#include "asio_server.h"
-#include "behavior_tree.h"
-#include "monster_ai.h"
-#include "player.h"
-#include "player_manager.h"
-#include "rest_api_server.h"
-#include "simple_websocket_server.h"
+#include "AsioServer.h"
+#include "BehaviorTree.h"
+#include "MonsterAI.h"
+#include "Player.h"
+#include "PlayerManager.h"
+#include "RestApiServer.h"
+#include "SimpleWebSocketServer.h"
 
 namespace bt
 {

@@ -7,12 +7,12 @@
 #include <csignal>
 #include <signal.h>
 
-#include "asio_server.h"
-#include "behavior_tree.h"
-#include "logger.h"
-#include "monster_ai.h"
-#include "player.h"
-#include "player_manager.h"
+#include "AsioServer.h"
+#include "BehaviorTree.h"
+#include "../shared/logger.h"
+#include "MonsterAI.h"
+#include "Player.h"
+#include "PlayerManager.h"
 
 namespace bt
 {

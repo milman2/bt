@@ -6,8 +6,8 @@
 #include <string>
 #include <thread>
 
-#include "monster_ai.h"
-#include "player_manager.h"
+#include "MonsterAI.h"
+#include "PlayerManager.h"
 
 namespace bt
 {

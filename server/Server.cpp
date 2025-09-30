@@ -6,9 +6,9 @@
 
 #include <cstring>
 
-#include "game_world.h"
-#include "packet_handler.h"
-#include "server.h"
+#include "GameWorld.h"
+#include "PacketHandler.h"
+#include "Server.h"
 
 namespace bt
 {

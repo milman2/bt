@@ -6,8 +6,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include "monster_ai.h" // MonsterPosition을 위해 필요
-#include "player.h"
+#include "MonsterAI.h" // MonsterPosition을 위해 필요
+#include "Player.h"
 
 namespace bt
 {

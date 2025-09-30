@@ -8,7 +8,7 @@
 #include <openssl/evp.h>
 #include <openssl/sha.h>
 
-#include "simple_websocket_server.h"
+#include "SimpleWebSocketServer.h"
 
 namespace bt
 {
