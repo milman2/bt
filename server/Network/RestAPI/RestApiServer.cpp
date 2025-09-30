@@ -301,7 +301,7 @@ namespace bt
                     json << "      \"is_active\": false,\n";
                 }
 
-                json << "      \"has_patrol_points\": " << (monster->has_patrol_points() ? "true" : "false") << "\n";
+                json << "      \"has_patrol_points\": " << (monster->HasPatrolPoints() ? "true" : "false") << "\n";
                 json << "    }";
             }
         }

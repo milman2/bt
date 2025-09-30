@@ -1,92 +1,200 @@
 [
 {
   "directory": "/home/milman2/bt/build/shared",
-  "command": "/usr/bin/c++ -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DHAVE_BOOST -I/home/milman2/bt/shared  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/SharedProtocol.dir/packet_protocol.cpp.o -c /home/milman2/bt/shared/packet_protocol.cpp",
-  "file": "/home/milman2/bt/shared/packet_protocol.cpp",
-  "output": "shared/CMakeFiles/SharedProtocol.dir/packet_protocol.cpp.o"
+  "command": "/usr/bin/c++ -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DHAVE_BOOST -I/home/milman2/bt/shared  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/SharedProtocol.dir/Logger.cpp.o -c /home/milman2/bt/shared/Logger.cpp",
+  "file": "/home/milman2/bt/shared/Logger.cpp",
+  "output": "shared/CMakeFiles/SharedProtocol.dir/Logger.cpp.o"
+},
+{
+  "directory": "/home/milman2/bt/build/shared",
+  "command": "/usr/bin/c++ -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DHAVE_BOOST -I/home/milman2/bt/shared  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/SharedProtocol.dir/PacketProtocol.cpp.o -c /home/milman2/bt/shared/PacketProtocol.cpp",
+  "file": "/home/milman2/bt/shared/PacketProtocol.cpp",
+  "output": "shared/CMakeFiles/SharedProtocol.dir/PacketProtocol.cpp.o"
 },
 {
   "directory": "/home/milman2/bt/build/server",
-  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_SERVER_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/server -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/BT_MMORPG_Server.dir/asio_main.cpp.o -c /home/milman2/bt/server/asio_main.cpp",
-  "file": "/home/milman2/bt/server/asio_main.cpp",
-  "output": "server/CMakeFiles/BT_MMORPG_Server.dir/asio_main.cpp.o"
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_SERVER_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/server -I/home/milman2/bt/server/BT -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/BT_MMORPG_Server.dir/BT/Action/BTAction.cpp.o -c /home/milman2/bt/server/BT/Action/BTAction.cpp",
+  "file": "/home/milman2/bt/server/BT/Action/BTAction.cpp",
+  "output": "server/CMakeFiles/BT_MMORPG_Server.dir/BT/Action/BTAction.cpp.o"
 },
 {
   "directory": "/home/milman2/bt/build/server",
-  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_SERVER_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/server -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/BT_MMORPG_Server.dir/asio_server.cpp.o -c /home/milman2/bt/server/asio_server.cpp",
-  "file": "/home/milman2/bt/server/asio_server.cpp",
-  "output": "server/CMakeFiles/BT_MMORPG_Server.dir/asio_server.cpp.o"
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_SERVER_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/server -I/home/milman2/bt/server/BT -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/BT_MMORPG_Server.dir/BT/BTContext.cpp.o -c /home/milman2/bt/server/BT/BTContext.cpp",
+  "file": "/home/milman2/bt/server/BT/BTContext.cpp",
+  "output": "server/CMakeFiles/BT_MMORPG_Server.dir/BT/BTContext.cpp.o"
 },
 {
   "directory": "/home/milman2/bt/build/server",
-  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_SERVER_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/server -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/BT_MMORPG_Server.dir/behavior_tree.cpp.o -c /home/milman2/bt/server/behavior_tree.cpp",
-  "file": "/home/milman2/bt/server/behavior_tree.cpp",
-  "output": "server/CMakeFiles/BT_MMORPG_Server.dir/behavior_tree.cpp.o"
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_SERVER_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/server -I/home/milman2/bt/server/BT -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/BT_MMORPG_Server.dir/BT/BTNode.cpp.o -c /home/milman2/bt/server/BT/BTNode.cpp",
+  "file": "/home/milman2/bt/server/BT/BTNode.cpp",
+  "output": "server/CMakeFiles/BT_MMORPG_Server.dir/BT/BTNode.cpp.o"
 },
 {
   "directory": "/home/milman2/bt/build/server",
-  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_SERVER_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/server -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/BT_MMORPG_Server.dir/game_world.cpp.o -c /home/milman2/bt/server/game_world.cpp",
-  "file": "/home/milman2/bt/server/game_world.cpp",
-  "output": "server/CMakeFiles/BT_MMORPG_Server.dir/game_world.cpp.o"
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_SERVER_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/server -I/home/milman2/bt/server/BT -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/BT_MMORPG_Server.dir/BT/BehaviorTree.cpp.o -c /home/milman2/bt/server/BT/BehaviorTree.cpp",
+  "file": "/home/milman2/bt/server/BT/BehaviorTree.cpp",
+  "output": "server/CMakeFiles/BT_MMORPG_Server.dir/BT/BehaviorTree.cpp.o"
 },
 {
   "directory": "/home/milman2/bt/build/server",
-  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_SERVER_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/server -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/BT_MMORPG_Server.dir/logger.cpp.o -c /home/milman2/bt/server/logger.cpp",
-  "file": "/home/milman2/bt/server/logger.cpp",
-  "output": "server/CMakeFiles/BT_MMORPG_Server.dir/logger.cpp.o"
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_SERVER_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/server -I/home/milman2/bt/server/BT -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/BT_MMORPG_Server.dir/BT/BehaviorTreeEngine.cpp.o -c /home/milman2/bt/server/BT/BehaviorTreeEngine.cpp",
+  "file": "/home/milman2/bt/server/BT/BehaviorTreeEngine.cpp",
+  "output": "server/CMakeFiles/BT_MMORPG_Server.dir/BT/BehaviorTreeEngine.cpp.o"
 },
 {
   "directory": "/home/milman2/bt/build/server",
-  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_SERVER_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/server -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/BT_MMORPG_Server.dir/monster_ai.cpp.o -c /home/milman2/bt/server/monster_ai.cpp",
-  "file": "/home/milman2/bt/server/monster_ai.cpp",
-  "output": "server/CMakeFiles/BT_MMORPG_Server.dir/monster_ai.cpp.o"
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_SERVER_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/server -I/home/milman2/bt/server/BT -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/BT_MMORPG_Server.dir/BT/Condition/BTCondition.cpp.o -c /home/milman2/bt/server/BT/Condition/BTCondition.cpp",
+  "file": "/home/milman2/bt/server/BT/Condition/BTCondition.cpp",
+  "output": "server/CMakeFiles/BT_MMORPG_Server.dir/BT/Condition/BTCondition.cpp.o"
 },
 {
   "directory": "/home/milman2/bt/build/server",
-  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_SERVER_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/server -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/BT_MMORPG_Server.dir/packet_handler.cpp.o -c /home/milman2/bt/server/packet_handler.cpp",
-  "file": "/home/milman2/bt/server/packet_handler.cpp",
-  "output": "server/CMakeFiles/BT_MMORPG_Server.dir/packet_handler.cpp.o"
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_SERVER_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/server -I/home/milman2/bt/server/BT -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/BT_MMORPG_Server.dir/BT/Control/BTParallel.cpp.o -c /home/milman2/bt/server/BT/Control/BTParallel.cpp",
+  "file": "/home/milman2/bt/server/BT/Control/BTParallel.cpp",
+  "output": "server/CMakeFiles/BT_MMORPG_Server.dir/BT/Control/BTParallel.cpp.o"
 },
 {
   "directory": "/home/milman2/bt/build/server",
-  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_SERVER_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/server -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/BT_MMORPG_Server.dir/player.cpp.o -c /home/milman2/bt/server/player.cpp",
-  "file": "/home/milman2/bt/server/player.cpp",
-  "output": "server/CMakeFiles/BT_MMORPG_Server.dir/player.cpp.o"
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_SERVER_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/server -I/home/milman2/bt/server/BT -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/BT_MMORPG_Server.dir/BT/Control/BTRandom.cpp.o -c /home/milman2/bt/server/BT/Control/BTRandom.cpp",
+  "file": "/home/milman2/bt/server/BT/Control/BTRandom.cpp",
+  "output": "server/CMakeFiles/BT_MMORPG_Server.dir/BT/Control/BTRandom.cpp.o"
 },
 {
   "directory": "/home/milman2/bt/build/server",
-  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_SERVER_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/server -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/BT_MMORPG_Server.dir/player_manager.cpp.o -c /home/milman2/bt/server/player_manager.cpp",
-  "file": "/home/milman2/bt/server/player_manager.cpp",
-  "output": "server/CMakeFiles/BT_MMORPG_Server.dir/player_manager.cpp.o"
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_SERVER_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/server -I/home/milman2/bt/server/BT -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/BT_MMORPG_Server.dir/BT/Control/BTSelector.cpp.o -c /home/milman2/bt/server/BT/Control/BTSelector.cpp",
+  "file": "/home/milman2/bt/server/BT/Control/BTSelector.cpp",
+  "output": "server/CMakeFiles/BT_MMORPG_Server.dir/BT/Control/BTSelector.cpp.o"
 },
 {
   "directory": "/home/milman2/bt/build/server",
-  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_SERVER_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/server -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/BT_MMORPG_Server.dir/rest_api_server.cpp.o -c /home/milman2/bt/server/rest_api_server.cpp",
-  "file": "/home/milman2/bt/server/rest_api_server.cpp",
-  "output": "server/CMakeFiles/BT_MMORPG_Server.dir/rest_api_server.cpp.o"
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_SERVER_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/server -I/home/milman2/bt/server/BT -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/BT_MMORPG_Server.dir/BT/Control/BTSequence.cpp.o -c /home/milman2/bt/server/BT/Control/BTSequence.cpp",
+  "file": "/home/milman2/bt/server/BT/Control/BTSequence.cpp",
+  "output": "server/CMakeFiles/BT_MMORPG_Server.dir/BT/Control/BTSequence.cpp.o"
 },
 {
   "directory": "/home/milman2/bt/build/server",
-  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_SERVER_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/server -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/BT_MMORPG_Server.dir/server.cpp.o -c /home/milman2/bt/server/server.cpp",
-  "file": "/home/milman2/bt/server/server.cpp",
-  "output": "server/CMakeFiles/BT_MMORPG_Server.dir/server.cpp.o"
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_SERVER_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/server -I/home/milman2/bt/server/BT -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/BT_MMORPG_Server.dir/BT/Decorator/BTDelay.cpp.o -c /home/milman2/bt/server/BT/Decorator/BTDelay.cpp",
+  "file": "/home/milman2/bt/server/BT/Decorator/BTDelay.cpp",
+  "output": "server/CMakeFiles/BT_MMORPG_Server.dir/BT/Decorator/BTDelay.cpp.o"
 },
 {
   "directory": "/home/milman2/bt/build/server",
-  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_SERVER_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/server -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/BT_MMORPG_Server.dir/simple_websocket_server.cpp.o -c /home/milman2/bt/server/simple_websocket_server.cpp",
-  "file": "/home/milman2/bt/server/simple_websocket_server.cpp",
-  "output": "server/CMakeFiles/BT_MMORPG_Server.dir/simple_websocket_server.cpp.o"
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_SERVER_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/server -I/home/milman2/bt/server/BT -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/BT_MMORPG_Server.dir/BT/Decorator/BTInvert.cpp.o -c /home/milman2/bt/server/BT/Decorator/BTInvert.cpp",
+  "file": "/home/milman2/bt/server/BT/Decorator/BTInvert.cpp",
+  "output": "server/CMakeFiles/BT_MMORPG_Server.dir/BT/Decorator/BTInvert.cpp.o"
+},
+{
+  "directory": "/home/milman2/bt/build/server",
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_SERVER_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/server -I/home/milman2/bt/server/BT -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/BT_MMORPG_Server.dir/BT/Decorator/BTRepeat.cpp.o -c /home/milman2/bt/server/BT/Decorator/BTRepeat.cpp",
+  "file": "/home/milman2/bt/server/BT/Decorator/BTRepeat.cpp",
+  "output": "server/CMakeFiles/BT_MMORPG_Server.dir/BT/Decorator/BTRepeat.cpp.o"
+},
+{
+  "directory": "/home/milman2/bt/build/server",
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_SERVER_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/server -I/home/milman2/bt/server/BT -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/BT_MMORPG_Server.dir/BT/Decorator/BTTimeout.cpp.o -c /home/milman2/bt/server/BT/Decorator/BTTimeout.cpp",
+  "file": "/home/milman2/bt/server/BT/Decorator/BTTimeout.cpp",
+  "output": "server/CMakeFiles/BT_MMORPG_Server.dir/BT/Decorator/BTTimeout.cpp.o"
+},
+{
+  "directory": "/home/milman2/bt/build/server",
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_SERVER_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/server -I/home/milman2/bt/server/BT -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/BT_MMORPG_Server.dir/BT/Monster/Monster.cpp.o -c /home/milman2/bt/server/BT/Monster/Monster.cpp",
+  "file": "/home/milman2/bt/server/BT/Monster/Monster.cpp",
+  "output": "server/CMakeFiles/BT_MMORPG_Server.dir/BT/Monster/Monster.cpp.o"
+},
+{
+  "directory": "/home/milman2/bt/build/server",
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_SERVER_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/server -I/home/milman2/bt/server/BT -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/BT_MMORPG_Server.dir/BT/Monster/MonsterBTExecutor.cpp.o -c /home/milman2/bt/server/BT/Monster/MonsterBTExecutor.cpp",
+  "file": "/home/milman2/bt/server/BT/Monster/MonsterBTExecutor.cpp",
+  "output": "server/CMakeFiles/BT_MMORPG_Server.dir/BT/Monster/MonsterBTExecutor.cpp.o"
+},
+{
+  "directory": "/home/milman2/bt/build/server",
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_SERVER_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/server -I/home/milman2/bt/server/BT -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/BT_MMORPG_Server.dir/BT/Monster/MonsterFactory.cpp.o -c /home/milman2/bt/server/BT/Monster/MonsterFactory.cpp",
+  "file": "/home/milman2/bt/server/BT/Monster/MonsterFactory.cpp",
+  "output": "server/CMakeFiles/BT_MMORPG_Server.dir/BT/Monster/MonsterFactory.cpp.o"
+},
+{
+  "directory": "/home/milman2/bt/build/server",
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_SERVER_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/server -I/home/milman2/bt/server/BT -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/BT_MMORPG_Server.dir/BT/Monster/MonsterManager.cpp.o -c /home/milman2/bt/server/BT/Monster/MonsterManager.cpp",
+  "file": "/home/milman2/bt/server/BT/Monster/MonsterManager.cpp",
+  "output": "server/CMakeFiles/BT_MMORPG_Server.dir/BT/Monster/MonsterManager.cpp.o"
+},
+{
+  "directory": "/home/milman2/bt/build/server",
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_SERVER_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/server -I/home/milman2/bt/server/BT -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/BT_MMORPG_Server.dir/BT/NPC/NPC.cpp.o -c /home/milman2/bt/server/BT/NPC/NPC.cpp",
+  "file": "/home/milman2/bt/server/BT/NPC/NPC.cpp",
+  "output": "server/CMakeFiles/BT_MMORPG_Server.dir/BT/NPC/NPC.cpp.o"
+},
+{
+  "directory": "/home/milman2/bt/build/server",
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_SERVER_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/server -I/home/milman2/bt/server/BT -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/BT_MMORPG_Server.dir/Network/Game/AsioMain.cpp.o -c /home/milman2/bt/server/Network/Game/AsioMain.cpp",
+  "file": "/home/milman2/bt/server/Network/Game/AsioMain.cpp",
+  "output": "server/CMakeFiles/BT_MMORPG_Server.dir/Network/Game/AsioMain.cpp.o"
+},
+{
+  "directory": "/home/milman2/bt/build/server",
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_SERVER_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/server -I/home/milman2/bt/server/BT -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/BT_MMORPG_Server.dir/Network/Game/AsioServer.cpp.o -c /home/milman2/bt/server/Network/Game/AsioServer.cpp",
+  "file": "/home/milman2/bt/server/Network/Game/AsioServer.cpp",
+  "output": "server/CMakeFiles/BT_MMORPG_Server.dir/Network/Game/AsioServer.cpp.o"
+},
+{
+  "directory": "/home/milman2/bt/build/server",
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_SERVER_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/server -I/home/milman2/bt/server/BT -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/BT_MMORPG_Server.dir/Network/Game/PacketHandler.cpp.o -c /home/milman2/bt/server/Network/Game/PacketHandler.cpp",
+  "file": "/home/milman2/bt/server/Network/Game/PacketHandler.cpp",
+  "output": "server/CMakeFiles/BT_MMORPG_Server.dir/Network/Game/PacketHandler.cpp.o"
+},
+{
+  "directory": "/home/milman2/bt/build/server",
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_SERVER_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/server -I/home/milman2/bt/server/BT -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/BT_MMORPG_Server.dir/Network/Game/Server.cpp.o -c /home/milman2/bt/server/Network/Game/Server.cpp",
+  "file": "/home/milman2/bt/server/Network/Game/Server.cpp",
+  "output": "server/CMakeFiles/BT_MMORPG_Server.dir/Network/Game/Server.cpp.o"
+},
+{
+  "directory": "/home/milman2/bt/build/server",
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_SERVER_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/server -I/home/milman2/bt/server/BT -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/BT_MMORPG_Server.dir/Network/RestAPI/RestApiServer.cpp.o -c /home/milman2/bt/server/Network/RestAPI/RestApiServer.cpp",
+  "file": "/home/milman2/bt/server/Network/RestAPI/RestApiServer.cpp",
+  "output": "server/CMakeFiles/BT_MMORPG_Server.dir/Network/RestAPI/RestApiServer.cpp.o"
+},
+{
+  "directory": "/home/milman2/bt/build/server",
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_SERVER_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/server -I/home/milman2/bt/server/BT -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/BT_MMORPG_Server.dir/Network/WebSocket/SimpleWebSocketServer.cpp.o -c /home/milman2/bt/server/Network/WebSocket/SimpleWebSocketServer.cpp",
+  "file": "/home/milman2/bt/server/Network/WebSocket/SimpleWebSocketServer.cpp",
+  "output": "server/CMakeFiles/BT_MMORPG_Server.dir/Network/WebSocket/SimpleWebSocketServer.cpp.o"
+},
+{
+  "directory": "/home/milman2/bt/build/server",
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_SERVER_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/server -I/home/milman2/bt/server/BT -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/BT_MMORPG_Server.dir/Player.cpp.o -c /home/milman2/bt/server/Player.cpp",
+  "file": "/home/milman2/bt/server/Player.cpp",
+  "output": "server/CMakeFiles/BT_MMORPG_Server.dir/Player.cpp.o"
+},
+{
+  "directory": "/home/milman2/bt/build/server",
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_SERVER_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/server -I/home/milman2/bt/server/BT -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/BT_MMORPG_Server.dir/PlayerManager.cpp.o -c /home/milman2/bt/server/PlayerManager.cpp",
+  "file": "/home/milman2/bt/server/PlayerManager.cpp",
+  "output": "server/CMakeFiles/BT_MMORPG_Server.dir/PlayerManager.cpp.o"
+},
+{
+  "directory": "/home/milman2/bt/build/server",
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_SERVER_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/server -I/home/milman2/bt/server/BT -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/BT_MMORPG_Server.dir/World/GameWorld.cpp.o -c /home/milman2/bt/server/World/GameWorld.cpp",
+  "file": "/home/milman2/bt/server/World/GameWorld.cpp",
+  "output": "server/CMakeFiles/BT_MMORPG_Server.dir/World/GameWorld.cpp.o"
+},
+{
+  "directory": "/home/milman2/bt/build/server",
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_SERVER_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/server -I/home/milman2/bt/server/BT -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/BT_MMORPG_Server.dir/World/Map.cpp.o -c /home/milman2/bt/server/World/Map.cpp",
+  "file": "/home/milman2/bt/server/World/Map.cpp",
+  "output": "server/CMakeFiles/BT_MMORPG_Server.dir/World/Map.cpp.o"
 },
 {
   "directory": "/home/milman2/bt/build/client",
-  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_CLIENT_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/client -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/AsioTestClient.dir/asio_test_client.cpp.o -c /home/milman2/bt/client/asio_test_client.cpp",
-  "file": "/home/milman2/bt/client/asio_test_client.cpp",
-  "output": "client/CMakeFiles/AsioTestClient.dir/asio_test_client.cpp.o"
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_CLIENT_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/client -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/AsioTestClient.dir/AsioTestClient.cpp.o -c /home/milman2/bt/client/AsioTestClient.cpp",
+  "file": "/home/milman2/bt/client/AsioTestClient.cpp",
+  "output": "client/CMakeFiles/AsioTestClient.dir/AsioTestClient.cpp.o"
 },
 {
   "directory": "/home/milman2/bt/build/client",
-  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_CLIENT_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/client -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/AsioTestClient.dir/asio_test_client_main.cpp.o -c /home/milman2/bt/client/asio_test_client_main.cpp",
-  "file": "/home/milman2/bt/client/asio_test_client_main.cpp",
-  "output": "client/CMakeFiles/AsioTestClient.dir/asio_test_client_main.cpp.o"
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_NO_LIB -DBOOST_ATOMIC_STATIC_LINK -DBOOST_BIND_GLOBAL_PLACEHOLDERS -DBOOST_CHRONO_NO_LIB -DBOOST_CHRONO_STATIC_LINK -DBOOST_CONTAINER_NO_LIB -DBOOST_CONTAINER_STATIC_LINK -DBOOST_DATE_TIME_NO_LIB -DBOOST_DATE_TIME_STATIC_LINK -DBOOST_THREAD_NO_LIB -DBOOST_THREAD_STATIC_LINK -DBOOST_THREAD_USE_LIB -DBT_CLIENT_BUILD -DHAVE_BOOST -I/home/milman2/bt/shared -I/home/milman2/bt/client -isystem /home/milman2/vcpkg/installed/x64-linux/include  -Wall -Wextra -O2 -std=gnu++17 -o CMakeFiles/AsioTestClient.dir/AsioTestClientMain.cpp.o -c /home/milman2/bt/client/AsioTestClientMain.cpp",
+  "file": "/home/milman2/bt/client/AsioTestClientMain.cpp",
+  "output": "client/CMakeFiles/AsioTestClient.dir/AsioTestClientMain.cpp.o"
 }
 ]

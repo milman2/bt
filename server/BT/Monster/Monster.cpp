@@ -33,7 +33,7 @@ namespace bt
         last_update_time_ = std::chrono::steady_clock::now();
 
         // 기본 순찰점 설정 (스폰 위치 주변)
-        set_default_patrol_points();
+        SetDefaultPatrolPoints();
 
         std::cout << "몬스터 생성: " << name_ << " (타입: " << static_cast<int>(type_) << ")" << std::endl;
     }
@@ -100,7 +100,7 @@ namespace bt
         }
     }
 
-    void Monster::update_environment_info(const std::vector<std::shared_ptr<Player>>&  players,
+    void Monster::UpdateEnvironmentInfo(const std::vector<std::shared_ptr<Player>>&  players,
                                           const std::vector<std::shared_ptr<Monster>>& monsters)
     {
         environment_info_ = EnvironmentInfo();
@@ -161,37 +161,37 @@ namespace bt
     }
 
     // 환경 인지 헬퍼 메서드들 구현
-    bool Monster::has_enemy_in_range(float range) const
+    bool Monster::HasEnemyInRange(float range) const
     {
         return environment_info_.nearest_enemy_distance >= 0 && environment_info_.nearest_enemy_distance <= range;
     }
 
-    bool Monster::has_enemy_in_attack_range() const
+    bool Monster::HasEnemyInAttackRange() const
     {
-        return has_enemy_in_range(stats_.attack_range);
+        return HasEnemyInRange(stats_.attack_range);
     }
 
-    bool Monster::has_enemy_in_detection_range() const
+    bool Monster::HasEnemyInDetectionRange() const
     {
-        return has_enemy_in_range(stats_.detection_range);
+        return HasEnemyInRange(stats_.detection_range);
     }
 
-    bool Monster::has_enemy_in_chase_range() const
+    bool Monster::HasEnemyInChaseRange() const
     {
-        return has_enemy_in_range(chase_range_);
+        return HasEnemyInRange(chase_range_);
     }
 
-    float Monster::get_distance_to_nearest_enemy() const
+    float Monster::GetDistanceToNearestEnemy() const
     {
         return environment_info_.nearest_enemy_distance;
     }
 
-    uint32_t Monster::get_nearest_enemy_id() const
+    uint32_t Monster::GetNearestEnemyID() const
     {
         return environment_info_.nearest_enemy_id;
     }
 
-    bool Monster::can_see_target(uint32_t target_id) const
+    bool Monster::CanSeeTarget(uint32_t target_id) const
     {
         // 간단한 시야 구현: 거리와 시야 확보 여부 확인
         if (target_id == 0)
@@ -207,7 +207,7 @@ namespace bt
         return false;
     }
 
-    bool Monster::is_target_in_range(uint32_t target_id, float range) const
+    bool Monster::IsTargetInRange(uint32_t target_id, float range) const
     {
         if (target_id == 0)
             return false;
@@ -221,7 +221,7 @@ namespace bt
         return false;
     }
 
-    float Monster::get_distance_to_target(uint32_t target_id) const
+    float Monster::GetDistanceToTarget(uint32_t target_id) const
     {
         if (target_id == 0)
             return -1.0f;
@@ -248,7 +248,7 @@ namespace bt
         SetState(MonsterState::ATTACK);
     }
 
-    void Monster::update(float delta_time)
+    void Monster::Update(float delta_time)
     {
         static std::map<std::string, int> update_counts;
         update_counts[name_]++;
@@ -279,7 +279,7 @@ namespace bt
         last_update_time_ = std::chrono::steady_clock::now();
     }
 
-    void Monster::set_default_patrol_points()
+    void Monster::SetDefaultPatrolPoints()
     {
         patrol_points_.clear();
 
@@ -295,18 +295,18 @@ namespace bt
         current_patrol_index_ = 0;
     }
 
-    void Monster::set_patrol_points(const std::vector<MonsterPosition>& points)
+    void Monster::SetPatrolPoints(const std::vector<MonsterPosition>& points)
     {
         patrol_points_        = points;
         current_patrol_index_ = 0;
     }
 
-    void Monster::add_patrol_point(const MonsterPosition& point)
+    void Monster::AddPatrolPoint(const MonsterPosition& point)
     {
         patrol_points_.push_back(point);
     }
 
-    MonsterPosition Monster::get_next_patrol_point()
+    MonsterPosition Monster::GetNextPatrolPoint()
     {
         if (patrol_points_.empty())
         {

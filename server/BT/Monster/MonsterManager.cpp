@@ -427,8 +427,8 @@ namespace bt
         // 각 몬스터의 환경 정보 업데이트
         for (const auto& [id, monster] : monsters_)
         {
-            monster->update_environment_info(all_players, all_monsters);
-            monster->update(delta_time);
+            monster->UpdateEnvironmentInfo(all_players, all_monsters);
+            monster->Update(delta_time);
         }
 
         // 주기적으로 WebSocket으로 몬스터 상태 업데이트 브로드캐스트
