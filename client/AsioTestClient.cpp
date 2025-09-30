@@ -28,6 +28,10 @@ namespace bt
         behavior_tree_ = PlayerBTs::CreatePlayerBT();
         context_.SetAI(shared_from_this());
         
+        // 환경 인지 정보 초기화
+        environment_info_.Clear();
+        context_.SetEnvironmentInfo(&environment_info_);
+        
         LogMessage("AI 플레이어 클라이언트 생성됨: " + config_.player_name);
     }
 
@@ -260,10 +264,26 @@ namespace bt
             ParsePacketResponse(packet);
         }
 
+        // 환경 인지 정보 업데이트
+        UpdateEnvironmentInfo();
+
         // Behavior Tree 실행
         if (behavior_tree_)
         {
-            behavior_tree_->Execute(context_);
+            // 실행 카운트 증가
+            context_.IncrementExecutionCount();
+            
+            // BT 실행
+            NodeStatus status = behavior_tree_->Execute(context_);
+            
+            // 실행 상태 로깅 (디버깅용)
+            if (verbose_ && context_.GetExecutionCount() % 100 == 0)
+            {
+                std::string status_str = (status == NodeStatus::SUCCESS) ? "SUCCESS" :
+                                       (status == NodeStatus::FAILURE) ? "FAILURE" : "RUNNING";
+                LogMessage("BT 실행 상태: " + status_str + " (실행 횟수: " + 
+                          std::to_string(context_.GetExecutionCount()) + ")");
+            }
         }
     }
 
@@ -789,6 +809,46 @@ namespace bt
         oss << "[" << config_.player_name << "] " << message;
         
         std::cout << oss.str() << std::endl;
+    }
+
+    void AsioTestClient::UpdateEnvironmentInfo()
+    {
+        // 환경 인지 정보 초기화
+        environment_info_.Clear();
+        
+        // 주변 몬스터 정보 업데이트
+        for (const auto& [monster_id, monster_pos] : monsters_)
+        {
+            float distance = std::sqrt(
+                std::pow(monster_pos.x - position_.x, 2) + 
+                std::pow(monster_pos.z - position_.z, 2)
+            );
+            
+            // 탐지 범위 내의 몬스터만 추가
+            if (distance <= config_.detection_range)
+            {
+                environment_info_.nearby_monsters.push_back(monster_id);
+                
+                // 가장 가까운 적 업데이트
+                if (environment_info_.nearest_enemy_id == 0 || 
+                    distance < environment_info_.nearest_enemy_distance)
+                {
+                    environment_info_.nearest_enemy_id = monster_id;
+                    environment_info_.nearest_enemy_distance = distance;
+                }
+            }
+        }
+        
+        // 시야 확보 여부 (간단한 구현 - 장애물이 없으면 시야 확보)
+        environment_info_.has_line_of_sight = true; // TODO: 실제 장애물 검사 구현
+        
+        // 디버그 로깅
+        if (verbose_ && !environment_info_.nearby_monsters.empty())
+        {
+            LogMessage("환경 인지: 주변 몬스터 " + std::to_string(environment_info_.nearby_monsters.size()) + 
+                      "마리, 가장 가까운 적 ID: " + std::to_string(environment_info_.nearest_enemy_id) +
+                      " (거리: " + std::to_string(environment_info_.nearest_enemy_distance) + ")");
+        }
     }
 
 } // namespace bt

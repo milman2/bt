@@ -16,18 +16,21 @@ namespace action
         auto ai = context.GetAI();
         if (!ai)
         {
+            SetLastStatus(NodeStatus::FAILURE);
             return NodeStatus::FAILURE;
         }
 
         auto client_executor = std::dynamic_pointer_cast<AsioTestClient>(ai);
         if (!client_executor)
         {
+            SetLastStatus(NodeStatus::FAILURE);
             return NodeStatus::FAILURE;
         }
 
         // 순찰점이 있는지 확인
         if (!client_executor->HasPatrolPoints())
         {
+            SetLastStatus(NodeStatus::FAILURE);
             return NodeStatus::FAILURE;
         }
 
@@ -50,6 +53,12 @@ namespace action
             
             // 다음 순찰점으로 이동
             client_executor->AdvanceToNextPatrolPoint();
+            
+            // 실행 상태 업데이트
+            SetRunning(false);
+            SetLastStatus(NodeStatus::SUCCESS);
+            context.ClearCurrentRunningNode();
+            
             return NodeStatus::SUCCESS;
         }
         else
@@ -69,8 +78,17 @@ namespace action
             
             client_executor->MoveTo(new_x, current_pos.y, new_z);
             
-            std::cout << "플레이어 " << client_executor->GetName() << " 순찰 이동: (" 
-                      << new_x << ", " << current_pos.y << ", " << new_z << ")" << std::endl;
+            // 실행 상태 업데이트
+            SetRunning(true);
+            SetLastStatus(NodeStatus::RUNNING);
+            context.SetCurrentRunningNode(GetName());
+            
+            if (context.GetExecutionCount() % 50 == 0) // 5초마다 로그
+            {
+                std::cout << "플레이어 " << client_executor->GetName() << " 순찰 이동 중: (" 
+                          << new_x << ", " << current_pos.y << ", " << new_z << ") - 거리: " 
+                          << distance << std::endl;
+            }
             
             return NodeStatus::RUNNING;
         }

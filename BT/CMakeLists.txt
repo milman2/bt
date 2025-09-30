@@ -21,6 +21,7 @@ set(BT_HEADERS
     Tree.h
     Engine.h
     IExecutor.h
+    EnvironmentInfo.h
     Action/Action.h
     Condition/Condition.h
     Control/Sequence.h
@@ -94,10 +95,33 @@ install(FILES
     DESTINATION lib/cmake/BT_Library
 )
 
-# 테스트 설정 (선택사항)
-option(BUILD_BT_TESTS "Build BT library tests" OFF)
+# 테스트 설정
+option(BUILD_BT_TESTS "Build BT library tests" ON)
 
 if(BUILD_BT_TESTS)
     enable_testing()
-    add_subdirectory(tests)
+    
+    # 테스트 소스 파일들
+    set(BT_TEST_SOURCES
+        Test/TestMain.cpp
+        Test/BehaviorTreeTests.cpp
+    )
+    
+    # 테스트 실행 파일 생성
+    add_executable(BT_Tests ${BT_TEST_SOURCES})
+    
+    # 테스트에 BT 라이브러리 링크
+    target_link_libraries(BT_Tests BT_Library)
+    
+    # 테스트 실행
+    add_test(NAME BT_UnitTests COMMAND BT_Tests)
+    
+    # 테스트 그룹 설정
+    set_tests_properties(BT_UnitTests PROPERTIES
+        TIMEOUT 30
+        LABELS "unit;bt;behavior_tree"
+    )
+    
+    # 테스트 디렉토리 생성
+    file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Test)
 endif()

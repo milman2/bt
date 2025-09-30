@@ -113,11 +113,11 @@ add_subdirectory(BT)
 add_subdirectory(server)
 add_subdirectory(client)
 
-# 테스트 설정 (선택사항)
-option(BUILD_TESTS "Build tests" OFF)
+# 테스트 설정
+option(BUILD_TESTS "Build tests" ON)
 if(BUILD_TESTS)
     enable_testing()
-    add_subdirectory(tests)
+    # BT 라이브러리 테스트는 BT/CMakeLists.txt에서 처리됨
 endif()
 
 # 설치 설정

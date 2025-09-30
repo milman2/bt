@@ -72,15 +72,6 @@ namespace bt
         float                        move_speed      = 2.0f;  // 이동 속도
     };
 
-    // 환경 인지 정보
-    struct EnvironmentInfo
-    {
-        std::vector<uint32_t> nearby_players;                 // 주변 플레이어 ID들
-        std::vector<uint32_t> nearby_monsters;                // 주변 몬스터 ID들
-        std::vector<uint32_t> obstacles;                      // 장애물 ID들
-        bool                  has_line_of_sight      = true;  // 시야 확보 여부
-        float                 nearest_enemy_distance = -1.0f; // 가장 가까운 적과의 거리
-        uint32_t              nearest_enemy_id       = 0;     // 가장 가까운 적 ID
-    };
+    // EnvironmentInfo는 이제 공용 BT 라이브러리에서 가져옴
 
 } // namespace bt

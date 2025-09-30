@@ -26,6 +26,7 @@
 #include "../BT/Context.h"
 #include "../BT/Engine.h"
 #include "../BT/IExecutor.h"
+#include "../BT/EnvironmentInfo.h"
 #include "BT/PlayerBTs.h"
 
 namespace bt
@@ -133,6 +134,10 @@ namespace bt
         void UpdateCombat(float delta_time);
         void FindNearestMonster();
         bool IsInRange(float x, float z, float range) const;
+        
+        // 환경 인지
+        void UpdateEnvironmentInfo();
+        const EnvironmentInfo& GetEnvironmentInfo() const { return environment_info_; }
 
         // 패킷 처리
         void HandleMonsterUpdate(const Packet& packet);
@@ -167,6 +172,9 @@ namespace bt
         // 몬스터 정보
         std::map<uint32_t, PlayerPosition>             monsters_;
         float                                           last_monster_update_;
+        
+        // 환경 인지 정보
+        EnvironmentInfo                                 environment_info_;
 
         // 로깅
         boost::mutex log_mutex_;

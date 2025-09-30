@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "MonsterTypes.h"
+#include "../../BT/EnvironmentInfo.h"
 
 // 전방 선언
 namespace bt
