@@ -31,7 +31,7 @@ namespace bt
     // 전방 선언
     class AsioClient;
     class BehaviorTreeEngine;
-    class MonsterAI;
+    class MonsterBTExecutor;
     class MonsterManager;
     class PlayerManager;
     class RestApiServer;
