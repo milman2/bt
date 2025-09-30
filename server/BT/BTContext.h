@@ -10,7 +10,7 @@ namespace bt
 {
 
     // 전방 선언
-    class MonsterAI;
+    class MonsterBTExecutor;
     struct EnvironmentInfo;
 
     // Behavior Tree 컨텍스트 (Blackboard)
@@ -52,8 +52,8 @@ namespace bt
         }
 
         // 몬스터 AI 참조
-        void                       set_monster_ai(std::shared_ptr<MonsterAI> ai) { monster_ai_ = ai; }
-        std::shared_ptr<MonsterAI> get_monster_ai() const { return monster_ai_; }
+        void                              set_monster_ai(std::shared_ptr<MonsterBTExecutor> ai) { monster_ai_ = ai; }
+        std::shared_ptr<MonsterBTExecutor> get_monster_ai() const { return monster_ai_; }
 
         // 실행 시간 관리
         void set_start_time(std::chrono::steady_clock::time_point time) { start_time_ = time; }
@@ -65,7 +65,7 @@ namespace bt
 
     private:
         std::unordered_map<std::string, std::any> data_;
-        std::shared_ptr<MonsterAI>                monster_ai_;
+        std::shared_ptr<MonsterBTExecutor>        monster_ai_;
         std::chrono::steady_clock::time_point     start_time_;
         const EnvironmentInfo*                    environment_info_ = nullptr;
     };

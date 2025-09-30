@@ -1,5 +1,5 @@
 #include "BehaviorTreeEngine.h"
-#include "Monster/MonsterAI.h"
+#include "Monster/MonsterBTExecutor.h"
 
 #include <algorithm>
 
@@ -44,13 +44,13 @@ namespace bt
         return BTNodeStatus::FAILURE;
     }
 
-    void BehaviorTreeEngine::register_monster_ai(std::shared_ptr<MonsterAI> ai)
+    void BehaviorTreeEngine::register_monster_ai(std::shared_ptr<MonsterBTExecutor> ai)
     {
         std::lock_guard<std::mutex> lock(monsters_mutex_);
         monster_ais_.push_back(ai);
     }
 
-    void BehaviorTreeEngine::unregister_monster_ai(std::shared_ptr<MonsterAI> ai)
+    void BehaviorTreeEngine::unregister_monster_ai(std::shared_ptr<MonsterBTExecutor> ai)
     {
         std::lock_guard<std::mutex> lock(monsters_mutex_);
         auto                        it = std::find(monster_ais_.begin(), monster_ais_.end(), ai);

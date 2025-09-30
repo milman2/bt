@@ -15,6 +15,7 @@
 #include "PlayerManager.h"
 #include "RestApiServer.h"
 #include "SimpleWebSocketServer.h"
+#include "BT/Monster/MonsterBTExecutor.h"
 
 namespace bt
 {

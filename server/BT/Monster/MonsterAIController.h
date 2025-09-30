@@ -5,8 +5,8 @@
 #include <memory>
 #include <string>
 
-#include "BehaviorTree.h"
-#include "BTContext.h"
+#include "../BehaviorTree.h"
+#include "../BTContext.h"
 
 namespace bt
 {
@@ -14,12 +14,12 @@ namespace bt
     // 전방 선언
     class Monster;
 
-    // 몬스터 Behavior Tree 실행자 클래스
-    class MonsterBTExecutor : public std::enable_shared_from_this<MonsterBTExecutor>
+    // 몬스터 AI 클래스
+    class MonsterAI : public std::enable_shared_from_this<MonsterAI>
     {
     public:
-        MonsterBTExecutor(const std::string& name, const std::string& bt_name);
-        ~MonsterBTExecutor() = default;
+        MonsterAI(const std::string& name, const std::string& bt_name);
+        ~MonsterAI() = default;
 
         // AI 업데이트
         void update(float delta_time);

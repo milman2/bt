@@ -3,7 +3,7 @@
 #include <memory>
 #include <string>
 
-#include "MonsterAI.h"
+#include "Monster.h"
 
 namespace bt
 {

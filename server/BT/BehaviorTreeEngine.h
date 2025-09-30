@@ -15,7 +15,7 @@ namespace bt
 {
 
     // 전방 선언
-    class MonsterAI;
+    class MonsterBTExecutor;
 
     // Behavior Tree 엔진
     class BehaviorTreeEngine
@@ -33,8 +33,8 @@ namespace bt
         BTNodeStatus execute_tree(const std::string& name, BTContext& context);
 
         // 몬스터 AI 관리
-        void register_monster_ai(std::shared_ptr<MonsterAI> ai);
-        void unregister_monster_ai(std::shared_ptr<MonsterAI> ai);
+        void register_monster_ai(std::shared_ptr<MonsterBTExecutor> ai);
+        void unregister_monster_ai(std::shared_ptr<MonsterBTExecutor> ai);
         void update_all_monsters(float delta_time);
 
         // 통계
@@ -43,7 +43,7 @@ namespace bt
 
     private:
         std::unordered_map<std::string, std::shared_ptr<BehaviorTree>> trees_;
-        std::vector<std::shared_ptr<MonsterAI>>                        monster_ais_;
+        std::vector<std::shared_ptr<MonsterBTExecutor>>                monster_ais_;
         mutable std::mutex                                             trees_mutex_;
         mutable std::mutex                                             monsters_mutex_;
     };
