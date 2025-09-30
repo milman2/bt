@@ -21,14 +21,14 @@ namespace bt
         ~BTContext() = default;
 
         // 데이터 관리
-        void     set_data(const std::string& key, const std::any& value);
-        std::any get_data(const std::string& key) const;
-        bool     has_data(const std::string& key) const;
-        void     remove_data(const std::string& key);
+        void     SetData(const std::string& key, const std::any& value);
+        std::any GetData(const std::string& key) const;
+        bool     HasData(const std::string& key) const;
+        void     RemoveData(const std::string& key);
 
         // 타입 안전한 데이터 접근
         template <typename T>
-        T get_data_as(const std::string& key) const
+        T GetDataAs(const std::string& key) const
         {
             auto it = data_.find(key);
             if (it != data_.end())
@@ -46,22 +46,22 @@ namespace bt
         }
 
         template <typename T>
-        void set_data(const std::string& key, const T& value)
+        void SetData(const std::string& key, const T& value)
         {
             data_[key] = value;
         }
 
         // 몬스터 AI 참조
-        void                              set_monster_ai(std::shared_ptr<MonsterBTExecutor> ai) { monster_ai_ = ai; }
-        std::shared_ptr<MonsterBTExecutor> get_monster_ai() const { return monster_ai_; }
+        void                              SetMonsterAI(std::shared_ptr<MonsterBTExecutor> ai) { monster_ai_ = ai; }
+        std::shared_ptr<MonsterBTExecutor> GetMonsterAI() const { return monster_ai_; }
 
         // 실행 시간 관리
-        void set_start_time(std::chrono::steady_clock::time_point time) { start_time_ = time; }
-        std::chrono::steady_clock::time_point get_start_time() const { return start_time_; }
+        void SetStartTime(std::chrono::steady_clock::time_point time) { start_time_ = time; }
+        std::chrono::steady_clock::time_point GetStartTime() const { return start_time_; }
 
         // 환경 정보 관리
-        void                   set_environment_info(const EnvironmentInfo* env_info) { environment_info_ = env_info; }
-        const EnvironmentInfo* get_environment_info() const { return environment_info_; }
+        void                   SetEnvironmentInfo(const EnvironmentInfo* env_info) { environment_info_ = env_info; }
+        const EnvironmentInfo* GetEnvironmentInfo() const { return environment_info_; }
 
     private:
         std::unordered_map<std::string, std::any> data_;

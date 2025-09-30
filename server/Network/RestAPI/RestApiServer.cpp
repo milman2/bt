@@ -342,8 +342,8 @@ namespace bt
 
         if (bt_engine_)
         {
-            json << "  \"registered_bt_trees\": " << bt_engine_->get_registered_trees() << ",\n";
-            json << "  \"active_monsters\": " << bt_engine_->get_active_monsters() << ",\n";
+            json << "  \"registered_bt_trees\": " << bt_engine_->GetRegisteredTrees() << ",\n";
+            json << "  \"active_monsters\": " << bt_engine_->GetActiveMonsters() << ",\n";
         }
         else
         {

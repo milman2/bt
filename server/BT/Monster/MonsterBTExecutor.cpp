@@ -36,10 +36,10 @@ namespace bt
         }
 
         auto now = std::chrono::steady_clock::now();
-        context_.set_start_time(now);
+        context_.SetStartTime(now);
 
         // 몬스터 참조를 컨텍스트에 설정
-        context_.set_monster_ai(shared_from_this());
+        context_.SetMonsterAI(shared_from_this());
 
         // Behavior Tree 실행
         behavior_tree_->Execute(context_);

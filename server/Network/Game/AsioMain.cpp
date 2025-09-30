@@ -136,7 +136,7 @@ int main(int argc, char* argv[])
         // bt_engine->register_tree("guard_bt", MonsterBTs::create_guard_bt());
 
         LOG_INFO("Behavior Tree 엔진 초기화 완료");
-        LOG_INFO("등록된 BT: " + std::to_string(bt_engine->get_registered_trees()) + "개");
+        LOG_INFO("등록된 BT: " + std::to_string(bt_engine->GetRegisteredTrees()) + "개");
 
         // MonsterManager에 Behavior Tree 엔진 설정
         // bt_engine은 포인터이므로 shared_ptr로 변환할 수 없음
@@ -205,7 +205,7 @@ int main(int argc, char* argv[])
         // Behavior Tree 엔진 업데이트
         if (bt_engine)
         {
-            bt_engine->update_all_monsters(0.1f); // 100ms 간격으로 업데이트
+            bt_engine->UpdateAllMonsters(0.1f); // 100ms 간격으로 업데이트
         }
 
         // 통계 정보 출력 (10초마다)

@@ -11,13 +11,13 @@ namespace bt
 
     BehaviorTreeEngine::~BehaviorTreeEngine() {}
 
-    void BehaviorTreeEngine::register_tree(const std::string& name, std::shared_ptr<BehaviorTree> tree)
+    void BehaviorTreeEngine::RegisterTree(const std::string& name, std::shared_ptr<BehaviorTree> tree)
     {
         std::lock_guard<std::mutex> lock(trees_mutex_);
         trees_[name] = tree;
     }
 
-    std::shared_ptr<BehaviorTree> BehaviorTreeEngine::get_tree(const std::string& name)
+    std::shared_ptr<BehaviorTree> BehaviorTreeEngine::GetTree(const std::string& name)
     {
         std::lock_guard<std::mutex> lock(trees_mutex_);
         auto                        it = trees_.find(name);
@@ -28,15 +28,15 @@ namespace bt
         return nullptr;
     }
 
-    void BehaviorTreeEngine::unregister_tree(const std::string& name)
+    void BehaviorTreeEngine::UnregisterTree(const std::string& name)
     {
         std::lock_guard<std::mutex> lock(trees_mutex_);
         trees_.erase(name);
     }
 
-    BTNodeStatus BehaviorTreeEngine::execute_tree(const std::string& name, BTContext& context)
+    BTNodeStatus BehaviorTreeEngine::ExecuteTree(const std::string& name, BTContext& context)
     {
-        auto tree = get_tree(name);
+        auto tree = GetTree(name);
         if (tree)
         {
             return tree->Execute(context);
@@ -44,13 +44,13 @@ namespace bt
         return BTNodeStatus::FAILURE;
     }
 
-    void BehaviorTreeEngine::register_monster_ai(std::shared_ptr<MonsterBTExecutor> ai)
+    void BehaviorTreeEngine::RegisterMonsterAI(std::shared_ptr<MonsterBTExecutor> ai)
     {
         std::lock_guard<std::mutex> lock(monsters_mutex_);
         monster_ais_.push_back(ai);
     }
 
-    void BehaviorTreeEngine::unregister_monster_ai(std::shared_ptr<MonsterBTExecutor> ai)
+    void BehaviorTreeEngine::UnregisterMonsterAI(std::shared_ptr<MonsterBTExecutor> ai)
     {
         std::lock_guard<std::mutex> lock(monsters_mutex_);
         auto                        it = std::find(monster_ais_.begin(), monster_ais_.end(), ai);
@@ -60,7 +60,7 @@ namespace bt
         }
     }
 
-    void BehaviorTreeEngine::update_all_monsters(float delta_time)
+    void BehaviorTreeEngine::UpdateAllMonsters(float delta_time)
     {
         std::lock_guard<std::mutex> lock(monsters_mutex_);
         for (auto& ai : monster_ais_)

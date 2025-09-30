@@ -101,10 +101,10 @@ namespace bt
         // Behavior Tree 엔진에 AI 등록
         if (bt_engine_ && monster->GetAI())
         {
-            bt_engine_->register_monster_ai(monster->GetAI());
+            bt_engine_->RegisterMonsterAI(monster->GetAI());
 
             // Behavior Tree 설정
-            auto tree = bt_engine_->get_tree(bt_name);
+            auto tree = bt_engine_->GetTree(bt_name);
             if (tree)
             {
                 monster->GetAI()->SetBehaviorTree(tree);

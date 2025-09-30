@@ -25,21 +25,21 @@ namespace bt
         ~BehaviorTreeEngine();
 
         // 트리 관리
-        void                          register_tree(const std::string& name, std::shared_ptr<BehaviorTree> tree);
-        std::shared_ptr<BehaviorTree> get_tree(const std::string& name);
-        void                          unregister_tree(const std::string& name);
+        void                          RegisterTree(const std::string& name, std::shared_ptr<BehaviorTree> tree);
+        std::shared_ptr<BehaviorTree> GetTree(const std::string& name);
+        void                          UnregisterTree(const std::string& name);
 
         // 트리 실행
-        BTNodeStatus execute_tree(const std::string& name, BTContext& context);
+        BTNodeStatus ExecuteTree(const std::string& name, BTContext& context);
 
         // 몬스터 AI 관리
-        void register_monster_ai(std::shared_ptr<MonsterBTExecutor> ai);
-        void unregister_monster_ai(std::shared_ptr<MonsterBTExecutor> ai);
-        void update_all_monsters(float delta_time);
+        void RegisterMonsterAI(std::shared_ptr<MonsterBTExecutor> ai);
+        void UnregisterMonsterAI(std::shared_ptr<MonsterBTExecutor> ai);
+        void UpdateAllMonsters(float delta_time);
 
         // 통계
-        size_t get_registered_trees() const { return trees_.size(); }
-        size_t get_active_monsters() const { return monster_ais_.size(); }
+        size_t GetRegisteredTrees() const { return trees_.size(); }
+        size_t GetActiveMonsters() const { return monster_ais_.size(); }
 
     private:
         std::unordered_map<std::string, std::shared_ptr<BehaviorTree>> trees_;
