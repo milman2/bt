@@ -120,7 +120,7 @@ int main(int argc, char* argv[])
 
     // 테스트 클라이언트 생성
     AsioTestClient client(config);
-    client.set_verbose(verbose);
+    client.SetVerbose(verbose);
 
     bool test_result = false;
 
@@ -128,39 +128,39 @@ int main(int argc, char* argv[])
     {
         if (test_type == "connection")
         {
-            test_result = client.test_connection();
+            test_result = client.TestConnection();
         }
         else if (test_type == "join")
         {
-            test_result = client.test_player_join(player_name);
+            test_result = client.TestPlayerJoin(player_name);
         }
         else if (test_type == "move")
         {
-            test_result = client.test_player_move(100.0f, 200.0f, 300.0f);
+            test_result = client.TestPlayerMove(100.0f, 200.0f, 300.0f);
         }
         else if (test_type == "attack")
         {
-            test_result = client.test_player_attack(target_id);
+            test_result = client.TestPlayerAttack(target_id);
         }
         else if (test_type == "bt")
         {
-            test_result = client.test_bt_execute(bt_name);
+            test_result = client.TestBTExecute(bt_name);
         }
         else if (test_type == "update")
         {
-            test_result = client.test_monster_update();
+            test_result = client.TestMonsterUpdate();
         }
         else if (test_type == "disconnect")
         {
-            test_result = client.test_disconnect();
+            test_result = client.TestDisconnect();
         }
         else if (test_type == "all")
         {
-            test_result = client.run_automated_test();
+            test_result = client.RunAutomatedTest();
         }
         else if (test_type == "stress")
         {
-            test_result = client.run_stress_test(stress_connections, stress_duration);
+            test_result = client.RunStressTest(stress_connections, stress_duration);
         }
         else
         {

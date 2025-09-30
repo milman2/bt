@@ -18,7 +18,7 @@ namespace bt
 
     AsioTestClient::~AsioTestClient()
     {
-        DisConnect();
+        Disconnect();
         LogMessage("AsioTestClient 소멸됨");
     }
 
@@ -46,7 +46,7 @@ namespace bt
         if (!SendPacket(connect_packet))
         {
             LogMessage("연결 요청 패킷 전송 실패", true);
-            DisConnect();
+            Disconnect();
             return false;
         }
 
@@ -55,14 +55,14 @@ namespace bt
         if (!ReceivePacket(response))
         {
             LogMessage("연결 응답 수신 실패", true);
-            DisConnect();
+            Disconnect();
             return false;
         }
 
         if (!ParsePacketResponse(response))
         {
             LogMessage("연결 응답 파싱 실패", true);
-            DisConnect();
+            Disconnect();
             return false;
         }
 
@@ -70,7 +70,7 @@ namespace bt
         return true;
     }
 
-    void AsioTestClient::DisConnect()
+    void AsioTestClient::Disconnect()
     {
         if (!connected_.load())
         {
@@ -220,7 +220,7 @@ namespace bt
             }
 
             LogMessage("연결 해제 중...");
-            DisConnect();
+            Disconnect();
             LogMessage("연결 테스트 완료");
         }
         else
@@ -249,7 +249,7 @@ namespace bt
         if (!SendPacket(join_packet))
         {
             RecordTestResult("플레이어 접속 테스트", false, "접속 요청 전송 실패");
-            DisConnect();
+            Disconnect();
             return false;
         }
 
@@ -259,7 +259,7 @@ namespace bt
         if (!ReceivePacket(response))
         {
             RecordTestResult("플레이어 접속 테스트", false, "응답 수신 실패");
-            DisConnect();
+            Disconnect();
             return false;
         }
 
@@ -268,7 +268,7 @@ namespace bt
         RecordTestResult("플레이어 접속 테스트", success, success ? "접속 성공" : "접속 실패");
 
         LogMessage("연결 해제 중...");
-        DisConnect();
+        Disconnect();
         LogMessage("플레이어 접속 테스트 완료");
         return success;
     }
@@ -289,12 +289,12 @@ namespace bt
         if (!SendPacket(move_packet))
         {
             RecordTestResult("플레이어 이동 테스트", false, "이동 요청 전송 실패");
-            DisConnect();
+            Disconnect();
             return false;
         }
 
         RecordTestResult("플레이어 이동 테스트", true, "이동 요청 전송 성공");
-        DisConnect();
+        Disconnect();
         return true;
     }
 
@@ -314,12 +314,12 @@ namespace bt
         if (!SendPacket(attack_packet))
         {
             RecordTestResult("플레이어 공격 테스트", false, "공격 요청 전송 실패");
-            DisConnect();
+            Disconnect();
             return false;
         }
 
         RecordTestResult("플레이어 공격 테스트", true, "공격 요청 전송 성공");
-        DisConnect();
+        Disconnect();
         return true;
     }
 
@@ -338,7 +338,7 @@ namespace bt
         if (!SendPacket(bt_packet))
         {
             RecordTestResult("BT 실행 테스트", false, "BT 요청 전송 실패");
-            DisConnect();
+            Disconnect();
             return false;
         }
 
@@ -347,14 +347,14 @@ namespace bt
         if (!ReceivePacket(response))
         {
             RecordTestResult("BT 실행 테스트", false, "응답 수신 실패");
-            DisConnect();
+            Disconnect();
             return false;
         }
 
         bool success = ParsePacketResponse(response);
         RecordTestResult("BT 실행 테스트", success, success ? "BT 실행 성공" : "BT 실행 실패");
 
-        DisConnect();
+        Disconnect();
         return success;
     }
 
@@ -373,16 +373,16 @@ namespace bt
         if (!SendPacket(update_packet))
         {
             RecordTestResult("몬스터 업데이트 테스트", false, "업데이트 요청 전송 실패");
-            DisConnect();
+            Disconnect();
             return false;
         }
 
         RecordTestResult("몬스터 업데이트 테스트", true, "업데이트 요청 전송 성공");
-        DisConnect();
+        Disconnect();
         return true;
     }
 
-    bool AsioTestClient::TestDisConnect()
+    bool AsioTestClient::TestDisconnect()
     {
         LogMessage("=== 연결 해제 테스트 시작 ===");
 
@@ -392,7 +392,7 @@ namespace bt
             return false;
         }
 
-        DisConnect();
+        Disconnect();
         RecordTestResult("연결 해제 테스트", true, "연결 해제 성공");
         return true;
     }
@@ -428,7 +428,7 @@ namespace bt
 
         // 6. 연결 해제 테스트
         LogMessage("\n[6/6] 연결 해제 테스트 실행 중...");
-        TestDisConnect();
+        TestDisconnect();
 
         // 테스트 결과 출력
         LogMessage("\n=== 테스트 결과 요약 ===");
@@ -471,7 +471,7 @@ namespace bt
                     {
                         // 연결 유지
                         std::this_thread::sleep_for(std::chrono::seconds(1));
-                        client->DisConnect();
+                        client->Disconnect();
                     }
                 });
 
