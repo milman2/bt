@@ -8,6 +8,7 @@
 
 #include "MonsterAI.h"
 #include "PlayerManager.h"
+#include "BT/BehaviorTreeEngine.h"
 
 namespace bt
 {

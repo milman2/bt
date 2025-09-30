@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include "BehaviorTree.h"
+#include "BT/BehaviorTree.h"
 
 namespace bt
 {

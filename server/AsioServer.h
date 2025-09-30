@@ -23,6 +23,7 @@
 #include <boost/thread/mutex.hpp>
 
 #include "PacketProtocol.h"
+#include "BT/BehaviorTreeEngine.h"
 
 namespace bt
 {

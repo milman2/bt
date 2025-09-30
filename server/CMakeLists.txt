@@ -4,6 +4,7 @@ file(GLOB_RECURSE SERVER_SOURCES "*.cpp")
 # 헤더 파일 디렉토리 설정
 include_directories(${CMAKE_SOURCE_DIR}/shared)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/BT)
 
 # 서버 실행 파일 생성
 add_executable(BT_MMORPG_Server ${SERVER_SOURCES})

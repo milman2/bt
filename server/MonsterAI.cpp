@@ -13,6 +13,20 @@
 #include "PlayerManager.h"
 #include "SimpleWebSocketServer.h"
 
+#include "BT/BehaviorTree.h"
+#include "BT/BehaviorTreeEngine.h"
+#include "BT/MonsterAI.h"
+#include "BT/Action/BTAction.h"
+#include "BT/Condition/BTCondition.h"
+#include "BT/Control/BTSequence.h"
+#include "BT/Control/BTSelector.h"
+#include "BT/Control/BTParallel.h"
+#include "BT/Control/BTRandom.h"
+#include "BT/Decorator/BTRepeat.h"
+#include "BT/Decorator/BTInvert.h"
+#include "BT/Decorator/BTDelay.h"
+#include "BT/Decorator/BTTimeout.h"
+
 namespace bt
 {
 

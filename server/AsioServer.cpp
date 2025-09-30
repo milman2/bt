@@ -3,7 +3,7 @@
 #include <sstream>
 
 #include "AsioServer.h"
-#include "BehaviorTree.h"
+#include "BT/BehaviorTree.h"
 #include "MonsterAI.h"
 #include "Player.h"
 #include "PlayerManager.h"

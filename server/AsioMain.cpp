@@ -8,7 +8,7 @@
 #include <signal.h>
 
 #include "AsioServer.h"
-#include "BehaviorTree.h"
+#include "BT/BehaviorTree.h"
 #include "../shared/Logger.h"
 #include "MonsterAI.h"
 #include "Player.h"
