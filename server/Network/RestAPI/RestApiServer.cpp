@@ -292,7 +292,7 @@ namespace bt
                 {
                     json << "      \"ai_name\": \"" << ai->GetName() << "\",\n";
                     json << "      \"bt_name\": \"" << ai->GetBTName() << "\",\n";
-                    json << "      \"is_active\": " << (ai->is_active() ? "true" : "false") << ",\n";
+                    json << "      \"is_active\": " << (ai->IsActive() ? "true" : "false") << ",\n";
                 }
                 else
                 {

@@ -65,9 +65,9 @@ namespace bt
         std::lock_guard<std::mutex> lock(monsters_mutex_);
         for (auto& ai : monster_ais_)
         {
-            if (ai && ai->is_active())
+            if (ai && ai->IsActive())
             {
-                ai->update(delta_time);
+                ai->Update(delta_time);
             }
         }
     }

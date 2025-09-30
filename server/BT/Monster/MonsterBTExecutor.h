@@ -22,27 +22,27 @@ namespace bt
         ~MonsterBTExecutor() = default;
 
         // AI 업데이트
-        void update(float delta_time);
+        void Update(float delta_time);
 
         // Behavior Tree 설정
-        void                          set_behavior_tree(std::shared_ptr<BehaviorTree> tree);
-        std::shared_ptr<BehaviorTree> get_behavior_tree() const { return behavior_tree_; }
+        void                          SetBehaviorTree(std::shared_ptr<BehaviorTree> tree);
+        std::shared_ptr<BehaviorTree> GetBehaviorTree() const { return behavior_tree_; }
 
         // 컨텍스트 접근
-        BTContext&       get_context() { return context_; }
-        const BTContext& get_context() const { return context_; }
+        BTContext&       GetContext() { return context_; }
+        const BTContext& GetContext() const { return context_; }
 
         // 몬스터 정보
         const std::string& GetName() const { return name_; }
         const std::string& GetBTName() const { return bt_name_; }
 
         // 몬스터 참조 설정
-        void                     set_monster(std::shared_ptr<Monster> monster) { monster_ = monster; }
-        std::shared_ptr<Monster> get_monster() const { return monster_; }
+        void                     SetMonster(std::shared_ptr<Monster> monster) { monster_ = monster; }
+        std::shared_ptr<Monster> GetMonster() const { return monster_; }
 
         // 상태 관리
-        bool is_active() const { return active_.load(); }
-        void set_active(bool active) { active_.store(active); }
+        bool IsActive() const { return active_.load(); }
+        void SetActive(bool active) { active_.store(active); }
 
     private:
         std::string                           name_;

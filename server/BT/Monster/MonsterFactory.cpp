@@ -7,7 +7,7 @@
 namespace bt
 {
 
-    std::shared_ptr<Monster> MonsterFactory::create_monster(MonsterType            type,
+    std::shared_ptr<Monster> MonsterFactory::CreateMonster(MonsterType            type,
                                                            const std::string&     name,
                                                            const MonsterPosition& position)
     {
@@ -21,7 +21,7 @@ namespace bt
         return monster;
     }
 
-    std::shared_ptr<Monster> MonsterFactory::create_monster(const MonsterSpawnConfig& config)
+    std::shared_ptr<Monster> MonsterFactory::CreateMonster(const MonsterSpawnConfig& config)
     {
         auto monster = std::make_shared<Monster>(config.name, config.type, config.position);
         monster->SetPosition(config.position.x, config.position.y, config.position.z, config.position.rotation);
@@ -36,7 +36,7 @@ namespace bt
         return monster;
     }
 
-    MonsterStats MonsterFactory::get_default_stats(MonsterType type)
+    MonsterStats MonsterFactory::GetDefaultStats(MonsterType type)
     {
         MonsterStats stats;
 
@@ -160,7 +160,7 @@ namespace bt
         }
     }
 
-    std::string MonsterFactory::monster_type_to_string(MonsterType type)
+    std::string MonsterFactory::MonsterTypeToString(MonsterType type)
     {
         switch (type)
         {
@@ -183,7 +183,7 @@ namespace bt
         }
     }
 
-    MonsterType MonsterFactory::string_to_monster_type(const std::string& str)
+    MonsterType MonsterFactory::StringToMonsterType(const std::string& str)
     {
         if (str == "goblin")
             return MonsterType::GOBLIN;

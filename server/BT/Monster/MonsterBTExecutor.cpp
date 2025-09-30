@@ -13,7 +13,7 @@ namespace bt
         last_update_time_ = std::chrono::steady_clock::now();
     }
 
-    void MonsterBTExecutor::update(float /* delta_time */)
+    void MonsterBTExecutor::Update(float /* delta_time */)
     {
         static std::map<std::string, int> update_counts;
         std::string                       monster_name = name_; // AI 이름 사용
@@ -47,7 +47,7 @@ namespace bt
         last_update_time_ = now;
     }
 
-    void MonsterBTExecutor::set_behavior_tree(std::shared_ptr<BehaviorTree> tree)
+    void MonsterBTExecutor::SetBehaviorTree(std::shared_ptr<BehaviorTree> tree)
     {
         behavior_tree_ = tree;
     }

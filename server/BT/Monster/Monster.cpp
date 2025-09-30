@@ -29,7 +29,7 @@ namespace bt
         , spawn_position_(position)
     {
         // 기본 통계 설정
-        stats_            = MonsterFactory::get_default_stats(type);
+        stats_            = MonsterFactory::GetDefaultStats(type);
         last_update_time_ = std::chrono::steady_clock::now();
 
         // 기본 순찰점 설정 (스폰 위치 주변)
@@ -262,7 +262,7 @@ namespace bt
         // AI 업데이트
         if (ai_)
         {
-            ai_->update(delta_time);
+            ai_->Update(delta_time);
             if (update_counts[name_] % 50 == 0)
             {
                 std::cout << "Monster::update - AI 업데이트 완료: " << name_ << std::endl;

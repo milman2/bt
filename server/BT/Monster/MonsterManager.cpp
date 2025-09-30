@@ -90,7 +90,7 @@ namespace bt
                                                            const std::string&     name,
                                                            const MonsterPosition& position)
     {
-        auto monster = MonsterFactory::create_monster(type, name, position);
+        auto monster = MonsterFactory::CreateMonster(type, name, position);
         add_monster(monster);
 
         // AI 이름과 BT 이름 설정
@@ -107,7 +107,7 @@ namespace bt
             auto tree = bt_engine_->get_tree(bt_name);
             if (tree)
             {
-                monster->GetAI()->set_behavior_tree(tree);
+                monster->GetAI()->SetBehaviorTree(tree);
                 std::cout << "몬스터 AI Behavior Tree 설정: " << name << " -> " << bt_name << std::endl;
             }
             else
@@ -223,7 +223,7 @@ namespace bt
                 // 타입 파싱
                 if (monster_data.contains("type") && monster_data["type"].is_string())
                 {
-                    config.type = MonsterFactory::string_to_monster_type(monster_data["type"]);
+                    config.type = MonsterFactory::StringToMonsterType(monster_data["type"]);
                 }
 
                 // 이름 파싱
@@ -451,7 +451,7 @@ namespace bt
                         nlohmann::json monster_data;
                         monster_data["id"]       = monster->GetID();
                         monster_data["name"]     = monster->GetName();
-                        monster_data["type"]     = MonsterFactory::monster_type_to_string(monster->GetType());
+                        monster_data["type"]     = MonsterFactory::MonsterTypeToString(monster->GetType());
                         monster_data["position"] = {
                             {"x",        monster->GetPosition().x       },
                             {"y",        monster->GetPosition().y       },
