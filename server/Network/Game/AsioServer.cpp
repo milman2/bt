@@ -9,6 +9,7 @@
 #include "../../BT/Control/Sequence.h"
 #include "../../BT/Control/Selector.h"
 #include "BT/Monster/MonsterTypes.h"
+#include "BT/Monster/MonsterBTExecutor.h"
 #include "Player.h"
 #include "PlayerManager.h"
 #include "Network/RestAPI/RestApiServer.h"
@@ -568,9 +569,62 @@ namespace bt
         
         // Patrol Action
         auto patrol_action = std::make_shared<Action>("patrol", [](Context& context) -> NodeStatus {
-            // TODO: 실제 patrol 로직 구현
-            std::cout << "Goblin patrol action executed" << std::endl;
-            return NodeStatus::SUCCESS;
+            // AI를 통해 몬스터 정보 가져오기
+            auto ai = context.GetAI();
+            if (!ai) {
+                return NodeStatus::FAILURE;
+            }
+            
+            // MonsterBTExecutor로 캐스팅
+            auto monster_ai = std::dynamic_pointer_cast<MonsterBTExecutor>(ai);
+            if (!monster_ai) {
+                return NodeStatus::FAILURE;
+            }
+            
+            auto monster = monster_ai->GetMonster();
+            if (!monster) {
+                return NodeStatus::FAILURE;
+            }
+            
+            // 다음 순찰점 가져오기
+            auto next_point = monster->GetNextPatrolPoint();
+            auto current_pos = monster->GetPosition();
+            
+            // 현재 위치와 목표 위치의 거리 계산
+            float dx = next_point.x - current_pos.x;
+            float dz = next_point.z - current_pos.z;
+            float distance = std::sqrt(dx * dx + dz * dz);
+            
+            // 목표 지점에 도달했는지 확인 (1.0f 이내)
+            if (distance < 1.0f) {
+                // 다음 순찰점으로 이동 완료
+                monster->SetPosition(next_point.x, next_point.y, next_point.z, next_point.rotation);
+                std::cout << "Goblin " << monster->GetName() << " reached patrol point: (" 
+                         << next_point.x << ", " << next_point.y << ", " << next_point.z << ")" << std::endl;
+                return NodeStatus::SUCCESS;
+            }
+            
+            // 목표 지점으로 이동
+            float move_speed = 2.0f; // 이동 속도
+            float move_distance = move_speed * 0.016f; // 60fps 기준
+            
+            if (distance > 0.0f) {
+                // 정규화된 방향 벡터
+                float dir_x = dx / distance;
+                float dir_z = dz / distance;
+                
+                // 새로운 위치 계산
+                float new_x = current_pos.x + dir_x * move_distance;
+                float new_z = current_pos.z + dir_z * move_distance;
+                
+                // 몬스터 위치 업데이트
+                monster->SetPosition(new_x, current_pos.y, new_z, current_pos.rotation);
+                
+                std::cout << "Goblin " << monster->GetName() << " moving to patrol point: (" 
+                         << new_x << ", " << current_pos.y << ", " << new_z << ")" << std::endl;
+            }
+            
+            return NodeStatus::RUNNING;
         });
         
         goblin_root->AddChild(patrol_action);
@@ -582,8 +636,39 @@ namespace bt
         auto orc_root = std::make_shared<Selector>("orc_root");
         
         auto orc_patrol_action = std::make_shared<Action>("patrol", [](Context& context) -> NodeStatus {
-            std::cout << "Orc patrol action executed" << std::endl;
-            return NodeStatus::SUCCESS;
+            auto ai = context.GetAI();
+            if (!ai) return NodeStatus::FAILURE;
+            
+            auto monster_ai = std::dynamic_pointer_cast<MonsterBTExecutor>(ai);
+            if (!monster_ai) return NodeStatus::FAILURE;
+            
+            auto monster = monster_ai->GetMonster();
+            if (!monster) return NodeStatus::FAILURE;
+            
+            auto next_point = monster->GetNextPatrolPoint();
+            auto current_pos = monster->GetPosition();
+            
+            float dx = next_point.x - current_pos.x;
+            float dz = next_point.z - current_pos.z;
+            float distance = std::sqrt(dx * dx + dz * dz);
+            
+            if (distance < 1.0f) {
+                monster->SetPosition(next_point.x, next_point.y, next_point.z, next_point.rotation);
+                return NodeStatus::SUCCESS;
+            }
+            
+            float move_speed = 1.5f; // Orc는 조금 느림
+            float move_distance = move_speed * 0.016f;
+            
+            if (distance > 0.0f) {
+                float dir_x = dx / distance;
+                float dir_z = dz / distance;
+                float new_x = current_pos.x + dir_x * move_distance;
+                float new_z = current_pos.z + dir_z * move_distance;
+                monster->SetPosition(new_x, current_pos.y, new_z, current_pos.rotation);
+            }
+            
+            return NodeStatus::RUNNING;
         });
         
         orc_root->AddChild(orc_patrol_action);
@@ -595,8 +680,39 @@ namespace bt
         auto dragon_root = std::make_shared<Selector>("dragon_root");
         
         auto dragon_patrol_action = std::make_shared<Action>("patrol", [](Context& context) -> NodeStatus {
-            std::cout << "Dragon patrol action executed" << std::endl;
-            return NodeStatus::SUCCESS;
+            auto ai = context.GetAI();
+            if (!ai) return NodeStatus::FAILURE;
+            
+            auto monster_ai = std::dynamic_pointer_cast<MonsterBTExecutor>(ai);
+            if (!monster_ai) return NodeStatus::FAILURE;
+            
+            auto monster = monster_ai->GetMonster();
+            if (!monster) return NodeStatus::FAILURE;
+            
+            auto next_point = monster->GetNextPatrolPoint();
+            auto current_pos = monster->GetPosition();
+            
+            float dx = next_point.x - current_pos.x;
+            float dz = next_point.z - current_pos.z;
+            float distance = std::sqrt(dx * dx + dz * dz);
+            
+            if (distance < 1.0f) {
+                monster->SetPosition(next_point.x, next_point.y, next_point.z, next_point.rotation);
+                return NodeStatus::SUCCESS;
+            }
+            
+            float move_speed = 3.0f; // Dragon은 빠름
+            float move_distance = move_speed * 0.016f;
+            
+            if (distance > 0.0f) {
+                float dir_x = dx / distance;
+                float dir_z = dz / distance;
+                float new_x = current_pos.x + dir_x * move_distance;
+                float new_z = current_pos.z + dir_z * move_distance;
+                monster->SetPosition(new_x, current_pos.y, new_z, current_pos.rotation);
+            }
+            
+            return NodeStatus::RUNNING;
         });
         
         dragon_root->AddChild(dragon_patrol_action);
@@ -608,8 +724,39 @@ namespace bt
         auto skeleton_root = std::make_shared<Selector>("skeleton_root");
         
         auto skeleton_patrol_action = std::make_shared<Action>("patrol", [](Context& context) -> NodeStatus {
-            std::cout << "Skeleton patrol action executed" << std::endl;
-            return NodeStatus::SUCCESS;
+            auto ai = context.GetAI();
+            if (!ai) return NodeStatus::FAILURE;
+            
+            auto monster_ai = std::dynamic_pointer_cast<MonsterBTExecutor>(ai);
+            if (!monster_ai) return NodeStatus::FAILURE;
+            
+            auto monster = monster_ai->GetMonster();
+            if (!monster) return NodeStatus::FAILURE;
+            
+            auto next_point = monster->GetNextPatrolPoint();
+            auto current_pos = monster->GetPosition();
+            
+            float dx = next_point.x - current_pos.x;
+            float dz = next_point.z - current_pos.z;
+            float distance = std::sqrt(dx * dx + dz * dz);
+            
+            if (distance < 1.0f) {
+                monster->SetPosition(next_point.x, next_point.y, next_point.z, next_point.rotation);
+                return NodeStatus::SUCCESS;
+            }
+            
+            float move_speed = 1.8f; // Skeleton은 보통 속도
+            float move_distance = move_speed * 0.016f;
+            
+            if (distance > 0.0f) {
+                float dir_x = dx / distance;
+                float dir_z = dz / distance;
+                float new_x = current_pos.x + dir_x * move_distance;
+                float new_z = current_pos.z + dir_z * move_distance;
+                monster->SetPosition(new_x, current_pos.y, new_z, current_pos.rotation);
+            }
+            
+            return NodeStatus::RUNNING;
         });
         
         skeleton_root->AddChild(skeleton_patrol_action);
@@ -621,8 +768,39 @@ namespace bt
         auto zombie_root = std::make_shared<Selector>("zombie_root");
         
         auto zombie_patrol_action = std::make_shared<Action>("patrol", [](Context& context) -> NodeStatus {
-            std::cout << "Zombie patrol action executed" << std::endl;
-            return NodeStatus::SUCCESS;
+            auto ai = context.GetAI();
+            if (!ai) return NodeStatus::FAILURE;
+            
+            auto monster_ai = std::dynamic_pointer_cast<MonsterBTExecutor>(ai);
+            if (!monster_ai) return NodeStatus::FAILURE;
+            
+            auto monster = monster_ai->GetMonster();
+            if (!monster) return NodeStatus::FAILURE;
+            
+            auto next_point = monster->GetNextPatrolPoint();
+            auto current_pos = monster->GetPosition();
+            
+            float dx = next_point.x - current_pos.x;
+            float dz = next_point.z - current_pos.z;
+            float distance = std::sqrt(dx * dx + dz * dz);
+            
+            if (distance < 1.0f) {
+                monster->SetPosition(next_point.x, next_point.y, next_point.z, next_point.rotation);
+                return NodeStatus::SUCCESS;
+            }
+            
+            float move_speed = 1.0f; // Zombie는 느림
+            float move_distance = move_speed * 0.016f;
+            
+            if (distance > 0.0f) {
+                float dir_x = dx / distance;
+                float dir_z = dz / distance;
+                float new_x = current_pos.x + dir_x * move_distance;
+                float new_z = current_pos.z + dir_z * move_distance;
+                monster->SetPosition(new_x, current_pos.y, new_z, current_pos.rotation);
+            }
+            
+            return NodeStatus::RUNNING;
         });
         
         zombie_root->AddChild(zombie_patrol_action);
@@ -647,8 +825,39 @@ namespace bt
         auto guard_root = std::make_shared<Selector>("guard_root");
         
         auto guard_patrol_action = std::make_shared<Action>("patrol", [](Context& context) -> NodeStatus {
-            std::cout << "Guard patrol action executed" << std::endl;
-            return NodeStatus::SUCCESS;
+            auto ai = context.GetAI();
+            if (!ai) return NodeStatus::FAILURE;
+            
+            auto monster_ai = std::dynamic_pointer_cast<MonsterBTExecutor>(ai);
+            if (!monster_ai) return NodeStatus::FAILURE;
+            
+            auto monster = monster_ai->GetMonster();
+            if (!monster) return NodeStatus::FAILURE;
+            
+            auto next_point = monster->GetNextPatrolPoint();
+            auto current_pos = monster->GetPosition();
+            
+            float dx = next_point.x - current_pos.x;
+            float dz = next_point.z - current_pos.z;
+            float distance = std::sqrt(dx * dx + dz * dz);
+            
+            if (distance < 1.0f) {
+                monster->SetPosition(next_point.x, next_point.y, next_point.z, next_point.rotation);
+                return NodeStatus::SUCCESS;
+            }
+            
+            float move_speed = 2.2f; // Guard는 빠름
+            float move_distance = move_speed * 0.016f;
+            
+            if (distance > 0.0f) {
+                float dir_x = dx / distance;
+                float dir_z = dz / distance;
+                float new_x = current_pos.x + dir_x * move_distance;
+                float new_z = current_pos.z + dir_z * move_distance;
+                monster->SetPosition(new_x, current_pos.y, new_z, current_pos.rotation);
+            }
+            
+            return NodeStatus::RUNNING;
         });
         
         guard_root->AddChild(guard_patrol_action);

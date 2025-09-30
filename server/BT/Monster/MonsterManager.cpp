@@ -3,6 +3,7 @@
 #include "MonsterBTExecutor.h"
 #include "../../PlayerManager.h"
 #include "../../BT/Engine.h"
+#include "../../Network/WebSocket/SimpleWebSocketServer.h"
 
 #include <algorithm>
 #include <fstream>
@@ -466,8 +467,8 @@ namespace bt
                 }
 
                 std::cout << "WebSocket 브로드캐스트: " << event["monsters"].size() << "마리 몬스터 전송" << std::endl;
-                // TODO: 서버에서 WebSocket 브로드캐스트 처리
-                // websocket_server_->broadcast(event.dump());
+                // WebSocket 브로드캐스트 처리
+                websocket_server_->broadcast(event.dump());
 
                 // 서버 통계도 함께 브로드캐스트
                 nlohmann::json stats_event;
