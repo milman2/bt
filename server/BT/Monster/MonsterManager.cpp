@@ -421,7 +421,7 @@ namespace bt
         // PlayerManager에서 플레이어 정보 가져오기
         if (player_manager_)
         {
-            all_players = player_manager_->get_all_players();
+            all_players = player_manager_->GetAllPlayers();
         }
 
         // 각 몬스터의 환경 정보 업데이트
@@ -478,7 +478,7 @@ namespace bt
                 // PlayerManager에서 실제 플레이어 수 가져오기
                 if (player_manager_)
                 {
-                    stats_event["data"]["totalPlayers"] = player_manager_->get_player_count();
+                    stats_event["data"]["totalPlayers"] = player_manager_->GetPlayerCount();
                 }
                 else
                 {

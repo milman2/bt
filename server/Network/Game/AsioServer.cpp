@@ -50,7 +50,7 @@ namespace bt
         monster_manager_->SetBTEngine(shared_bt_engine);
 
         // PlayerManager에 WebSocket 서버 설정
-        player_manager_->set_websocket_server(websocket_server_);
+        player_manager_->SetWebSocketServer(websocket_server_);
 
         LogMessage("AsioServer 인스턴스가 생성되었습니다.");
     }
@@ -288,7 +288,7 @@ namespace bt
             MonsterPosition spawn_position = {0.0f, 0.0f, 0.0f, 0.0f};
 
             // 플레이어 생성
-            auto player = player_manager_->create_player_for_client(client_id, player_name, spawn_position);
+            auto player = player_manager_->CreatePlayerForClient(client_id, player_name, spawn_position);
             if (player)
             {
                 info.player_id          = player->GetID();
@@ -318,7 +318,7 @@ namespace bt
         // 클라이언트 연결 해제 시 플레이어 제거
         if (player_manager_ && client_id != 0)
         {
-            player_manager_->remove_player_by_client_id(client_id);
+            player_manager_->RemovePlayerByClientID(client_id);
         }
 
         if (!client_info.empty())

@@ -12,14 +12,14 @@ namespace bt
 
     PlayerManager::~PlayerManager() {}
 
-    void PlayerManager::add_player(std::shared_ptr<Player> player)
+    void PlayerManager::AddPlayer(std::shared_ptr<Player> player)
     {
         std::lock_guard<std::mutex> lock(players_mutex_);
         players_[player->GetID()] = player;
         std::cout << "플레이어 추가: " << player->GetName() << " (ID: " << player->GetID() << ")" << std::endl;
     }
 
-    void PlayerManager::remove_player(uint32_t player_id)
+    void PlayerManager::RemovePlayer(uint32_t player_id)
     {
         std::lock_guard<std::mutex> lock(players_mutex_);
         auto                        it = players_.find(player_id);
@@ -30,7 +30,7 @@ namespace bt
         }
     }
 
-    std::shared_ptr<Player> PlayerManager::get_player(uint32_t player_id)
+    std::shared_ptr<Player> PlayerManager::GetPlayer(uint32_t player_id)
     {
         std::lock_guard<std::mutex> lock(players_mutex_);
         auto                        it = players_.find(player_id);
@@ -41,7 +41,7 @@ namespace bt
         return nullptr;
     }
 
-    std::vector<std::shared_ptr<Player>> PlayerManager::get_all_players()
+    std::vector<std::shared_ptr<Player>> PlayerManager::GetAllPlayers()
     {
         std::lock_guard<std::mutex>          lock(players_mutex_);
         std::vector<std::shared_ptr<Player>> result;
@@ -52,7 +52,7 @@ namespace bt
         return result;
     }
 
-    std::vector<std::shared_ptr<Player>> PlayerManager::get_players_in_range(const MonsterPosition& position,
+    std::vector<std::shared_ptr<Player>> PlayerManager::GetPlayersInRange(const MonsterPosition& position,
                                                                              float                  range)
     {
         std::lock_guard<std::mutex>          lock(players_mutex_);
@@ -75,7 +75,7 @@ namespace bt
         return result;
     }
 
-    std::shared_ptr<Player> PlayerManager::create_player(const std::string& name, const MonsterPosition& position)
+    std::shared_ptr<Player> PlayerManager::CreatePlayer(const std::string& name, const MonsterPosition& position)
     {
         uint32_t player_id = next_player_id_.fetch_add(1);
         auto     player    = std::make_shared<Player>(player_id, name);
@@ -94,13 +94,13 @@ namespace bt
         player->SetStats(stats);
 
         // 플레이어 추가
-        add_player(player);
+        AddPlayer(player);
 
         std::cout << "플레이어 생성: " << name << " (ID: " << player_id << ")" << std::endl;
         return player;
     }
 
-    std::shared_ptr<Player> PlayerManager::create_player_for_client(uint32_t               client_id,
+    std::shared_ptr<Player> PlayerManager::CreatePlayerForClient(uint32_t               client_id,
                                                                     const std::string&     name,
                                                                     const MonsterPosition& position)
     {
@@ -133,7 +133,7 @@ namespace bt
         return player;
     }
 
-    void PlayerManager::remove_player_by_client_id(uint32_t client_id)
+    void PlayerManager::RemovePlayerByClientID(uint32_t client_id)
     {
         std::lock_guard<std::mutex> lock(players_mutex_);
 
@@ -157,7 +157,7 @@ namespace bt
         }
     }
 
-    std::shared_ptr<Player> PlayerManager::get_player_by_client_id(uint32_t client_id)
+    std::shared_ptr<Player> PlayerManager::GetPlayerByClientID(uint32_t client_id)
     {
         std::lock_guard<std::mutex> lock(players_mutex_);
 
@@ -174,7 +174,7 @@ namespace bt
         return nullptr;
     }
 
-    uint32_t PlayerManager::get_client_id_by_player_id(uint32_t player_id)
+    uint32_t PlayerManager::GetClientIDByPlayerID(uint32_t player_id)
     {
         std::lock_guard<std::mutex> lock(players_mutex_);
 
@@ -186,7 +186,7 @@ namespace bt
         return 0; // 0은 유효하지 않은 클라이언트 ID
     }
 
-    void PlayerManager::process_combat(float delta_time)
+    void PlayerManager::ProcessCombat(float delta_time)
     {
         std::lock_guard<std::mutex> lock(players_mutex_);
 
@@ -202,11 +202,11 @@ namespace bt
         }
     }
 
-    void PlayerManager::attack_player(uint32_t attacker_id, uint32_t tarGetID, uint32_t damage)
+    void PlayerManager::AttackPlayer(uint32_t attacker_id, uint32_t tarGetID, uint32_t damage)
     {
         std::lock_guard<std::mutex> lock(players_mutex_);
 
-        auto target = get_player(tarGetID);
+        auto target = GetPlayer(tarGetID);
         if (!target || !target->IsAlive())
             return;
 
@@ -215,13 +215,13 @@ namespace bt
                   << std::endl;
     }
 
-    void PlayerManager::attack_monster(uint32_t attacker_id, uint32_t tarGetID, uint32_t damage)
+    void PlayerManager::AttackMonster(uint32_t attacker_id, uint32_t tarGetID, uint32_t damage)
     {
         // 이 함수는 MonsterManager에서 호출되어야 함
         // 여기서는 플레이어의 공격력을 가져오는 역할만 함
         std::lock_guard<std::mutex> lock(players_mutex_);
 
-        auto attacker = get_player(attacker_id);
+        auto attacker = GetPlayer(attacker_id);
         if (!attacker || !attacker->IsAlive())
             return;
 
@@ -229,7 +229,7 @@ namespace bt
                   << std::endl;
     }
 
-    void PlayerManager::process_player_respawn(float delta_time)
+    void PlayerManager::ProcessPlayerRespawn(float delta_time)
     {
         std::lock_guard<std::mutex> lock(players_mutex_);
 
@@ -238,18 +238,18 @@ namespace bt
             if (!player->IsAlive())
             {
                 // 플레이어가 사망한 경우 자동 리스폰 (필요시 시간 체크 로직 추가)
-                respawn_player(id);
+                RespawnPlayer(id);
             }
         }
     }
 
-    void PlayerManager::set_websocket_server(std::shared_ptr<bt::SimpleWebSocketServer> server)
+    void PlayerManager::SetWebSocketServer(std::shared_ptr<bt::SimpleWebSocketServer> server)
     {
         websocket_server_ = server;
         std::cout << "PlayerManager에 WebSocket 서버 설정 완료" << std::endl;
     }
 
-    void PlayerManager::update(float delta_time)
+    void PlayerManager::Update(float delta_time)
     {
         static int update_count = 0;
         update_count++;
@@ -259,12 +259,12 @@ namespace bt
                       << ", 플레이어 수: " << players_.size() << ")" << std::endl;
         }
 
-        process_combat(delta_time);
-        process_player_ai(delta_time);
-        process_player_respawn(delta_time);
+        ProcessCombat(delta_time);
+        ProcessPlayerAI(delta_time);
+        ProcessPlayerRespawn(delta_time);
     }
 
-    void PlayerManager::process_player_ai(float delta_time)
+    void PlayerManager::ProcessPlayerAI(float delta_time)
     {
         std::lock_guard<std::mutex> lock(players_mutex_);
 
@@ -283,7 +283,7 @@ namespace bt
             if (last_move_it == player_last_move_time_.end() ||
                 current_time - last_move_it->second >= player_move_interval_)
             {
-                move_player_to_random_location(id);
+                MovePlayerToRandomLocation(id);
                 player_last_move_time_[id] = current_time;
             }
 
@@ -292,15 +292,15 @@ namespace bt
             if (last_attack_it == player_last_attack_time_.end() ||
                 current_time - last_attack_it->second >= player_attack_interval_)
             {
-                attack_nearby_monster(id);
+                AttackNearbyMonster(id);
                 player_last_attack_time_[id] = current_time;
             }
         }
     }
 
-    void PlayerManager::move_player_to_random_location(uint32_t player_id)
+    void PlayerManager::MovePlayerToRandomLocation(uint32_t player_id)
     {
-        auto player = get_player(player_id);
+        auto player = GetPlayer(player_id);
         if (!player)
         {
             return;
@@ -322,9 +322,9 @@ namespace bt
                   << std::endl;
     }
 
-    void PlayerManager::attack_nearby_monster(uint32_t player_id)
+    void PlayerManager::AttackNearbyMonster(uint32_t player_id)
     {
-        auto player = get_player(player_id);
+        auto player = GetPlayer(player_id);
         if (!player)
         {
             return;
@@ -334,16 +334,16 @@ namespace bt
         std::cout << "플레이어 " << player_id << " 근처 몬스터 공격 시도" << std::endl;
     }
 
-    void PlayerManager::respawn_player(uint32_t player_id)
+    void PlayerManager::RespawnPlayer(uint32_t player_id)
     {
-        auto player = get_player(player_id);
+        auto player = GetPlayer(player_id);
         if (!player)
         {
             return;
         }
 
         // 랜덤 리스폰 포인트에서 부활
-        MonsterPosition respawn_pos = get_random_respawn_point();
+        MonsterPosition respawn_pos = GetRandomRespawnPoint();
         player->SetPosition(respawn_pos.x, respawn_pos.y, respawn_pos.z, respawn_pos.rotation);
 
         // 스탯 복구
@@ -356,12 +356,12 @@ namespace bt
                   << respawn_pos.z << ")" << std::endl;
     }
 
-    void PlayerManager::set_player_respawn_points(const std::vector<MonsterPosition>& points)
+    void PlayerManager::SetPlayerRespawnPoints(const std::vector<MonsterPosition>& points)
     {
         player_respawn_points_ = points;
     }
 
-    MonsterPosition PlayerManager::get_random_respawn_point() const
+    MonsterPosition PlayerManager::GetRandomRespawnPoint() const
     {
         if (player_respawn_points_.empty())
         {

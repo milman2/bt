@@ -199,7 +199,7 @@ int main(int argc, char* argv[])
 
         if (player_manager)
         {
-            player_manager->update(0.1f); // 100ms 간격으로 업데이트
+            player_manager->Update(0.1f); // 100ms 간격으로 업데이트
         }
 
         // Behavior Tree 엔진 업데이트
@@ -222,7 +222,7 @@ int main(int argc, char* argv[])
             }
             if (player_manager)
             {
-                LOG_INFO("활성 플레이어: " + std::to_string(player_manager->get_player_count()) + "명");
+                LOG_INFO("활성 플레이어: " + std::to_string(player_manager->GetPlayerCount()) + "명");
             }
             last_stats_time = now;
         }

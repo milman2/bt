@@ -333,7 +333,7 @@ namespace bt
 
         if (player_manager_)
         {
-            json << "  \"total_players\": " << player_manager_->get_player_count() << ",\n";
+            json << "  \"total_players\": " << player_manager_->GetPlayerCount() << ",\n";
         }
         else
         {
@@ -373,7 +373,7 @@ namespace bt
 
         if (player_manager_)
         {
-            auto players = player_manager_->get_all_players();
+            auto players = player_manager_->GetAllPlayers();
             bool first   = true;
 
             for (const auto& player : players)
