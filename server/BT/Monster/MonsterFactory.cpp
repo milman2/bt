@@ -1,4 +1,5 @@
 #include "MonsterFactory.h"
+#include "MonsterBTExecutor.h"
 
 #include <iostream>
 
@@ -18,6 +19,10 @@ namespace bt
         std::string bt_name = GetBTName(type);
         monster->SetBTName(bt_name);
 
+        // AI 생성 및 설정
+        auto ai = std::make_shared<MonsterBTExecutor>(name, bt_name);
+        monster->SetAI(ai);
+
         return monster;
     }
 
@@ -32,6 +37,10 @@ namespace bt
         monster->SetAIName(config.name);
         std::string bt_name = GetBTName(config.type);
         monster->SetBTName(bt_name);
+
+        // AI 생성 및 설정
+        auto ai = std::make_shared<MonsterBTExecutor>(config.name, bt_name);
+        monster->SetAI(ai);
 
         return monster;
     }

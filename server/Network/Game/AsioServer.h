@@ -175,6 +175,9 @@ namespace bt
 
         // 로깅
         mutable boost::mutex log_mutex_;
+
+        // Behavior Tree 초기화
+        void InitializeBehaviorTrees();
     };
 
 

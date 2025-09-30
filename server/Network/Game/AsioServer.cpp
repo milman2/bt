@@ -4,6 +4,10 @@
 
 #include "AsioServer.h"
 #include "../../BT/Tree.h"
+#include "../../BT/Action/Action.h"
+#include "../../BT/Condition/Condition.h"
+#include "../../BT/Control/Sequence.h"
+#include "../../BT/Control/Selector.h"
 #include "BT/Monster/MonsterTypes.h"
 #include "Player.h"
 #include "PlayerManager.h"
@@ -18,6 +22,9 @@ namespace bt
     {
         // Behavior Tree 엔진 초기화
         bt_engine_ = std::make_unique<Engine>();
+        
+        // Behavior Tree 초기화
+        InitializeBehaviorTrees();
 
         // 매니저들 초기화
         monster_manager_ = std::make_shared<MonsterManager>();
@@ -551,6 +558,117 @@ namespace bt
                 .count();
 
         return info;
+    }
+
+    void AsioServer::InitializeBehaviorTrees()
+    {
+        // Goblin Behavior Tree 생성
+        auto goblin_tree = std::make_shared<Tree>("goblin_bt");
+        auto goblin_root = std::make_shared<Selector>("goblin_root");
+        
+        // Patrol Action
+        auto patrol_action = std::make_shared<Action>("patrol", [](Context& context) -> NodeStatus {
+            // TODO: 실제 patrol 로직 구현
+            std::cout << "Goblin patrol action executed" << std::endl;
+            return NodeStatus::SUCCESS;
+        });
+        
+        goblin_root->AddChild(patrol_action);
+        goblin_tree->SetRoot(goblin_root);
+        bt_engine_->RegisterTree("goblin_bt", goblin_tree);
+        
+        // Orc Behavior Tree 생성
+        auto orc_tree = std::make_shared<Tree>("orc_bt");
+        auto orc_root = std::make_shared<Selector>("orc_root");
+        
+        auto orc_patrol_action = std::make_shared<Action>("patrol", [](Context& context) -> NodeStatus {
+            std::cout << "Orc patrol action executed" << std::endl;
+            return NodeStatus::SUCCESS;
+        });
+        
+        orc_root->AddChild(orc_patrol_action);
+        orc_tree->SetRoot(orc_root);
+        bt_engine_->RegisterTree("orc_bt", orc_tree);
+        
+        // Dragon Behavior Tree 생성
+        auto dragon_tree = std::make_shared<Tree>("dragon_bt");
+        auto dragon_root = std::make_shared<Selector>("dragon_root");
+        
+        auto dragon_patrol_action = std::make_shared<Action>("patrol", [](Context& context) -> NodeStatus {
+            std::cout << "Dragon patrol action executed" << std::endl;
+            return NodeStatus::SUCCESS;
+        });
+        
+        dragon_root->AddChild(dragon_patrol_action);
+        dragon_tree->SetRoot(dragon_root);
+        bt_engine_->RegisterTree("dragon_bt", dragon_tree);
+        
+        // Skeleton Behavior Tree 생성
+        auto skeleton_tree = std::make_shared<Tree>("skeleton_bt");
+        auto skeleton_root = std::make_shared<Selector>("skeleton_root");
+        
+        auto skeleton_patrol_action = std::make_shared<Action>("patrol", [](Context& context) -> NodeStatus {
+            std::cout << "Skeleton patrol action executed" << std::endl;
+            return NodeStatus::SUCCESS;
+        });
+        
+        skeleton_root->AddChild(skeleton_patrol_action);
+        skeleton_tree->SetRoot(skeleton_root);
+        bt_engine_->RegisterTree("skeleton_bt", skeleton_tree);
+        
+        // Zombie Behavior Tree 생성
+        auto zombie_tree = std::make_shared<Tree>("zombie_bt");
+        auto zombie_root = std::make_shared<Selector>("zombie_root");
+        
+        auto zombie_patrol_action = std::make_shared<Action>("patrol", [](Context& context) -> NodeStatus {
+            std::cout << "Zombie patrol action executed" << std::endl;
+            return NodeStatus::SUCCESS;
+        });
+        
+        zombie_root->AddChild(zombie_patrol_action);
+        zombie_tree->SetRoot(zombie_root);
+        bt_engine_->RegisterTree("zombie_bt", zombie_tree);
+        
+        // Merchant Behavior Tree 생성
+        auto merchant_tree = std::make_shared<Tree>("merchant_bt");
+        auto merchant_root = std::make_shared<Selector>("merchant_root");
+        
+        auto merchant_idle_action = std::make_shared<Action>("idle", [](Context& context) -> NodeStatus {
+            std::cout << "Merchant idle action executed" << std::endl;
+            return NodeStatus::SUCCESS;
+        });
+        
+        merchant_root->AddChild(merchant_idle_action);
+        merchant_tree->SetRoot(merchant_root);
+        bt_engine_->RegisterTree("merchant_bt", merchant_tree);
+        
+        // Guard Behavior Tree 생성
+        auto guard_tree = std::make_shared<Tree>("guard_bt");
+        auto guard_root = std::make_shared<Selector>("guard_root");
+        
+        auto guard_patrol_action = std::make_shared<Action>("patrol", [](Context& context) -> NodeStatus {
+            std::cout << "Guard patrol action executed" << std::endl;
+            return NodeStatus::SUCCESS;
+        });
+        
+        guard_root->AddChild(guard_patrol_action);
+        guard_tree->SetRoot(guard_root);
+        bt_engine_->RegisterTree("guard_bt", guard_tree);
+        
+        // Default Behavior Tree 생성
+        auto default_tree = std::make_shared<Tree>("default_bt");
+        auto default_root = std::make_shared<Selector>("default_root");
+        
+        auto default_idle_action = std::make_shared<Action>("idle", [](Context& context) -> NodeStatus {
+            std::cout << "Default idle action executed" << std::endl;
+            return NodeStatus::SUCCESS;
+        });
+        
+        default_root->AddChild(default_idle_action);
+        default_tree->SetRoot(default_root);
+        bt_engine_->RegisterTree("default_bt", default_tree);
+        
+        std::cout << "Behavior Tree 초기화 완료 - " << bt_engine_->GetRegisteredTrees() << "개 등록됨" << std::endl;
     }
 
 

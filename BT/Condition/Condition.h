@@ -17,8 +17,18 @@ namespace bt
     public:
         using ConditionFunction = std::function<bool(Context&)>;
 
-        Condition(const std::string& name, ConditionFunction func);
-        NodeStatus Execute(Context& context) override;
+        Condition(const std::string& name, ConditionFunction func) 
+            : Node(name, NodeType::CONDITION), condition_func_(func) {}
+            
+        NodeStatus Execute(Context& context) override
+        {
+            if (condition_func_)
+            {
+                bool result = condition_func_(context);
+                return result ? NodeStatus::SUCCESS : NodeStatus::FAILURE;
+            }
+            return NodeStatus::FAILURE;
+        }
 
     private:
         ConditionFunction condition_func_;
