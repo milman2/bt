@@ -10,6 +10,7 @@ namespace bt
 {
 
     // 전방 선언
+    class IInterface;
     class IExecutor;
     class IOwner;
 
@@ -42,6 +43,10 @@ namespace bt
             blackboard_.SetData(key, value);
         }
 
+        // Interface 참조 (IInterface 인터페이스 사용)
+        void SetInterface(const std::string& name, std::shared_ptr<IInterface> interface) { interfaces_[name] = interface; }
+        std::shared_ptr<IInterface> GetInterface(const std::string& name) const { return interfaces_.at(name); }
+
         // Owner 참조 (IOwner 인터페이스 사용)
         void SetOwner(std::shared_ptr<IOwner> owner) { owner_ = owner; }
         std::shared_ptr<IOwner> GetOwner() const { return owner_; }
@@ -73,10 +78,11 @@ namespace bt
         void ClearCurrentRunningNode() { current_running_node_.clear(); }
 
     private:        
-        std::shared_ptr<IOwner>                    owner_;
-        std::shared_ptr<IExecutor>                     ai_;
-        Blackboard                                blackboard_;
-        std::chrono::steady_clock::time_point     start_time_;
+        std::unordered_map<std::string, std::shared_ptr<IInterface>> interfaces_;
+        std::shared_ptr<IOwner> owner_;
+        std::shared_ptr<IExecutor> ai_;
+        Blackboard blackboard_;
+        std::chrono::steady_clock::time_point start_time_;
         const EnvironmentInfo*                    environment_info_ = nullptr;
         uint64_t                                 execution_count_;
         std::string                              current_running_node_;
