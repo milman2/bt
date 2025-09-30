@@ -257,7 +257,7 @@ namespace bt
 
         if (monster_manager_)
         {
-            auto monsters = monster_manager_->get_all_monsters();
+            auto monsters = monster_manager_->GetAllMonsters();
             bool first    = true;
 
             for (const auto& monster : monsters)
@@ -324,7 +324,7 @@ namespace bt
 
         if (monster_manager_)
         {
-            json << "  \"total_monsters\": " << monster_manager_->get_monster_count() << ",\n";
+            json << "  \"total_monsters\": " << monster_manager_->GetMonsterCount() << ",\n";
         }
         else
         {

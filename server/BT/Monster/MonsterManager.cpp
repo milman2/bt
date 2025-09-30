@@ -22,7 +22,7 @@ namespace bt
 
     MonsterManager::~MonsterManager() {}
 
-    void MonsterManager::add_monster(std::shared_ptr<Monster> monster)
+    void MonsterManager::AddMonster(std::shared_ptr<Monster> monster)
     {
         std::lock_guard<std::mutex> lock(monsters_mutex_);
         uint32_t                    id = next_monster_id_.fetch_add(1);
@@ -31,7 +31,7 @@ namespace bt
         std::cout << "몬스터 추가: " << monster->GetName() << " (ID: " << id << ")" << std::endl;
     }
 
-    void MonsterManager::remove_monster(uint32_t monster_id)
+    void MonsterManager::RemoveMonster(uint32_t monster_id)
     {
         std::lock_guard<std::mutex> lock(monsters_mutex_);
         auto                        it = monsters_.find(monster_id);
@@ -42,7 +42,7 @@ namespace bt
         }
     }
 
-    std::shared_ptr<Monster> MonsterManager::get_monster(uint32_t monster_id)
+    std::shared_ptr<Monster> MonsterManager::GetMonster(uint32_t monster_id)
     {
         std::lock_guard<std::mutex> lock(monsters_mutex_);
         auto                        it = monsters_.find(monster_id);
@@ -53,7 +53,7 @@ namespace bt
         return nullptr;
     }
 
-    std::vector<std::shared_ptr<Monster>> MonsterManager::get_all_monsters()
+    std::vector<std::shared_ptr<Monster>> MonsterManager::GetAllMonsters()
     {
         std::lock_guard<std::mutex>           lock(monsters_mutex_);
         std::vector<std::shared_ptr<Monster>> result;
@@ -64,7 +64,7 @@ namespace bt
         return result;
     }
 
-    std::vector<std::shared_ptr<Monster>> MonsterManager::get_monsters_in_range(const MonsterPosition& position,
+    std::vector<std::shared_ptr<Monster>> MonsterManager::GetMonstersInRange(const MonsterPosition& position,
                                                                                 float                  range)
     {
         std::lock_guard<std::mutex>           lock(monsters_mutex_);
@@ -86,12 +86,12 @@ namespace bt
         return result;
     }
 
-    std::shared_ptr<Monster> MonsterManager::spawn_monster(MonsterType            type,
+    std::shared_ptr<Monster> MonsterManager::SpawnMonster(MonsterType            type,
                                                            const std::string&     name,
                                                            const MonsterPosition& position)
     {
         auto monster = MonsterFactory::CreateMonster(type, name, position);
-        add_monster(monster);
+        AddMonster(monster);
 
         // AI 이름과 BT 이름 설정
         monster->SetAIName(name);
@@ -120,7 +120,7 @@ namespace bt
         return monster;
     }
 
-    void MonsterManager::add_spawn_config(const MonsterSpawnConfig& config)
+    void MonsterManager::AddSpawnConfig(const MonsterSpawnConfig& config)
     {
         std::lock_guard<std::mutex> lock(spawn_mutex_);
         spawn_configs_.push_back(config);
@@ -128,7 +128,7 @@ namespace bt
                   << std::endl;
     }
 
-    void MonsterManager::remove_spawn_config(MonsterType type, const std::string& name)
+    void MonsterManager::RemoveSpawnConfig(MonsterType type, const std::string& name)
     {
         std::lock_guard<std::mutex> lock(spawn_mutex_);
         spawn_configs_.erase(std::remove_if(spawn_configs_.begin(),
@@ -140,19 +140,19 @@ namespace bt
                              spawn_configs_.end());
     }
 
-    void MonsterManager::start_auto_spawn()
+    void MonsterManager::StartAutoSpawn()
     {
         auto_spawn_enabled_.store(true);
         std::cout << "몬스터 자동 스폰 시작" << std::endl;
     }
 
-    void MonsterManager::stop_auto_spawn()
+    void MonsterManager::StopAutoSpawn()
     {
         auto_spawn_enabled_.store(false);
         std::cout << "몬스터 자동 스폰 중지" << std::endl;
     }
 
-    void MonsterManager::clear_all_spawn_configs()
+    void MonsterManager::ClearAllSpawnConfigs()
     {
         std::lock_guard<std::mutex> lock(spawn_mutex_);
         spawn_configs_.clear();
@@ -160,25 +160,25 @@ namespace bt
         std::cout << "모든 몬스터 스폰 설정이 초기화되었습니다." << std::endl;
     }
 
-    void MonsterManager::set_bt_engine(std::shared_ptr<BehaviorTreeEngine> engine)
+    void MonsterManager::SetBTEngine(std::shared_ptr<BehaviorTreeEngine> engine)
     {
         bt_engine_ = engine;
         std::cout << "MonsterManager에 Behavior Tree 엔진 설정 완료" << std::endl;
     }
 
-    void MonsterManager::set_websocket_server(std::shared_ptr<bt::SimpleWebSocketServer> server)
+    void MonsterManager::SetWebSocketServer(std::shared_ptr<bt::SimpleWebSocketServer> server)
     {
         websocket_server_ = server;
         std::cout << "MonsterManager에 WebSocket 서버 설정 완료" << std::endl;
     }
 
-    void MonsterManager::set_player_manager(std::shared_ptr<PlayerManager> manager)
+    void MonsterManager::SetPlayerManager(std::shared_ptr<PlayerManager> manager)
     {
         player_manager_ = manager;
         std::cout << "MonsterManager에 PlayerManager 설정 완료" << std::endl;
     }
 
-    bool MonsterManager::load_spawn_configs_from_file(const std::string& file_path)
+    bool MonsterManager::LoadSpawnConfigsFromFile(const std::string& file_path)
     {
         std::ifstream file(file_path);
         if (!file.is_open())
@@ -188,7 +188,7 @@ namespace bt
         }
 
         // 기존 설정 초기화
-        clear_all_spawn_configs();
+        ClearAllSpawnConfigs();
 
         try
         {
@@ -269,7 +269,7 @@ namespace bt
                     }
                 }
 
-                add_spawn_config(config);
+                AddSpawnConfig(config);
                 config_count++;
             }
 
@@ -283,7 +283,7 @@ namespace bt
         }
     }
 
-    void MonsterManager::process_auto_spawn(float /* delta_time */)
+    void MonsterManager::ProcessAutoSpawn(float /* delta_time */)
     {
         if (!auto_spawn_enabled_.load())
         {
@@ -323,7 +323,7 @@ namespace bt
             std::string config_key = config.name + "_" + std::to_string(static_cast<int>(config.type));
 
             // 현재 이름의 몬스터 수 확인
-            size_t current_count = get_monster_count_by_name(config.name);
+            size_t current_count = GetMonsterCountByName(config.name);
             // 10초마다 스폰 상태 로그 출력 (성능 개선)
             if (debug_count % 100 == 0)
             {
@@ -361,7 +361,7 @@ namespace bt
                 spawn_pos.z += dis(gen);
             }
 
-            auto monster = spawn_monster(config.type, config.name, spawn_pos);
+            auto monster = SpawnMonster(config.type, config.name, spawn_pos);
             if (monster)
             {
                 last_spawn_times_[config_key] = now;
@@ -371,7 +371,7 @@ namespace bt
         }
     }
 
-    void MonsterManager::process_respawn(float /* delta_time */)
+    void MonsterManager::ProcessRespawn(float /* delta_time */)
     {
         std::lock_guard<std::mutex> lock(monsters_mutex_);
 
@@ -392,7 +392,7 @@ namespace bt
         }
     }
 
-    void MonsterManager::update(float delta_time)
+    void MonsterManager::Update(float delta_time)
     {
         static int update_count = 0;
         update_count++;
@@ -404,8 +404,8 @@ namespace bt
                       << ", 몬스터 수: " << monsters_.size() << ")" << std::endl;
         }
 
-        process_auto_spawn(delta_time);
-        process_respawn(delta_time);
+        ProcessAutoSpawn(delta_time);
+        ProcessRespawn(delta_time);
 
         std::lock_guard<std::mutex> lock(monsters_mutex_);
 
@@ -491,7 +491,7 @@ namespace bt
         }
     }
 
-    size_t MonsterManager::get_monster_count_by_type(MonsterType type) const
+    size_t MonsterManager::GetMonsterCountByType(MonsterType type) const
     {
         std::lock_guard<std::mutex> lock(monsters_mutex_);
         size_t                      count = 0;
@@ -505,7 +505,7 @@ namespace bt
         return count;
     }
 
-    size_t MonsterManager::get_monster_count_by_name(const std::string& name) const
+    size_t MonsterManager::GetMonsterCountByName(const std::string& name) const
     {
         std::lock_guard<std::mutex> lock(monsters_mutex_);
         size_t                      count = 0;

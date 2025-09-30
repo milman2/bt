@@ -144,7 +144,7 @@ int main(int argc, char* argv[])
 
         // 몬스터 스폰 설정 파일 로드
         std::string config_file = "config/monster_spawns.json";
-        if (monster_manager->load_spawn_configs_from_file(config_file))
+        if (monster_manager->LoadSpawnConfigsFromFile(config_file))
         {
             LOG_INFO("몬스터 스폰 설정 파일 로드 성공: " + config_file);
         }
@@ -161,7 +161,7 @@ int main(int argc, char* argv[])
             goblin_spawn.respawn_time = 30.0f;
             goblin_spawn.max_count    = 3;
             goblin_spawn.spawn_radius = 3.0f;
-            monster_manager->add_spawn_config(goblin_spawn);
+            monster_manager->AddSpawnConfig(goblin_spawn);
 
             MonsterSpawnConfig orc_spawn;
             orc_spawn.type         = MonsterType::ORC;
@@ -170,11 +170,11 @@ int main(int argc, char* argv[])
             orc_spawn.respawn_time = 60.0f;
             orc_spawn.max_count    = 2;
             orc_spawn.spawn_radius = 5.0f;
-            monster_manager->add_spawn_config(orc_spawn);
+            monster_manager->AddSpawnConfig(orc_spawn);
         }
 
         // 자동 스폰 시작
-        monster_manager->start_auto_spawn();
+        monster_manager->StartAutoSpawn();
 
         // 실제 클라이언트 연결 시 플레이어가 생성됩니다
     }
@@ -194,7 +194,7 @@ int main(int argc, char* argv[])
                 LOG_DEBUG("asio_main.cpp에서 MonsterManager::update 호출 (카운트: " + std::to_string(update_count) +
                           ")");
             }
-            monster_manager->update(0.1f); // 100ms 간격으로 업데이트
+            monster_manager->Update(0.1f); // 100ms 간격으로 업데이트
         }
 
         if (player_manager)
@@ -218,7 +218,7 @@ int main(int argc, char* argv[])
                      ", 수신된 패킷: " + std::to_string(g_server->get_total_packets_received()));
             if (monster_manager)
             {
-                LOG_INFO("활성 몬스터: " + std::to_string(monster_manager->get_monster_count()) + "마리");
+                LOG_INFO("활성 몬스터: " + std::to_string(monster_manager->GetMonsterCount()) + "마리");
             }
             if (player_manager)
             {

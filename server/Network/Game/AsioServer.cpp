@@ -41,13 +41,13 @@ namespace bt
         rest_api_server_->set_websocket_server(websocket_server_);
 
         // MonsterManager에 WebSocket 서버 설정
-        monster_manager_->set_websocket_server(websocket_server_);
+        monster_manager_->SetWebSocketServer(websocket_server_);
 
         // MonsterManager에 PlayerManager 설정
-        monster_manager_->set_player_manager(player_manager_);
+        monster_manager_->SetPlayerManager(player_manager_);
 
         // MonsterManager에 BT 엔진 설정
-        monster_manager_->set_bt_engine(shared_bt_engine);
+        monster_manager_->SetBTEngine(shared_bt_engine);
 
         // PlayerManager에 WebSocket 서버 설정
         player_manager_->set_websocket_server(websocket_server_);
