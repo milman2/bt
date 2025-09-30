@@ -25,20 +25,20 @@ namespace bt
 
         // 웹 서버 초기화
         rest_api_server_ = std::make_shared<RestApiServer>(8081); // REST API 서버는 8081 포트 사용
-        rest_api_server_->set_monster_manager(monster_manager_);
-        rest_api_server_->set_player_manager(player_manager_);
+        rest_api_server_->SetMonsterManager(monster_manager_);
+        rest_api_server_->SetPlayerManager(player_manager_);
         // bt_engine_을 shared_ptr로 변환 (원본은 유지)
         std::shared_ptr<BehaviorTreeEngine> shared_bt_engine(bt_engine_.get(),
                                                              [](BehaviorTreeEngine*)
                                                              {
                                                              });
-        rest_api_server_->set_bt_engine(shared_bt_engine);
+        rest_api_server_->SetBTEngine(shared_bt_engine);
 
         // WebSocket 서버 초기화
         websocket_server_ = std::make_shared<SimpleWebSocketServer>(8082); // WebSocket 서버는 8082 포트 사용
 
         // RestApiServer에 WebSocket 서버 참조 설정
-        rest_api_server_->set_websocket_server(websocket_server_);
+        rest_api_server_->SetWebSocketServer(websocket_server_);
 
         // MonsterManager에 WebSocket 서버 설정
         monster_manager_->SetWebSocketServer(websocket_server_);
@@ -106,7 +106,7 @@ namespace bt
             // REST API 서버 시작
             if (rest_api_server_)
             {
-                rest_api_server_->start();
+                rest_api_server_->Start();
             }
 
             // WebSocket 서버 시작
@@ -162,7 +162,7 @@ namespace bt
             // REST API 서버 중지
             if (rest_api_server_)
             {
-                rest_api_server_->stop();
+                rest_api_server_->Stop();
             }
 
             // WebSocket 서버 중지

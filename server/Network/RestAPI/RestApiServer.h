@@ -54,23 +54,23 @@ namespace bt
         ~RestApiServer();
 
         // 서버 시작/중지
-        bool start();
-        void stop();
-        bool is_running() const { return running_.load(); }
+        bool Start();
+        void Stop();
+        bool IsRunning() const { return running_.load(); }
 
         // 매니저 설정
-        void set_monster_manager(std::shared_ptr<MonsterManager> manager);
-        void set_player_manager(std::shared_ptr<PlayerManager> manager);
-        void set_bt_engine(std::shared_ptr<BehaviorTreeEngine> engine);
-        void set_websocket_server(std::shared_ptr<SimpleWebSocketServer> server);
+        void SetMonsterManager(std::shared_ptr<MonsterManager> manager);
+        void SetPlayerManager(std::shared_ptr<PlayerManager> manager);
+        void SetBTEngine(std::shared_ptr<BehaviorTreeEngine> engine);
+        void SetWebSocketServer(std::shared_ptr<SimpleWebSocketServer> server);
 
         // 포트 설정
-        void     set_port(uint16_t port) { port_ = port; }
-        uint16_t get_port() const { return port_; }
+        void     SetPort(uint16_t port) { port_ = port; }
+        uint16_t GetPort() const { return port_; }
 
         // 통계 정보
-        size_t get_connected_clients() const { return connected_clients_.load(); }
-        size_t get_total_requests() const { return total_requests_.load(); }
+        size_t GetConnectedClients() const { return connected_clients_.load(); }
+        size_t GetTotalRequests() const { return total_requests_.load(); }
 
     private:
         uint16_t            port_;
@@ -86,36 +86,36 @@ namespace bt
         std::thread server_thread_;
 
         // HTTP 서버 메인 루프
-        void server_loop();
+        void ServerLoop();
 
         // HTTP 요청 처리
-        void handle_request(const std::string& request, std::string& response);
+        void HandleRequest(const std::string& request, std::string& response);
 
         // API 엔드포인트들
-        void handle_root(const std::string& request, std::string& response);
-        void handle_api_monsters(const std::string& request, std::string& response);
-        void handle_api_monster_detail(const std::string& request, std::string& response);
-        void handle_api_stats(const std::string& request, std::string& response);
-        void handle_api_players(const std::string& request, std::string& response);
+        void HandleRoot(const std::string& request, std::string& response);
+        void HandleApiMonsters(const std::string& request, std::string& response);
+        void HandleApiMonsterDetail(const std::string& request, std::string& response);
+        void HandleApiStats(const std::string& request, std::string& response);
+        void HandleApiPlayers(const std::string& request, std::string& response);
 
         // 유틸리티 함수들
-        std::string get_monster_status_json() const;
-        std::string get_server_stats_json() const;
-        std::string get_player_status_json() const;
-        std::string monster_type_to_string(MonsterType type) const;
-        std::string monster_state_to_string(MonsterState state) const;
+        std::string GetMonsterStatusJson() const;
+        std::string GetServerStatsJson() const;
+        std::string GetPlayerStatusJson() const;
+        std::string MonsterTypeToString(MonsterType type) const;
+        std::string MonsterStateToString(MonsterState state) const;
 
         // HTTP 헬퍼 함수들
-        std::string extract_path(const std::string& request) const;
-        std::string extract_method(const std::string& request) const;
-        std::string create_http_response(const std::string& content,
+        std::string ExtractPath(const std::string& request) const;
+        std::string ExtractMethod(const std::string& request) const;
+        std::string CreateHttpResponse(const std::string& content,
                                          const std::string& content_type = "text/html") const;
-        std::string create_json_response(const std::string& json) const;
-        std::string create_error_response(int status_code, const std::string& message) const;
+        std::string CreateJsonResponse(const std::string& json) const;
+        std::string CreateErrorResponse(int status_code, const std::string& message) const;
 
         // HTML 템플릿
-        std::string get_dashboard_html() const;
-        std::string get_monster_detail_html() const;
+        std::string GetDashboardHtml() const;
+        std::string GetMonsterDetailHtml() const;
     };
 
 } // namespace bt

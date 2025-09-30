@@ -27,10 +27,10 @@ namespace bt
 
     RestApiServer::~RestApiServer()
     {
-        stop();
+        Stop();
     }
 
-    bool RestApiServer::start()
+    bool RestApiServer::Start()
     {
         if (running_.load())
         {
@@ -38,7 +38,7 @@ namespace bt
         }
 
         running_.store(true);
-        server_thread_ = std::thread(&RestApiServer::server_loop, this);
+        server_thread_ = std::thread(&RestApiServer::ServerLoop, this);
 
         std::cout << "웹 서버가 포트 " << port_ << "에서 시작되었습니다." << std::endl;
         std::cout << "브라우저에서 http://localhost:" << port_ << " 으로 접속하세요." << std::endl;
@@ -46,7 +46,7 @@ namespace bt
         return true;
     }
 
-    void RestApiServer::stop()
+    void RestApiServer::Stop()
     {
         if (!running_.load())
         {
@@ -62,27 +62,27 @@ namespace bt
         std::cout << "웹 서버가 중지되었습니다." << std::endl;
     }
 
-    void RestApiServer::set_monster_manager(std::shared_ptr<MonsterManager> manager)
+    void RestApiServer::SetMonsterManager(std::shared_ptr<MonsterManager> manager)
     {
         monster_manager_ = manager;
     }
 
-    void RestApiServer::set_player_manager(std::shared_ptr<PlayerManager> manager)
+    void RestApiServer::SetPlayerManager(std::shared_ptr<PlayerManager> manager)
     {
         player_manager_ = manager;
     }
 
-    void RestApiServer::set_bt_engine(std::shared_ptr<BehaviorTreeEngine> engine)
+    void RestApiServer::SetBTEngine(std::shared_ptr<BehaviorTreeEngine> engine)
     {
         bt_engine_ = engine;
     }
 
-    void RestApiServer::set_websocket_server(std::shared_ptr<SimpleWebSocketServer> server)
+    void RestApiServer::SetWebSocketServer(std::shared_ptr<SimpleWebSocketServer> server)
     {
         websocket_server_ = server;
     }
 
-    void RestApiServer::server_loop()
+    void RestApiServer::ServerLoop()
     {
         int server_fd = socket(AF_INET, SOCK_STREAM, 0);
         if (server_fd == 0)
@@ -174,7 +174,7 @@ namespace bt
                     std::string request(buffer, bytes_read);
                     std::string response;
 
-                    handle_request(request, response);
+                    HandleRequest(request, response);
 
                     send(client_socket, response.c_str(), response.length(), 0);
                     total_requests_++;
@@ -188,68 +188,68 @@ namespace bt
         close(server_fd);
     }
 
-    void RestApiServer::handle_request(const std::string& request, std::string& response)
+    void RestApiServer::HandleRequest(const std::string& request, std::string& response)
     {
-        std::string method = extract_method(request);
-        std::string path   = extract_path(request);
+        std::string method = ExtractMethod(request);
+        std::string path   = ExtractPath(request);
 
         if (path == "/")
         {
-            handle_root(request, response);
+            HandleRoot(request, response);
         }
         else if (path == "/api/monsters")
         {
-            handle_api_monsters(request, response);
+            HandleApiMonsters(request, response);
         }
         else if (path.find("/api/monsters/") == 0)
         {
-            handle_api_monster_detail(request, response);
+            HandleApiMonsterDetail(request, response);
         }
         else if (path == "/api/stats")
         {
-            handle_api_stats(request, response);
+            HandleApiStats(request, response);
         }
         else if (path == "/api/players")
         {
-            handle_api_players(request, response);
+            HandleApiPlayers(request, response);
         }
         else
         {
-            response = create_error_response(404, "Not Found");
+            response = CreateErrorResponse(404, "Not Found");
         }
     }
 
-    void RestApiServer::handle_root(const std::string& request, std::string& response)
+    void RestApiServer::HandleRoot(const std::string& request, std::string& response)
     {
-        response = create_http_response(get_dashboard_html());
+        response = CreateHttpResponse(GetDashboardHtml());
     }
 
-    void RestApiServer::handle_api_monsters(const std::string& request, std::string& response)
+    void RestApiServer::HandleApiMonsters(const std::string& request, std::string& response)
     {
-        std::string json = get_monster_status_json();
-        response         = create_json_response(json);
+        std::string json = GetMonsterStatusJson();
+        response         = CreateJsonResponse(json);
     }
 
-    void RestApiServer::handle_api_monster_detail(const std::string& request, std::string& response)
+    void RestApiServer::HandleApiMonsterDetail(const std::string& request, std::string& response)
     {
         // 간단한 구현 - 모든 몬스터 정보 반환
-        std::string json = get_monster_status_json();
-        response         = create_json_response(json);
+        std::string json = GetMonsterStatusJson();
+        response         = CreateJsonResponse(json);
     }
 
-    void RestApiServer::handle_api_stats(const std::string& request, std::string& response)
+    void RestApiServer::HandleApiStats(const std::string& request, std::string& response)
     {
-        std::string json = get_server_stats_json();
-        response         = create_json_response(json);
+        std::string json = GetServerStatsJson();
+        response         = CreateJsonResponse(json);
     }
 
-    void RestApiServer::handle_api_players(const std::string& request, std::string& response)
+    void RestApiServer::HandleApiPlayers(const std::string& request, std::string& response)
     {
-        std::string json = get_player_status_json();
-        response         = create_json_response(json);
+        std::string json = GetPlayerStatusJson();
+        response         = CreateJsonResponse(json);
     }
 
-    std::string RestApiServer::get_monster_status_json() const
+    std::string RestApiServer::GetMonsterStatusJson() const
     {
         std::ostringstream json;
         json << "{\n";
@@ -269,7 +269,7 @@ namespace bt
                 json << "    {\n";
                 json << "      \"id\": " << monster->GetTargetID() << ",\n";
                 json << "      \"name\": \"" << monster->GetName() << "\",\n";
-                json << "      \"type\": \"" << monster_type_to_string(monster->GetType()) << "\",\n";
+                json << "      \"type\": \"" << MonsterTypeToString(monster->GetType()) << "\",\n";
 
                 const auto& pos = monster->GetPosition();
                 json << "      \"position\": {\n";
@@ -279,7 +279,7 @@ namespace bt
                 json << "        \"rotation\": " << pos.rotation << "\n";
                 json << "      },\n";
 
-                json << "      \"state\": \"" << monster_state_to_string(monster->GetState()) << "\",\n";
+                json << "      \"state\": \"" << MonsterStateToString(monster->GetState()) << "\",\n";
 
                 const auto& stats = monster->GetStats();
                 json << "      \"health\": " << stats.health << ",\n";
@@ -317,7 +317,7 @@ namespace bt
         return json.str();
     }
 
-    std::string RestApiServer::get_server_stats_json() const
+    std::string RestApiServer::GetServerStatsJson() const
     {
         std::ostringstream json;
         json << "{\n";
@@ -365,7 +365,7 @@ namespace bt
         return json.str();
     }
 
-    std::string RestApiServer::get_player_status_json() const
+    std::string RestApiServer::GetPlayerStatusJson() const
     {
         std::ostringstream json;
         json << "{\n";
@@ -414,7 +414,7 @@ namespace bt
         return json.str();
     }
 
-    std::string RestApiServer::monster_type_to_string(MonsterType type) const
+    std::string RestApiServer::MonsterTypeToString(MonsterType type) const
     {
         switch (type)
         {
@@ -437,7 +437,7 @@ namespace bt
         }
     }
 
-    std::string RestApiServer::monster_state_to_string(MonsterState state) const
+    std::string RestApiServer::MonsterStateToString(MonsterState state) const
     {
         switch (state)
         {
@@ -458,7 +458,7 @@ namespace bt
         }
     }
 
-    std::string RestApiServer::extract_path(const std::string& request) const
+    std::string RestApiServer::ExtractPath(const std::string& request) const
     {
         size_t start = request.find(' ');
         if (start == std::string::npos)
@@ -471,7 +471,7 @@ namespace bt
         return request.substr(start + 1, end - start - 1);
     }
 
-    std::string RestApiServer::extract_method(const std::string& request) const
+    std::string RestApiServer::ExtractMethod(const std::string& request) const
     {
         size_t end = request.find(' ');
         if (end == std::string::npos)
@@ -480,7 +480,7 @@ namespace bt
         return request.substr(0, end);
     }
 
-    std::string RestApiServer::create_http_response(const std::string& content, const std::string& content_type) const
+    std::string RestApiServer::CreateHttpResponse(const std::string& content, const std::string& content_type) const
     {
         std::ostringstream response;
         response << "HTTP/1.1 200 OK\r\n";
@@ -496,12 +496,12 @@ namespace bt
         return response.str();
     }
 
-    std::string RestApiServer::create_json_response(const std::string& json) const
+    std::string RestApiServer::CreateJsonResponse(const std::string& json) const
     {
-        return create_http_response(json, "application/json");
+        return CreateHttpResponse(json, "application/json");
     }
 
-    std::string RestApiServer::create_error_response(int status_code, const std::string& message) const
+    std::string RestApiServer::CreateErrorResponse(int status_code, const std::string& message) const
     {
         std::ostringstream response;
         response << "HTTP/1.1 " << status_code << " " << message << "\r\n";
@@ -514,7 +514,7 @@ namespace bt
         return response.str();
     }
 
-    std::string RestApiServer::get_dashboard_html() const
+    std::string RestApiServer::GetDashboardHtml() const
     {
         std::ifstream file("web/dashboard.html");
         if (!file.is_open())
