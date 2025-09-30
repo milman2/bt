@@ -21,6 +21,7 @@ namespace bt
 
         // AI 생성 및 설정
         auto ai = std::make_shared<MonsterBTExecutor>(name, bt_name);
+        ai->SetMonster(monster);  // AI에 몬스터 참조 설정
         monster->SetAI(ai);
 
         return monster;
@@ -40,6 +41,7 @@ namespace bt
 
         // AI 생성 및 설정
         auto ai = std::make_shared<MonsterBTExecutor>(config.name, bt_name);
+        ai->SetMonster(monster);  // AI에 몬스터 참조 설정
         monster->SetAI(ai);
 
         return monster;

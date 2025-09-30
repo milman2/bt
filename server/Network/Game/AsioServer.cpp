@@ -569,20 +569,25 @@ namespace bt
         
         // Patrol Action
         auto patrol_action = std::make_shared<Action>("patrol", [](Context& context) -> NodeStatus {
+            std::cout << "Goblin patrol action executed" << std::endl;
+            
             // AI를 통해 몬스터 정보 가져오기
             auto ai = context.GetAI();
             if (!ai) {
+                std::cout << "Patrol action: AI가 없음" << std::endl;
                 return NodeStatus::FAILURE;
             }
             
             // MonsterBTExecutor로 캐스팅
             auto monster_ai = std::dynamic_pointer_cast<MonsterBTExecutor>(ai);
             if (!monster_ai) {
+                std::cout << "Patrol action: MonsterBTExecutor 캐스팅 실패" << std::endl;
                 return NodeStatus::FAILURE;
             }
             
             auto monster = monster_ai->GetMonster();
             if (!monster) {
+                std::cout << "Patrol action: 몬스터 참조가 없음" << std::endl;
                 return NodeStatus::FAILURE;
             }
             
@@ -605,7 +610,7 @@ namespace bt
             }
             
             // 목표 지점으로 이동
-            float move_speed = 2.0f; // 이동 속도
+            float move_speed = 50.0f; // 이동 속도 (크게 증가)
             float move_distance = move_speed * 0.016f; // 60fps 기준
             
             if (distance > 0.0f) {
@@ -657,7 +662,7 @@ namespace bt
                 return NodeStatus::SUCCESS;
             }
             
-            float move_speed = 1.5f; // Orc는 조금 느림
+            float move_speed = 40.0f; // Orc는 조금 느림 (속도 증가)
             float move_distance = move_speed * 0.016f;
             
             if (distance > 0.0f) {
@@ -701,7 +706,7 @@ namespace bt
                 return NodeStatus::SUCCESS;
             }
             
-            float move_speed = 3.0f; // Dragon은 빠름
+            float move_speed = 60.0f; // Dragon은 빠름 (속도 증가)
             float move_distance = move_speed * 0.016f;
             
             if (distance > 0.0f) {
@@ -745,7 +750,7 @@ namespace bt
                 return NodeStatus::SUCCESS;
             }
             
-            float move_speed = 1.8f; // Skeleton은 보통 속도
+            float move_speed = 45.0f; // Skeleton은 보통 속도 (속도 증가)
             float move_distance = move_speed * 0.016f;
             
             if (distance > 0.0f) {
@@ -789,7 +794,7 @@ namespace bt
                 return NodeStatus::SUCCESS;
             }
             
-            float move_speed = 1.0f; // Zombie는 느림
+            float move_speed = 30.0f; // Zombie는 느림 (속도 증가)
             float move_distance = move_speed * 0.016f;
             
             if (distance > 0.0f) {
@@ -846,7 +851,7 @@ namespace bt
                 return NodeStatus::SUCCESS;
             }
             
-            float move_speed = 2.2f; // Guard는 빠름
+            float move_speed = 35.0f; // Guard는 빠름 (속도 증가)
             float move_distance = move_speed * 0.016f;
             
             if (distance > 0.0f) {
