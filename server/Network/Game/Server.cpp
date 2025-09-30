@@ -6,7 +6,7 @@
 
 #include <cstring>
 
-#include "../World/GameWorld.h"
+#include "World/GameWorld.h"
 #include "PacketHandler.h"
 #include "Server.h"
 

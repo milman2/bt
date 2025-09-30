@@ -38,7 +38,7 @@ namespace bt
     class BTNode
     {
     public:
-        BTNode(const std::string& name, BTNodeType type);
+        BTNode(const std::string& name, BTNodeType type) : name_(name), type_(type) {}
         virtual ~BTNode() = default;
 
         // 노드 실행
@@ -49,7 +49,7 @@ namespace bt
         BTNodeType         GetType() const { return type_; }
 
         // 자식 노드 관리
-        void                                        AddChild(std::shared_ptr<BTNode> child);
+        void AddChild(std::shared_ptr<BTNode> child) { children_.push_back(child); }
         const std::vector<std::shared_ptr<BTNode>>& GetChildren() const { return children_; }
 
         // 노드 상태

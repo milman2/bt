@@ -15,15 +15,22 @@ namespace bt
     class BehaviorTree
     {
     public:
-        BehaviorTree(const std::string& name);
+        BehaviorTree(const std::string& name) : name_(name) {}
         ~BehaviorTree() = default;
 
         // 트리 구성
-        void                    SetRoot(std::shared_ptr<BTNode> root);
+        void SetRoot(std::shared_ptr<BTNode> root) { root_ = root; }
         std::shared_ptr<BTNode> GetRoot() const { return root_; }
 
         // 트리 실행
-        BTNodeStatus Execute(BTContext& context);
+        BTNodeStatus Execute(BTContext& context)
+        {
+            if (root_)
+            {
+                return root_->Execute(context);
+            }
+            return BTNodeStatus::FAILURE;
+        }
 
         // 트리 정보
         const std::string& GetName() const { return name_; }

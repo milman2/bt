@@ -8,7 +8,7 @@
 #include <signal.h>
 
 #include "AsioServer.h"
-#include "BT/BehaviorTree.h"
+#include "../../BT/BehaviorTree.h"
 #include "../shared/Logger.h"
 #include "BT/Monster/MonsterTypes.h"
 #include "BT/Monster/MonsterManager.h"
@@ -205,7 +205,7 @@ int main(int argc, char* argv[])
         // Behavior Tree 엔진 업데이트
         if (bt_engine)
         {
-            bt_engine->UpdateAllMonsters(0.1f); // 100ms 간격으로 업데이트
+            // BT 엔진에서 몬스터 업데이트 제거됨 - MonsterManager에서 직접 처리
         }
 
         // 통계 정보 출력 (10초마다)

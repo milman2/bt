@@ -12,6 +12,7 @@ add_executable(BT_MMORPG_Server ${SERVER_SOURCES})
 # 라이브러리 링크
 target_link_libraries(BT_MMORPG_Server 
     SharedProtocol
+    BT_Library
     Threads::Threads
     Boost::system
     Boost::thread

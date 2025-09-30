@@ -1,8 +1,6 @@
 #include "Monster.h"
 #include "MonsterBTExecutor.h"
 #include "MonsterFactory.h"
-#include "../../Player.h"
-#include "../../PlayerManager.h"
 
 #include <algorithm>
 #include <fstream>
@@ -105,39 +103,9 @@ namespace bt
     {
         environment_info_ = EnvironmentInfo();
 
-        // 주변 플레이어 검색
-        for (const auto& player : players)
-        {
-            if (!player || !player->IsAlive())
-                continue;
-
-            const auto& player_pos = player->GetPosition();
-            float       distance =
-                std::sqrt(std::pow(player_pos.x - position_.x, 2) + std::pow(player_pos.y - position_.y, 2) +
-                          std::pow(player_pos.z - position_.z, 2));
-
-            // 디버깅: 플레이어와의 거리 로그 (더 자주 출력)
-            static int debug_count = 0;
-            if (debug_count++ % 20 == 0)
-            { // 2초마다 로그 출력
-                std::cout << "Monster " << name_ << " - Player " << player->GetID() << " 거리: " << distance
-                          << " (탐지범위: " << stats_.detection_range << ")" << std::endl;
-            }
-
-            if (distance <= stats_.detection_range)
-            {
-                environment_info_.nearby_players.push_back(player->GetID());
-
-                if (environment_info_.nearest_enemy_distance < 0 || distance < environment_info_.nearest_enemy_distance)
-                {
-                    environment_info_.nearest_enemy_distance = distance;
-                    environment_info_.nearest_enemy_id       = player->GetID();
-
-                    std::cout << "Monster " << name_ << " - Player " << player->GetID()
-                              << " 탐지됨! 거리: " << distance << std::endl;
-                }
-            }
-        }
+        // 주변 플레이어 검색 (서버에서 주입받은 정보 사용)
+        // TODO: 서버에서 플레이어 정보를 주입받아 처리
+        // 현재는 빈 구현으로 두고 서버에서 실제 로직 처리
 
         // 주변 몬스터 검색
         for (const auto& monster : monsters)

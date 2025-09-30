@@ -343,7 +343,7 @@ namespace bt
         if (bt_engine_)
         {
             json << "  \"registered_bt_trees\": " << bt_engine_->GetRegisteredTrees() << ",\n";
-            json << "  \"active_monsters\": " << bt_engine_->GetActiveMonsters() << ",\n";
+            json << "  \"active_monsters\": " << monster_manager_->GetMonsterCount() << ",\n";
         }
         else
         {

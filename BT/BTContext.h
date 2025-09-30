@@ -10,21 +10,32 @@ namespace bt
 {
 
     // 전방 선언
-    class MonsterBTExecutor;
     struct EnvironmentInfo;
+    class IBTExecutor;
 
     // Behavior Tree 컨텍스트 (Blackboard)
     class BTContext
     {
     public:
-        BTContext();
+        BTContext() : start_time_(std::chrono::steady_clock::now()) {}
         ~BTContext() = default;
 
         // 데이터 관리
-        void     SetData(const std::string& key, const std::any& value);
-        std::any GetData(const std::string& key) const;
-        bool     HasData(const std::string& key) const;
-        void     RemoveData(const std::string& key);
+        void SetData(const std::string& key, const std::any& value) { data_[key] = value; }
+        
+        std::any GetData(const std::string& key) const 
+        { 
+            auto it = data_.find(key);
+            if (it != data_.end())
+            {
+                return it->second;
+            }
+            return std::any{};
+        }
+        
+        bool HasData(const std::string& key) const { return data_.find(key) != data_.end(); }
+        
+        void RemoveData(const std::string& key) { data_.erase(key); }
 
         // 타입 안전한 데이터 접근
         template <typename T>
@@ -51,9 +62,9 @@ namespace bt
             data_[key] = value;
         }
 
-        // 몬스터 AI 참조
-        void                              SetMonsterAI(std::shared_ptr<MonsterBTExecutor> ai) { monster_ai_ = ai; }
-        std::shared_ptr<MonsterBTExecutor> GetMonsterAI() const { return monster_ai_; }
+        // AI 참조 (IBTExecutor 인터페이스 사용)
+        void SetAI(std::shared_ptr<IBTExecutor> ai) { ai_ = ai; }
+        std::shared_ptr<IBTExecutor> GetAI() const { return ai_; }
 
         // 실행 시간 관리
         void SetStartTime(std::chrono::steady_clock::time_point time) { start_time_ = time; }
@@ -65,7 +76,7 @@ namespace bt
 
     private:
         std::unordered_map<std::string, std::any> data_;
-        std::shared_ptr<MonsterBTExecutor>        monster_ai_;
+        std::shared_ptr<IBTExecutor>                     ai_;
         std::chrono::steady_clock::time_point     start_time_;
         const EnvironmentInfo*                    environment_info_ = nullptr;
     };

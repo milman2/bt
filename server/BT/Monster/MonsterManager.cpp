@@ -1,10 +1,8 @@
 #include "MonsterManager.h"
 #include "MonsterFactory.h"
 #include "MonsterBTExecutor.h"
-#include "../../Player.h"
 #include "../../PlayerManager.h"
-#include "../../Network/WebSocket/SimpleWebSocketServer.h"
-#include "../BehaviorTreeEngine.h"
+#include "../../BT/BehaviorTreeEngine.h"
 
 #include <algorithm>
 #include <fstream>
@@ -101,7 +99,7 @@ namespace bt
         // Behavior Tree 엔진에 AI 등록
         if (bt_engine_ && monster->GetAI())
         {
-            bt_engine_->RegisterMonsterAI(monster->GetAI());
+            // BT 엔진에서 몬스터 AI 등록 제거됨 - 서버에서 직접 관리
 
             // Behavior Tree 설정
             auto tree = bt_engine_->GetTree(bt_name);
@@ -468,7 +466,8 @@ namespace bt
                 }
 
                 std::cout << "WebSocket 브로드캐스트: " << event["monsters"].size() << "마리 몬스터 전송" << std::endl;
-                websocket_server_->broadcast(event.dump());
+                // TODO: 서버에서 WebSocket 브로드캐스트 처리
+                // websocket_server_->broadcast(event.dump());
 
                 // 서버 통계도 함께 브로드캐스트
                 nlohmann::json stats_event;
@@ -485,8 +484,9 @@ namespace bt
                     stats_event["data"]["totalPlayers"] = 0;
                 }
                 stats_event["data"]["registeredBTTrees"] = 7; // 등록된 BT 트리 수
-                stats_event["data"]["connectedClients"]  = websocket_server_->get_connected_clients();
-                websocket_server_->broadcast(stats_event.dump());
+                // TODO: 서버에서 WebSocket 브로드캐스트 처리
+                stats_event["data"]["connectedClients"]  = 0;
+                // websocket_server_->broadcast(stats_event.dump());
             }
         }
     }

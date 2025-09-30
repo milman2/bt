@@ -109,6 +109,7 @@ endif()
 
 # 서브디렉토리 추가
 add_subdirectory(shared)
+add_subdirectory(BT)
 add_subdirectory(server)
 add_subdirectory(client)
 

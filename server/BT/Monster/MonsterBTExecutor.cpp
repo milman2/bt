@@ -39,7 +39,7 @@ namespace bt
         context_.SetStartTime(now);
 
         // 몬스터 참조를 컨텍스트에 설정
-        context_.SetMonsterAI(shared_from_this());
+        context_.SetAI(shared_from_this());
 
         // Behavior Tree 실행
         behavior_tree_->Execute(context_);
