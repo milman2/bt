@@ -137,22 +137,22 @@ int main(int argc, char* argv[])
     }
     std::cout << "\n";
 
-    // AI 플레이어 클라이언트 생성
-    AsioTestClient client(config);
-    client.SetVerbose(verbose);
+    // AI 플레이어 클라이언트 생성 (shared_ptr로 생성)
+    auto client = std::make_shared<AsioTestClient>(config);
+    client->SetVerbose(verbose);
 
     try
     {
         // 서버 연결
         std::cout << "서버에 연결 중...\n";
-        if (!client.Connect())
+        if (!client->Connect())
         {
             std::cerr << "서버 연결 실패!\n";
             return 1;
         }
 
         std::cout << "AI 시작...\n";
-        client.StartAI();
+        client->StartAI();
 
         // AI 루프 실행
         auto start_time = std::chrono::steady_clock::now();
@@ -160,14 +160,14 @@ int main(int argc, char* argv[])
         
         std::cout << "AI 플레이어가 동작 중입니다. 종료하려면 Ctrl+C를 누르세요.\n\n";
 
-        while (client.IsConnected())
+        while (client->IsConnected())
         {
             auto current_time = std::chrono::steady_clock::now();
             auto delta_time = std::chrono::duration<float>(current_time - last_update).count();
             last_update = current_time;
 
             // AI 업데이트
-            client.UpdateAI(delta_time);
+            client->UpdateAI(delta_time);
 
             // 실행 시간 체크
             if (duration > 0)
@@ -185,7 +185,7 @@ int main(int argc, char* argv[])
         }
 
         std::cout << "AI 중지...\n";
-        client.StopAI();
+        client->StopAI();
     }
     catch (const std::exception& e)
     {

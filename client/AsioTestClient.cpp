@@ -26,7 +26,7 @@ namespace bt
         
         // Behavior Tree 생성
         behavior_tree_ = PlayerBTs::CreatePlayerBT();
-        context_.SetAI(std::shared_ptr<AsioTestClient>(this, [](AsioTestClient*){}));
+        context_.SetAI(shared_from_this());
         
         LogMessage("AI 플레이어 클라이언트 생성됨: " + config_.player_name);
     }
