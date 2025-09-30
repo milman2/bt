@@ -2,10 +2,10 @@
 #include "../../BT/Tree.h"
 #include "../../BT/Control/Sequence.h"
 #include "../../BT/Control/Selector.h"
-#include "../Action/PatrolAction.h"
-#include "../Action/AttackAction.h"
-#include "../Condition/HasTargetCondition.h"
-#include "../Condition/InAttackRangeCondition.h"
+#include "../Action/Patrol.h"
+#include "../Action/Attack.h"
+#include "../Condition/HasTarget.h"
+#include "../Condition/InAttackRange.h"
 
 #include <iostream>
 
@@ -21,12 +21,12 @@ namespace bt
         
         // 공격 시퀀스: 타겟이 있고 공격 범위 내에 있으면 공격
         auto attack_sequence = std::make_shared<Sequence>("attack_sequence");
-        attack_sequence->AddChild(std::make_shared<HasTargetCondition>("has_target"));
-        attack_sequence->AddChild(std::make_shared<InAttackRangeCondition>("in_attack_range"));
-        attack_sequence->AddChild(std::make_shared<AttackAction>("attack"));
+        attack_sequence->AddChild(std::make_shared<bt::condition::HasTarget>("has_target"));
+        attack_sequence->AddChild(std::make_shared<bt::condition::InAttackRange>("in_attack_range"));
+        attack_sequence->AddChild(std::make_shared<bt::action::Attack>("attack"));
         
         // 순찰 액션
-        auto patrol_action = std::make_shared<PatrolAction>("patrol");
+        auto patrol_action = std::make_shared<bt::action::Patrol>("patrol");
         
         // 루트에 자식 노드들 추가
         root->AddChild(attack_sequence);
@@ -46,11 +46,11 @@ namespace bt
         auto root = std::make_shared<Selector>("orc_root");
         
         auto attack_sequence = std::make_shared<Sequence>("attack_sequence");
-        attack_sequence->AddChild(std::make_shared<HasTargetCondition>("has_target"));
-        attack_sequence->AddChild(std::make_shared<InAttackRangeCondition>("in_attack_range"));
-        attack_sequence->AddChild(std::make_shared<AttackAction>("attack"));
+        attack_sequence->AddChild(std::make_shared<bt::condition::HasTarget>("has_target"));
+        attack_sequence->AddChild(std::make_shared<bt::condition::InAttackRange>("in_attack_range"));
+        attack_sequence->AddChild(std::make_shared<bt::action::Attack>("attack"));
         
-        auto patrol_action = std::make_shared<PatrolAction>("patrol");
+        auto patrol_action = std::make_shared<bt::action::Patrol>("patrol");
         
         root->AddChild(attack_sequence);
         root->AddChild(patrol_action);
@@ -69,11 +69,11 @@ namespace bt
         auto root = std::make_shared<Selector>("dragon_root");
         
         auto attack_sequence = std::make_shared<Sequence>("attack_sequence");
-        attack_sequence->AddChild(std::make_shared<HasTargetCondition>("has_target"));
-        attack_sequence->AddChild(std::make_shared<InAttackRangeCondition>("in_attack_range"));
-        attack_sequence->AddChild(std::make_shared<AttackAction>("attack"));
+        attack_sequence->AddChild(std::make_shared<bt::condition::HasTarget>("has_target"));
+        attack_sequence->AddChild(std::make_shared<bt::condition::InAttackRange>("in_attack_range"));
+        attack_sequence->AddChild(std::make_shared<bt::action::Attack>("attack"));
         
-        auto patrol_action = std::make_shared<PatrolAction>("patrol");
+        auto patrol_action = std::make_shared<bt::action::Patrol>("patrol");
         
         root->AddChild(attack_sequence);
         root->AddChild(patrol_action);
@@ -91,11 +91,11 @@ namespace bt
         auto root = std::make_shared<Selector>("skeleton_root");
         
         auto attack_sequence = std::make_shared<Sequence>("attack_sequence");
-        attack_sequence->AddChild(std::make_shared<HasTargetCondition>("has_target"));
-        attack_sequence->AddChild(std::make_shared<InAttackRangeCondition>("in_attack_range"));
-        attack_sequence->AddChild(std::make_shared<AttackAction>("attack"));
+        attack_sequence->AddChild(std::make_shared<bt::condition::HasTarget>("has_target"));
+        attack_sequence->AddChild(std::make_shared<bt::condition::InAttackRange>("in_attack_range"));
+        attack_sequence->AddChild(std::make_shared<bt::action::Attack>("attack"));
         
-        auto patrol_action = std::make_shared<PatrolAction>("patrol");
+        auto patrol_action = std::make_shared<bt::action::Patrol>("patrol");
         
         root->AddChild(attack_sequence);
         root->AddChild(patrol_action);
@@ -113,11 +113,11 @@ namespace bt
         auto root = std::make_shared<Selector>("zombie_root");
         
         auto attack_sequence = std::make_shared<Sequence>("attack_sequence");
-        attack_sequence->AddChild(std::make_shared<HasTargetCondition>("has_target"));
-        attack_sequence->AddChild(std::make_shared<InAttackRangeCondition>("in_attack_range"));
-        attack_sequence->AddChild(std::make_shared<AttackAction>("attack"));
+        attack_sequence->AddChild(std::make_shared<bt::condition::HasTarget>("has_target"));
+        attack_sequence->AddChild(std::make_shared<bt::condition::InAttackRange>("in_attack_range"));
+        attack_sequence->AddChild(std::make_shared<bt::action::Attack>("attack"));
         
-        auto patrol_action = std::make_shared<PatrolAction>("patrol");
+        auto patrol_action = std::make_shared<bt::action::Patrol>("patrol");
         
         root->AddChild(attack_sequence);
         root->AddChild(patrol_action);
@@ -133,7 +133,7 @@ namespace bt
         auto tree = std::make_shared<Tree>("merchant_bt");
         
         // 상인은 순찰만 함
-        auto root = std::make_shared<PatrolAction>("merchant_patrol");
+        auto root = std::make_shared<bt::action::Patrol>("merchant_patrol");
         
         tree->SetRoot(root);
         
@@ -149,11 +149,11 @@ namespace bt
         auto root = std::make_shared<Selector>("guard_root");
         
         auto attack_sequence = std::make_shared<Sequence>("attack_sequence");
-        attack_sequence->AddChild(std::make_shared<HasTargetCondition>("has_target"));
-        attack_sequence->AddChild(std::make_shared<InAttackRangeCondition>("in_attack_range"));
-        attack_sequence->AddChild(std::make_shared<AttackAction>("attack"));
+        attack_sequence->AddChild(std::make_shared<bt::condition::HasTarget>("has_target"));
+        attack_sequence->AddChild(std::make_shared<bt::condition::InAttackRange>("in_attack_range"));
+        attack_sequence->AddChild(std::make_shared<bt::action::Attack>("attack"));
         
-        auto patrol_action = std::make_shared<PatrolAction>("patrol");
+        auto patrol_action = std::make_shared<bt::action::Patrol>("patrol");
         
         root->AddChild(attack_sequence);
         root->AddChild(patrol_action);

@@ -5,14 +5,17 @@
 
 namespace bt
 {
+namespace action
+{
 
     // 공격 액션 노드
-    class AttackAction : public Node
+    class Attack : public Node
     {
     public:
-        AttackAction(const std::string& name) : Node(name, NodeType::ACTION) {}
+        Attack(const std::string& name) : Node(name, NodeType::ACTION) {}
         
         NodeStatus Execute(Context& context) override;
     };
 
+} // namespace action
 } // namespace bt

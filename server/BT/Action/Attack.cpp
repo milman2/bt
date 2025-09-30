@@ -1,4 +1,4 @@
-#include "HasTargetCondition.h"
+#include "Attack.h"
 #include "../../BT/Context.h"
 #include "../Monster/MonsterBTExecutor.h"
 #include "../Monster/Monster.h"
@@ -7,8 +7,10 @@
 
 namespace bt
 {
+namespace action
+{
 
-    NodeStatus HasTargetCondition::Execute(Context& context)
+    NodeStatus Attack::Execute(Context& context)
     {
         auto ai = context.GetAI();
         if (!ai)
@@ -29,17 +31,19 @@ namespace bt
         }
 
         // 타겟이 있는지 확인
-        bool has_target = (monster->GetTargetID() != 0);
-        
-        if (has_target)
-        {
-            std::cout << "Goblin " << monster->GetName() << " has target: " << monster->GetTargetID() << std::endl;
-            return NodeStatus::SUCCESS;
-        }
-        else
+        if (monster->GetTargetID() == 0)
         {
             return NodeStatus::FAILURE;
         }
+
+        // 공격 실행
+        std::cout << "Goblin " << monster->GetName() << " attacks target!" << std::endl;
+        
+        // 공격 애니메이션/이펙트 처리
+        monster->SetState(MonsterState::ATTACK);
+        
+        return NodeStatus::SUCCESS;
     }
 
+} // namespace action
 } // namespace bt

@@ -1,4 +1,4 @@
-#include "PatrolAction.h"
+#include "Patrol.h"
 #include "../../BT/Context.h"
 #include "../Monster/MonsterBTExecutor.h"
 #include "../Monster/Monster.h"
@@ -8,8 +8,10 @@
 
 namespace bt
 {
+namespace action
+{
 
-    NodeStatus PatrolAction::Execute(Context& context)
+    NodeStatus Patrol::Execute(Context& context)
     {
         auto ai = context.GetAI();
         if (!ai)
@@ -77,4 +79,5 @@ namespace bt
         }
     }
 
+} // namespace action
 } // namespace bt

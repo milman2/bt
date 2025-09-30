@@ -5,14 +5,17 @@
 
 namespace bt
 {
+namespace condition
+{
 
     // 공격 범위 내에 있는지 확인하는 조건 노드
-    class InAttackRangeCondition : public Node
+    class InAttackRange : public Node
     {
     public:
-        InAttackRangeCondition(const std::string& name) : Node(name, NodeType::CONDITION) {}
+        InAttackRange(const std::string& name) : Node(name, NodeType::CONDITION) {}
         
         NodeStatus Execute(Context& context) override;
     };
 
+} // namespace condition
 } // namespace bt
