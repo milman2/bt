@@ -3,7 +3,7 @@
 #include <random>
 
 #include "PlayerManager.h"
-#include "SimpleWebSocketServer.h"
+#include "Network/WebSocket/SimpleWebSocketServer.h"
 
 namespace bt
 {

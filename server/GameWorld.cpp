@@ -4,7 +4,7 @@
 
 #include "GameWorld.h"
 #include "Map.h"
-#include "NPC.h"
+#include "BT/NPC/NPC.h"
 #include "Player.h"
 
 namespace bt

@@ -8,7 +8,7 @@
 #include "Player.h"
 #include "PlayerManager.h"
 #include "RestApiServer.h"
-#include "SimpleWebSocketServer.h"
+#include "Network/WebSocket/SimpleWebSocketServer.h"
 
 namespace bt
 {
