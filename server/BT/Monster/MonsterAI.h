@@ -6,9 +6,9 @@
 #include <unordered_map>
 #include <vector>
 
-#include "BT/BehaviorTree.h"
-#include "BT/BehaviorTreeEngine.h"
-#include "BT/MonsterAI.h"
+#include "../BehaviorTree.h"
+#include "../BehaviorTreeEngine.h"
+#include "../MonsterAI.h"
 
 // 전방 선언
 namespace bt
