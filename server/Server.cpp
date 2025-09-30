@@ -19,29 +19,29 @@ namespace bt
         game_world_     = std::make_unique<GameWorld>();
         packet_handler_ = std::make_unique<PacketHandler>();
 
-        log_message("서버 인스턴스가 생성되었습니다.");
+        LogMessage("서버 인스턴스가 생성되었습니다.");
     }
 
     Server::~Server()
     {
         stop();
-        log_message("서버 인스턴스가 소멸되었습니다.");
+        LogMessage("서버 인스턴스가 소멸되었습니다.");
     }
 
     bool Server::start()
     {
         if (running_.load())
         {
-            log_message("서버가 이미 실행 중입니다.", true);
+            LogMessage("서버가 이미 실행 중입니다.", true);
             return false;
         }
 
-        log_message("서버 시작 중...");
+        LogMessage("서버 시작 중...");
 
         // 소켓 생성 및 바인딩
-        if (!create_socket() || !bind_socket() || !listen_socket())
+        if (!CreateSocket() || !BindSocket() || !ListenSocket())
         {
-            log_message("소켓 설정 실패", true);
+            LogMessage("소켓 설정 실패", true);
             return false;
         }
 
@@ -51,15 +51,15 @@ namespace bt
         // 워커 스레드 시작
         for (int i = 0; i < config_.worker_threads; ++i)
         {
-            worker_threads_.emplace_back(&Server::worker_thread_function, this);
+            worker_threads_.emplace_back(&Server::WorkerThreadFunction, this);
         }
 
         // 연결 수락 스레드 시작
-        std::thread accept_thread(&Server::accept_connections, this);
+        std::thread accept_thread(&Server::AcceptConnections, this);
         accept_thread.detach();
 
         running_.store(true);
-        log_message("서버가 성공적으로 시작되었습니다. 포트: " + std::to_string(config_.port));
+        LogMessage("서버가 성공적으로 시작되었습니다. 포트: " + std::to_string(config_.port));
 
         return true;
     }
@@ -71,7 +71,7 @@ namespace bt
             return;
         }
 
-        log_message("서버 종료 중...");
+        LogMessage("서버 종료 중...");
         running_.store(false);
 
         // 소켓 닫기
@@ -108,15 +108,15 @@ namespace bt
         }
         worker_threads_.clear();
 
-        log_message("서버가 종료되었습니다.");
+        LogMessage("서버가 종료되었습니다.");
     }
 
-    bool Server::create_socket()
+    bool Server::CreateSocket()
     {
         server_socket_ = socket(AF_INET, SOCK_STREAM, 0);
         if (server_socket_ == -1)
         {
-            log_message("소켓 생성 실패: " + std::string(strerror(errno)), true);
+            LogMessage("소켓 생성 실패: " + std::string(strerror(errno)), true);
             return false;
         }
 
@@ -124,7 +124,7 @@ namespace bt
         int opt = 1;
         if (setsockopt(server_socket_, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1)
         {
-            log_message("소켓 옵션 설정 실패: " + std::string(strerror(errno)), true);
+            LogMessage("소켓 옵션 설정 실패: " + std::string(strerror(errno)), true);
             close(server_socket_);
             return false;
         }
@@ -132,7 +132,7 @@ namespace bt
         return true;
     }
 
-    bool Server::bind_socket()
+    bool Server::BindSocket()
     {
         memset(&server_addr_, 0, sizeof(server_addr_));
         server_addr_.sin_family      = AF_INET;
@@ -141,7 +141,7 @@ namespace bt
 
         if (bind(server_socket_, (struct sockaddr*)&server_addr_, sizeof(server_addr_)) == -1)
         {
-            log_message("소켓 바인딩 실패: " + std::string(strerror(errno)), true);
+            LogMessage("소켓 바인딩 실패: " + std::string(strerror(errno)), true);
             close(server_socket_);
             return false;
         }
@@ -149,11 +149,11 @@ namespace bt
         return true;
     }
 
-    bool Server::listen_socket()
+    bool Server::ListenSocket()
     {
         if (listen(server_socket_, config_.max_clients) == -1)
         {
-            log_message("소켓 리스닝 실패: " + std::string(strerror(errno)), true);
+            LogMessage("소켓 리스닝 실패: " + std::string(strerror(errno)), true);
             close(server_socket_);
             return false;
         }
@@ -161,9 +161,9 @@ namespace bt
         return true;
     }
 
-    void Server::accept_connections()
+    void Server::AcceptConnections()
     {
-        log_message("연결 수락 스레드 시작");
+        LogMessage("연결 수락 스레드 시작");
 
         while (running_.load())
         {
@@ -181,7 +181,7 @@ namespace bt
                 }
                 if (running_.load())
                 {
-                    log_message("연결 수락 실패: " + std::string(strerror(errno)), true);
+                    LogMessage("연결 수락 실패: " + std::string(strerror(errno)), true);
                 }
                 continue;
             }
@@ -191,7 +191,7 @@ namespace bt
                 std::lock_guard<std::mutex> lock(clients_mutex_);
                 if (clients_.size() >= static_cast<size_t>(config_.max_clients))
                 {
-                    log_message("최대 클라이언트 수 초과. 연결 거부", true);
+                    LogMessage("최대 클라이언트 수 초과. 연결 거부", true);
                     close(client_socket);
                     continue;
                 }
@@ -200,13 +200,13 @@ namespace bt
             // 클라이언트 추가
             std::string client_ip   = inet_ntoa(client_addr.sin_addr);
             uint16_t    client_port = ntohs(client_addr.sin_port);
-            add_client(client_socket, client_ip, client_port);
+            AddClient(client_socket, client_ip, client_port);
         }
 
-        log_message("연결 수락 스레드 종료");
+        LogMessage("연결 수락 스레드 종료");
     }
 
-    void Server::add_client(int socket_fd, const std::string& ip, uint16_t port)
+    void Server::AddClient(int socket_fd, const std::string& ip, uint16_t port)
     {
         auto client              = std::make_unique<ClientInfo>();
         client->socket_fd        = socket_fd;
@@ -222,14 +222,14 @@ namespace bt
         }
 
         // 클라이언트 처리 스레드 시작
-        std::thread client_thread(&Server::handle_client, this, socket_fd);
+        std::thread client_thread(&Server::HandleClient, this, socket_fd);
         client_thread.detach();
 
-        log_message("새 클라이언트 연결: " + ip + ":" + std::to_string(port) + " (소켓: " + std::to_string(socket_fd) +
+        LogMessage("새 클라이언트 연결: " + ip + ":" + std::to_string(port) + " (소켓: " + std::to_string(socket_fd) +
                     ")");
     }
 
-    void Server::remove_client(int socket_fd)
+    void Server::RemoveClient(int socket_fd)
     {
         std::string client_info;
 
@@ -247,16 +247,16 @@ namespace bt
 
         if (!client_info.empty())
         {
-            log_message("클라이언트 연결 종료: " + client_info);
+            LogMessage("클라이언트 연결 종료: " + client_info);
         }
     }
 
-    void Server::handle_client(int socket_fd)
+    void Server::HandleClient(int socket_fd)
     {
-        log_message("클라이언트 처리 시작: 소켓 " + std::to_string(socket_fd));
+        LogMessage("클라이언트 처리 시작: 소켓 " + std::to_string(socket_fd));
 
         // 소켓을 논블로킹으로 설정
-        set_socket_non_blocking(socket_fd);
+        SetSocketNonBlocking(socket_fd);
 
         std::vector<uint8_t> buffer(4096);
 
@@ -281,12 +281,12 @@ namespace bt
                     std::this_thread::sleep_for(std::chrono::milliseconds(10));
                     continue;
                 }
-                log_message("데이터 수신 오류: " + std::string(strerror(errno)), true);
+                LogMessage("데이터 수신 오류: " + std::string(strerror(errno)), true);
                 break;
             }
             else if (bytes_received == 0)
             {
-                log_message("클라이언트 연결 종료 감지");
+                LogMessage("클라이언트 연결 종료 감지");
                 break;
             }
 
@@ -304,26 +304,26 @@ namespace bt
                         packet.data.assign(buffer.begin() + sizeof(uint32_t) + sizeof(uint16_t),
                                            buffer.begin() + packet_size);
                     }
-                    process_packet(socket_fd, packet);
+                    ProcessPacket(socket_fd, packet);
                 }
             }
         }
 
-        remove_client(socket_fd);
-        log_message("클라이언트 처리 종료: 소켓 " + std::to_string(socket_fd));
+        RemoveClient(socket_fd);
+        LogMessage("클라이언트 처리 종료: 소켓 " + std::to_string(socket_fd));
     }
 
-    void Server::process_packet(int socket_fd, const Packet& packet)
+    void Server::ProcessPacket(int socket_fd, const Packet& packet)
     {
         if (packet_handler_)
         {
-            packet_handler_->handle_packet(socket_fd, packet);
+            packet_handler_->HandlePacket(socket_fd, packet);
         }
     }
 
-    void Server::worker_thread_function()
+    void Server::WorkerThreadFunction()
     {
-        log_message("워커 스레드 시작");
+        LogMessage("워커 스레드 시작");
 
         while (running_.load())
         {
@@ -349,10 +349,10 @@ namespace bt
             }
         }
 
-        log_message("워커 스레드 종료");
+        LogMessage("워커 스레드 종료");
     }
 
-    void Server::broadcast_packet(const Packet& packet, int exclude_socket)
+    void Server::BroadcastPacket(const Packet& packet, int exclude_socket)
     {
         std::lock_guard<std::mutex> lock(clients_mutex_);
 
@@ -360,12 +360,12 @@ namespace bt
         {
             if (socket_fd != exclude_socket)
             {
-                send_packet(socket_fd, packet);
+                SendPacket(socket_fd, packet);
             }
         }
     }
 
-    void Server::send_packet(int socket_fd, const Packet& packet)
+    void Server::SendPacket(int socket_fd, const Packet& packet)
     {
         // 패킷 크기 + 타입 + 데이터 전송
         uint32_t             total_size = sizeof(uint32_t) + sizeof(uint16_t) + packet.data.size();
@@ -381,11 +381,11 @@ namespace bt
         ssize_t bytes_sent = send(socket_fd, send_buffer.data(), total_size, 0);
         if (bytes_sent == -1)
         {
-            log_message("패킷 전송 실패: " + std::string(strerror(errno)), true);
+            LogMessage("패킷 전송 실패: " + std::string(strerror(errno)), true);
         }
     }
 
-    bool Server::set_socket_non_blocking(int socket_fd)
+    bool Server::SetSocketNonBlocking(int socket_fd)
     {
         int flags = fcntl(socket_fd, F_GETFL, 0);
         if (flags == -1)
@@ -395,7 +395,7 @@ namespace bt
         return fcntl(socket_fd, F_SETFL, flags | O_NONBLOCK) != -1;
     }
 
-    void Server::log_message(const std::string& message, bool is_error)
+    void Server::LogMessage(const std::string& message, bool is_error)
     {
         std::lock_guard<std::mutex> lock(log_mutex_);
 

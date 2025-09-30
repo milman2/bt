@@ -10,46 +10,46 @@ namespace bt
     PacketHandler::PacketHandler()
     {
         // 기본 핸들러 등록
-        register_handler(PacketType::CONNECT_REQUEST,
+        RegisterHandler(PacketType::CONNECT_REQUEST,
                          [this](int socket_fd, const Packet& packet)
                          {
-                             handle_connect_request(socket_fd, packet);
+                             HandleConnectRequest(socket_fd, packet);
                          });
 
-        register_handler(PacketType::LOGIN_REQUEST,
+        RegisterHandler(PacketType::LOGIN_REQUEST,
                          [this](int socket_fd, const Packet& packet)
                          {
-                             handle_login_request(socket_fd, packet);
+                             HandleLoginRequest(socket_fd, packet);
                          });
 
-        register_handler(PacketType::LOGOUT_REQUEST,
+        RegisterHandler(PacketType::LOGOUT_REQUEST,
                          [this](int socket_fd, const Packet& packet)
                          {
-                             handle_logout_request(socket_fd, packet);
+                             HandleLogoutRequest(socket_fd, packet);
                          });
 
-        register_handler(PacketType::PLAYER_MOVE,
+        RegisterHandler(PacketType::PLAYER_MOVE,
                          [this](int socket_fd, const Packet& packet)
                          {
-                             handle_player_move(socket_fd, packet);
+                             HandlePlayerMove(socket_fd, packet);
                          });
 
-        register_handler(PacketType::PLAYER_CHAT,
+        RegisterHandler(PacketType::PLAYER_CHAT,
                          [this](int socket_fd, const Packet& packet)
                          {
-                             handle_player_chat(socket_fd, packet);
+                             HandlePlayerChat(socket_fd, packet);
                          });
 
-        register_handler(PacketType::DISCONNECT,
+        RegisterHandler(PacketType::DISCONNECT,
                          [this](int socket_fd, const Packet& packet)
                          {
-                             handle_disconnect(socket_fd, packet);
+                             HandleDisconnect(socket_fd, packet);
                          });
     }
 
     PacketHandler::~PacketHandler() {}
 
-    void PacketHandler::handle_packet(int socket_fd, const Packet& packet)
+    void PacketHandler::HandlePacket(int socket_fd, const Packet& packet)
     {
         auto it = handlers_.find(static_cast<PacketType>(packet.type));
         if (it != handlers_.end())
@@ -62,12 +62,12 @@ namespace bt
         }
     }
 
-    void PacketHandler::register_handler(PacketType type, PacketHandlerFunc handler)
+    void PacketHandler::RegisterHandler(PacketType type, PacketHandlerFunc handler)
     {
         handlers_[type] = handler;
     }
 
-    void PacketHandler::handle_connect_request(int socket_fd, const Packet& packet)
+    void PacketHandler::HandleConnectRequest(int socket_fd, const Packet& packet)
     {
         std::cout << "연결 요청 수신: 소켓 " << socket_fd << std::endl;
 
@@ -76,7 +76,7 @@ namespace bt
         // 실제로는 서버 인스턴스에 접근해서 전송해야 함
     }
 
-    void PacketHandler::handle_login_request(int socket_fd, const Packet& packet)
+    void PacketHandler::HandleLoginRequest(int socket_fd, const Packet& packet)
     {
         std::cout << "로그인 요청 수신: 소켓 " << socket_fd << std::endl;
 
@@ -85,22 +85,22 @@ namespace bt
         // 실제로는 서버 인스턴스에 접근해서 전송해야 함
     }
 
-    void PacketHandler::handle_logout_request(int socket_fd, const Packet& packet)
+    void PacketHandler::HandleLogoutRequest(int socket_fd, const Packet& packet)
     {
         std::cout << "로그아웃 요청 수신: 소켓 " << socket_fd << std::endl;
     }
 
-    void PacketHandler::handle_player_move(int socket_fd, const Packet& packet)
+    void PacketHandler::HandlePlayerMove(int socket_fd, const Packet& packet)
     {
         std::cout << "플레이어 이동 요청 수신: 소켓 " << socket_fd << std::endl;
     }
 
-    void PacketHandler::handle_player_chat(int socket_fd, const Packet& packet)
+    void PacketHandler::HandlePlayerChat(int socket_fd, const Packet& packet)
     {
         std::cout << "플레이어 채팅 요청 수신: 소켓 " << socket_fd << std::endl;
     }
 
-    void PacketHandler::handle_disconnect(int socket_fd, const Packet& packet)
+    void PacketHandler::HandleDisconnect(int socket_fd, const Packet& packet)
     {
         std::cout << "연결 해제 요청 수신: 소켓 " << socket_fd << std::endl;
     }

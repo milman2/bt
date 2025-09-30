@@ -49,37 +49,37 @@ namespace bt
         // 서버 시작/중지
         bool start();
         void stop();
-        bool is_running() const { return running_.load(); }
+        bool IsRunning() const { return running_.load(); }
 
         // 클라이언트 관리
-        void add_client(int socket_fd, const std::string& ip, uint16_t port);
-        void remove_client(int socket_fd);
-        void broadcast_packet(const Packet& packet, int exclude_socket = -1);
-        void send_packet(int socket_fd, const Packet& packet);
+        void AddClient(int socket_fd, const std::string& ip, uint16_t port);
+        void RemoveClient(int socket_fd);
+        void BroadcastPacket(const Packet& packet, int exclude_socket = -1);
+        void SendPacket(int socket_fd, const Packet& packet);
 
         // 게임 월드 접근
-        GameWorld* get_game_world() { return game_world_.get(); }
+        GameWorld* GetGameWorld() { return game_world_.get(); }
 
         // 설정 접근
         const ServerConfig& get_config() const { return config_; }
 
     private:
         // 서버 소켓 관련
-        bool create_socket();
-        bool bind_socket();
-        bool listen_socket();
-        void accept_connections();
+        bool CreateSocket();
+        bool BindSocket();
+        bool ListenSocket();
+        void AcceptConnections();
 
         // 클라이언트 처리
-        void handle_client(int socket_fd);
-        void process_packet(int socket_fd, const Packet& packet);
+        void HandleClient(int socket_fd);
+        void ProcessPacket(int socket_fd, const Packet& packet);
 
         // 워커 스레드
-        void worker_thread_function();
+        void WorkerThreadFunction();
 
         // 유틸리티 함수
-        bool set_socket_non_blocking(int socket_fd);
-        void log_message(const std::string& message, bool is_error = false);
+        bool SetSocketNonBlocking(int socket_fd);
+        void LogMessage(const std::string& message, bool is_error = false);
 
     private:
         ServerConfig      config_;

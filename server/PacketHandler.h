@@ -19,21 +19,21 @@ namespace bt
         ~PacketHandler();
 
         // 패킷 처리
-        void handle_packet(int socket_fd, const Packet& packet);
+        void HandlePacket(int socket_fd, const Packet& packet);
 
         // 핸들러 등록
-        void register_handler(PacketType type, PacketHandlerFunc handler);
+        void RegisterHandler(PacketType type, PacketHandlerFunc handler);
 
         // 패킷 생성은 PacketUtils 네임스페이스의 함수들을 사용
 
     private:
         // 기본 핸들러들
-        void handle_connect_request(int socket_fd, const Packet& packet);
-        void handle_login_request(int socket_fd, const Packet& packet);
-        void handle_logout_request(int socket_fd, const Packet& packet);
-        void handle_player_move(int socket_fd, const Packet& packet);
-        void handle_player_chat(int socket_fd, const Packet& packet);
-        void handle_disconnect(int socket_fd, const Packet& packet);
+        void HandleConnectRequest(int socket_fd, const Packet& packet);
+        void HandleLoginRequest(int socket_fd, const Packet& packet);
+        void HandleLogoutRequest(int socket_fd, const Packet& packet);
+        void HandlePlayerMove(int socket_fd, const Packet& packet);
+        void HandlePlayerChat(int socket_fd, const Packet& packet);
+        void HandleDisconnect(int socket_fd, const Packet& packet);
 
         // 패킷 파싱은 PacketUtils 네임스페이스의 함수들을 사용
 
