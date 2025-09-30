@@ -14,9 +14,9 @@ namespace bt
         auto monster = std::make_shared<Monster>(name, type, position);
 
         // AI 이름과 BT 이름 설정
-        monster->set_ai_name(name);
-        std::string bt_name = get_bt_name(type);
-        monster->set_bt_name(bt_name);
+        monster->SetAIName(name);
+        std::string bt_name = GetBTName(type);
+        monster->SetBTName(bt_name);
 
         return monster;
     }
@@ -24,14 +24,14 @@ namespace bt
     std::shared_ptr<Monster> MonsterFactory::create_monster(const MonsterSpawnConfig& config)
     {
         auto monster = std::make_shared<Monster>(config.name, config.type, config.position);
-        monster->set_position(config.position.x, config.position.y, config.position.z, config.position.rotation);
-        monster->heal(config.health);                                          // 체력 설정
-        monster->take_damage(monster->get_stats().max_health - config.health); // 현재 체력 설정
+        monster->SetPosition(config.position.x, config.position.y, config.position.z, config.position.rotation);
+        monster->Heal(config.health);                                          // 체력 설정
+        monster->TakeDamage(monster->GetStats().max_health - config.health); // 현재 체력 설정
 
         // AI 이름과 BT 이름 설정
-        monster->set_ai_name(config.name);
-        std::string bt_name = get_bt_name(config.type);
-        monster->set_bt_name(bt_name);
+        monster->SetAIName(config.name);
+        std::string bt_name = GetBTName(config.type);
+        monster->SetBTName(bt_name);
 
         return monster;
     }
@@ -137,7 +137,7 @@ namespace bt
         return stats;
     }
 
-    std::string MonsterFactory::get_bt_name(MonsterType type)
+    std::string MonsterFactory::GetBTName(MonsterType type)
     {
         switch (type)
         {

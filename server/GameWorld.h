@@ -25,35 +25,35 @@ namespace bt
         ~GameWorld();
 
         // 플레이어 관리
-        bool                 add_player(uint32_t player_id, const std::string& name);
-        void                 remove_player(uint32_t player_id);
-        Player*              get_player(uint32_t player_id);
-        std::vector<Player*> get_players_in_map(uint32_t map_id);
+        bool                 AddPlayer(uint32_t player_id, const std::string& name);
+        void                 RemovePlayer(uint32_t player_id);
+        Player*              GetPlayer(uint32_t player_id);
+        std::vector<Player*> GetPlayersInMap(uint32_t map_id);
 
         // 맵 관리
-        bool              load_map(uint32_t map_id, const std::string& map_data);
-        Map*              get_map(uint32_t map_id);
-        std::vector<Map*> get_all_maps();
+        bool              LoadMap(uint32_t map_id, const std::string& map_data);
+        Map*              GetMap(uint32_t map_id);
+        std::vector<Map*> GetAllMaps();
 
         // NPC 관리
-        void spawn_npc(uint32_t npc_id, uint32_t map_id, float x, float y, float z);
-        void remove_npc(uint32_t npc_id);
-        NPC* get_npc(uint32_t npc_id);
+        void SpawnNPC(uint32_t npc_id, uint32_t map_id, float x, float y, float z);
+        void RemoveNPC(uint32_t npc_id);
+        NPC* GetNPC(uint32_t npc_id);
 
         // 게임 루프
-        void update(float delta_time);
-        void start_game_loop();
-        void stop_game_loop();
+        void Update(float delta_time);
+        void StartGameLoop();
+        void StopGameLoop();
 
         // 이벤트 시스템
-        void register_event_handler(std::function<void(const std::string&, const std::string&)> handler);
-        void trigger_event(const std::string& event_type, const std::string& data);
+        void RegisterEventHandler(std::function<void(const std::string&, const std::string&)> handler);
+        void TriggerEvent(const std::string& event_type, const std::string& data);
 
     private:
-        void game_loop_thread();
-        void process_ai(float delta_time);
-        void process_movement(float delta_time);
-        void process_combat(float delta_time);
+        void GameLoopThread();
+        void ProcessAI(float delta_time);
+        void ProcessMovement(float delta_time);
+        void ProcessCombat(float delta_time);
 
     private:
         std::atomic<bool> running_;

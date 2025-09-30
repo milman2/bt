@@ -39,38 +39,38 @@ namespace bt
         std::cout << "플레이어 소멸: " << name_ << " (ID: " << id_ << ")" << std::endl;
     }
 
-    void Player::set_position(float x, float y, float z, float rotation)
+    void Player::SetPosition(float x, float y, float z, float rotation)
     {
         position_.x        = x;
         position_.y        = y;
         position_.z        = z;
         position_.rotation = rotation;
-        update_activity();
+        UpdateActivity();
     }
 
-    void Player::move_to(float x, float y, float z, float rotation)
+    void Player::MoveTo(float x, float y, float z, float rotation)
     {
-        set_position(x, y, z, rotation);
+        SetPosition(x, y, z, rotation);
         std::cout << "플레이어 " << name_ << " 이동: (" << x << ", " << y << ", " << z << ")" << std::endl;
     }
 
-    void Player::add_experience(uint32_t exp)
+    void Player::AddExperience(uint32_t exp)
     {
         stats_.experience += exp;
-        update_activity();
+        UpdateActivity();
 
         // 레벨업 체크 (간단한 구현)
         uint32_t required_exp = stats_.level * 100; // 레벨당 100 경험치 필요
         if (stats_.experience >= required_exp)
         {
-            level_up();
+            LevelUp();
         }
 
         std::cout << "플레이어 " << name_ << " 경험치 획득: " << exp << " (총: " << stats_.experience << ")"
                   << std::endl;
     }
 
-    void Player::level_up()
+    void Player::LevelUp()
     {
         stats_.level++;
         stats_.experience = 0;
@@ -85,11 +85,11 @@ namespace bt
         stats_.intelligence += 2;
         stats_.vitality += 2;
 
-        update_activity();
+        UpdateActivity();
         std::cout << "플레이어 " << name_ << " 레벨업! 새 레벨: " << stats_.level << std::endl;
     }
 
-    void Player::take_damage(uint32_t damage)
+    void Player::TakeDamage(uint32_t damage)
     {
         if (damage >= stats_.health)
         {
@@ -103,10 +103,10 @@ namespace bt
             std::cout << "플레이어 " << name_ << " 데미지 받음: " << damage << " (남은 체력: " << stats_.health << ")"
                       << std::endl;
         }
-        update_activity();
+        UpdateActivity();
     }
 
-    void Player::heal(uint32_t amount)
+    void Player::Heal(uint32_t amount)
     {
         if (state_ == PlayerState::DEAD)
         {
@@ -121,16 +121,16 @@ namespace bt
             stats_.health = stats_.max_health;
         }
 
-        uint32_t actual_heal = stats_.health - old_health;
-        if (actual_heal > 0)
+        uint32_t actual_Heal = stats_.health - old_health;
+        if (actual_Heal > 0)
         {
-            std::cout << "플레이어 " << name_ << " 치료됨: " << actual_heal << " (현재 체력: " << stats_.health << ")"
+            std::cout << "플레이어 " << name_ << " 치료됨: " << actual_Heal << " (현재 체력: " << stats_.health << ")"
                       << std::endl;
-            update_activity();
+            UpdateActivity();
         }
     }
 
-    void Player::update(float delta_time)
+    void Player::Update(float delta_time)
     {
         // 플레이어 상태 업데이트
         auto current_time = std::chrono::steady_clock::now();
@@ -158,7 +158,7 @@ namespace bt
         last_update_time_ = current_time;
     }
 
-    void Player::respawn()
+    void Player::Respawn()
     {
         if (state_ != PlayerState::DEAD)
         {
@@ -171,7 +171,7 @@ namespace bt
         state_        = PlayerState::ONLINE;
 
         // 기본 위치로 이동
-        set_position(0.0f, 0.0f, 0.0f, 0.0f);
+        SetPosition(0.0f, 0.0f, 0.0f, 0.0f);
 
         std::cout << "플레이어 " << name_ << " 부활!" << std::endl;
     }

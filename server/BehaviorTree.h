@@ -315,8 +315,8 @@ namespace bt
         const BTContext& get_context() const { return context_; }
 
         // 몬스터 정보
-        const std::string& get_name() const { return name_; }
-        const std::string& get_bt_name() const { return bt_name_; }
+        const std::string& GetName() const { return name_; }
+        const std::string& GetBTName() const { return bt_name_; }
 
         // 몬스터 참조 설정
         void                     set_monster(std::shared_ptr<Monster> monster) { monster_ = monster; }

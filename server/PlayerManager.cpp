@@ -15,8 +15,8 @@ namespace bt
     void PlayerManager::add_player(std::shared_ptr<Player> player)
     {
         std::lock_guard<std::mutex> lock(players_mutex_);
-        players_[player->get_id()] = player;
-        std::cout << "플레이어 추가: " << player->get_name() << " (ID: " << player->get_id() << ")" << std::endl;
+        players_[player->GetID()] = player;
+        std::cout << "플레이어 추가: " << player->GetName() << " (ID: " << player->GetID() << ")" << std::endl;
     }
 
     void PlayerManager::remove_player(uint32_t player_id)
@@ -25,7 +25,7 @@ namespace bt
         auto                        it = players_.find(player_id);
         if (it != players_.end())
         {
-            std::cout << "플레이어 제거: " << it->second->get_name() << " (ID: " << player_id << ")" << std::endl;
+            std::cout << "플레이어 제거: " << it->second->GetName() << " (ID: " << player_id << ")" << std::endl;
             players_.erase(it);
         }
     }
@@ -60,10 +60,10 @@ namespace bt
 
         for (const auto& [id, player] : players_)
         {
-            if (!player->is_alive())
+            if (!player->IsAlive())
                 continue;
 
-            auto  player_pos = player->get_position();
+            auto  player_pos = player->GetPosition();
             float distance = std::sqrt(std::pow(player_pos.x - position.x, 2) + std::pow(player_pos.y - position.y, 2) +
                                        std::pow(player_pos.z - position.z, 2));
 
@@ -81,7 +81,7 @@ namespace bt
         auto     player    = std::make_shared<Player>(player_id, name);
 
         // 위치 설정
-        player->set_position(position.x, position.y, position.z, position.rotation);
+        player->SetPosition(position.x, position.y, position.z, position.rotation);
 
         // 기본 스탯 설정
         PlayerStats stats;
@@ -91,7 +91,7 @@ namespace bt
         stats.max_mana   = 50;
         stats.level      = 1;
         stats.experience = 0;
-        player->set_stats(stats);
+        player->SetStats(stats);
 
         // 플레이어 추가
         add_player(player);
@@ -108,7 +108,7 @@ namespace bt
         auto     player    = std::make_shared<Player>(player_id, name);
 
         // 위치 설정
-        player->set_position(position.x, position.y, position.z, position.rotation);
+        player->SetPosition(position.x, position.y, position.z, position.rotation);
 
         // 기본 스탯 설정
         PlayerStats stats;
@@ -118,7 +118,7 @@ namespace bt
         stats.max_mana   = 50;
         stats.level      = 1;
         stats.experience = 0;
-        player->set_stats(stats);
+        player->SetStats(stats);
 
         // 클라이언트 ID와 플레이어 ID 매핑
         {
@@ -146,7 +146,7 @@ namespace bt
             auto player_it = players_.find(player_id);
             if (player_it != players_.end())
             {
-                std::cout << "클라이언트용 플레이어 제거: " << player_it->second->get_name() << " (ID: " << player_id
+                std::cout << "클라이언트용 플레이어 제거: " << player_it->second->GetName() << " (ID: " << player_id
                           << ", Client ID: " << client_id << ")" << std::endl;
                 players_.erase(player_it);
             }
@@ -192,7 +192,7 @@ namespace bt
 
         for (const auto& [id, player] : players_)
         {
-            if (!player->is_alive())
+            if (!player->IsAlive())
             {
                 // 플레이어가 사망한 경우 처리 (필요시 리스폰 로직 추가)
                 continue;
@@ -202,30 +202,30 @@ namespace bt
         }
     }
 
-    void PlayerManager::attack_player(uint32_t attacker_id, uint32_t target_id, uint32_t damage)
+    void PlayerManager::attack_player(uint32_t attacker_id, uint32_t tarGetID, uint32_t damage)
     {
         std::lock_guard<std::mutex> lock(players_mutex_);
 
-        auto target = get_player(target_id);
-        if (!target || !target->is_alive())
+        auto target = get_player(tarGetID);
+        if (!target || !target->IsAlive())
             return;
 
-        target->take_damage(damage);
-        std::cout << "플레이어 " << attacker_id << "가 플레이어 " << target_id << "에게 " << damage << " 데미지"
+        target->TakeDamage(damage);
+        std::cout << "플레이어 " << attacker_id << "가 플레이어 " << tarGetID << "에게 " << damage << " 데미지"
                   << std::endl;
     }
 
-    void PlayerManager::attack_monster(uint32_t attacker_id, uint32_t target_id, uint32_t damage)
+    void PlayerManager::attack_monster(uint32_t attacker_id, uint32_t tarGetID, uint32_t damage)
     {
         // 이 함수는 MonsterManager에서 호출되어야 함
         // 여기서는 플레이어의 공격력을 가져오는 역할만 함
         std::lock_guard<std::mutex> lock(players_mutex_);
 
         auto attacker = get_player(attacker_id);
-        if (!attacker || !attacker->is_alive())
+        if (!attacker || !attacker->IsAlive())
             return;
 
-        std::cout << "플레이어 " << attacker_id << "가 몬스터 " << target_id << "를 공격 (데미지: " << damage << ")"
+        std::cout << "플레이어 " << attacker_id << "가 몬스터 " << tarGetID << "를 공격 (데미지: " << damage << ")"
                   << std::endl;
     }
 
@@ -235,7 +235,7 @@ namespace bt
 
         for (const auto& [id, player] : players_)
         {
-            if (!player->is_alive())
+            if (!player->IsAlive())
             {
                 // 플레이어가 사망한 경우 자동 리스폰 (필요시 시간 체크 로직 추가)
                 respawn_player(id);
@@ -275,7 +275,7 @@ namespace bt
 
         for (const auto& [id, player] : players_)
         {
-            if (!player->is_alive())
+            if (!player->IsAlive())
                 continue;
 
             // 랜덤 이동
@@ -311,12 +311,12 @@ namespace bt
         static std::mt19937                          gen(rd());
         static std::uniform_real_distribution<float> dis(-50.0f, 50.0f);
 
-        auto  current_pos = player->get_position();
+        auto  current_pos = player->GetPosition();
         float new_x       = current_pos.x + dis(gen);
         float new_y       = current_pos.y;
         float new_z       = current_pos.z + dis(gen);
 
-        player->set_position(new_x, new_y, new_z, current_pos.rotation);
+        player->SetPosition(new_x, new_y, new_z, current_pos.rotation);
 
         std::cout << "플레이어 " << player_id << " 랜덤 이동: (" << new_x << ", " << new_y << ", " << new_z << ")"
                   << std::endl;
@@ -344,13 +344,13 @@ namespace bt
 
         // 랜덤 리스폰 포인트에서 부활
         MonsterPosition respawn_pos = get_random_respawn_point();
-        player->set_position(respawn_pos.x, respawn_pos.y, respawn_pos.z, respawn_pos.rotation);
+        player->SetPosition(respawn_pos.x, respawn_pos.y, respawn_pos.z, respawn_pos.rotation);
 
         // 스탯 복구
-        PlayerStats stats = player->get_stats();
+        PlayerStats stats = player->GetStats();
         stats.health      = stats.max_health;
         stats.mana        = stats.max_mana;
-        player->set_stats(stats);
+        player->SetStats(stats);
 
         std::cout << "플레이어 " << player_id << " 리스폰: (" << respawn_pos.x << ", " << respawn_pos.y << ", "
                   << respawn_pos.z << ")" << std::endl;

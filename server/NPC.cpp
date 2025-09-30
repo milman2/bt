@@ -16,7 +16,7 @@ namespace bt
         std::cout << "NPC 소멸: " << name_ << " (ID: " << id_ << ")" << std::endl;
     }
 
-    void NPC::set_position(float x, float y, float z)
+    void NPC::SetPosition(float x, float y, float z)
     {
         x_ = x;
         y_ = y;

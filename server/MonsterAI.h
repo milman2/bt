@@ -104,46 +104,46 @@ namespace bt
         ~Monster();
 
         // 기본 정보
-        uint32_t           get_id() const { return id_; }
-        void               set_id(uint32_t id) { id_ = id; }
-        const std::string& get_name() const { return name_; }
-        MonsterType        get_type() const { return type_; }
-        MonsterState       get_state() const { return state_; }
-        void               set_state(MonsterState state) { state_ = state; }
+        uint32_t           GetID() const { return id_; }
+        void               SetID(uint32_t id) { id_ = id; }
+        const std::string& GetName() const { return name_; }
+        MonsterType        GetType() const { return type_; }
+        MonsterState       GetState() const { return state_; }
+        void               SetState(MonsterState state) { state_ = state; }
 
         // 위치 관련
-        const MonsterPosition& get_position() const { return position_; }
-        void                   set_position(const MonsterPosition& pos) { position_ = pos; }
-        void                   set_position(float x, float y, float z, float rotation = 0.0f);
-        void                   move_to(float x, float y, float z, float rotation = 0.0f);
+        const MonsterPosition& GetPosition() const { return position_; }
+        void                   SetPosition(const MonsterPosition& pos) { position_ = pos; }
+        void                   SetPosition(float x, float y, float z, float rotation = 0.0f);
+        void                   MoveTo(float x, float y, float z, float rotation = 0.0f);
 
         // 통계 관련
-        const MonsterStats& get_stats() const { return stats_; }
-        void                set_stats(const MonsterStats& stats) { stats_ = stats; }
-        void                take_damage(uint32_t damage);
-        void                heal(uint32_t amount);
-        bool                is_alive() const { return stats_.health > 0; }
-        uint32_t            get_max_health() const { return stats_.max_health; }
+        const MonsterStats& GetStats() const { return stats_; }
+        void                SetStats(const MonsterStats& stats) { stats_ = stats; }
+        void                TakeDamage(uint32_t damage);
+        void                Heal(uint32_t amount);
+        bool                IsAlive() const { return stats_.health > 0; }
+        uint32_t            GetMaxHealth() const { return stats_.max_health; }
 
         // AI 관련
-        std::shared_ptr<MonsterAI> get_ai() const { return ai_; }
-        void                       set_ai(std::shared_ptr<MonsterAI> ai) { ai_ = ai; }
-        void                       set_ai_name(const std::string& ai_name) { ai_name_ = ai_name; }
-        const std::string&         get_ai_name() const { return ai_name_; }
-        void                       set_bt_name(const std::string& bt_name) { bt_name_ = bt_name; }
-        const std::string&         get_bt_name() const { return bt_name_; }
+        std::shared_ptr<MonsterAI> GetAI() const { return ai_; }
+        void                       SetAI(std::shared_ptr<MonsterAI> ai) { ai_ = ai; }
+        void                       SetAIName(const std::string& ai_name) { ai_name_ = ai_name; }
+        const std::string&         GetAIName() const { return ai_name_; }
+        void                       SetBTName(const std::string& bt_name) { bt_name_ = bt_name; }
+        const std::string&         GetBTName() const { return bt_name_; }
 
         // 타겟 관리
-        uint32_t get_target_id() const { return target_id_; }
-        void     set_target_id(uint32_t id) { target_id_ = id; }
-        bool     has_target() const { return target_id_ != 0; }
-        void     clear_target() { target_id_ = 0; }
+        uint32_t GetTargetID() const { return target_id_; }
+        void     SetTargetID(uint32_t id) { target_id_ = id; }
+        bool     HasTarget() const { return target_id_ != 0; }
+        void     ClearTarget() { target_id_ = 0; }
 
         // 전투 관련
-        void attack_target();
-        bool is_in_attack_range(uint32_t target_id) const;
-        bool is_in_detection_range(uint32_t target_id) const;
-        bool is_in_chase_range(uint32_t target_id) const;
+        void AttackTarget();
+        bool IsInAttackRange(uint32_t target_id) const;
+        bool IsInDetectionRange(uint32_t target_id) const;
+        bool IsInChaseRange(uint32_t target_id) const;
 
         // 리스폰 관련
         void  set_respawn_time(float time) { respawn_time_ = time; }

@@ -32,7 +32,7 @@ namespace bt
         bool is_connected() const { return connected_.load(); }
 
         // 세션 ID
-        uint32_t get_id() const { return session_id_; }
+        uint32_t GetID() const { return session_id_; }
 
         // 정적 ID 생성기
         static uint32_t get_next_session_id() { return next_session_id_++; }

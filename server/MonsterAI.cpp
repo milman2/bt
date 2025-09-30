@@ -44,7 +44,7 @@ namespace bt
         std::cout << "몬스터 소멸: " << name_ << std::endl;
     }
 
-    void Monster::set_position(float x, float y, float z, float rotation)
+    void Monster::SetPosition(float x, float y, float z, float rotation)
     {
         position_.x        = x;
         position_.y        = y;
@@ -52,13 +52,13 @@ namespace bt
         position_.rotation = rotation;
     }
 
-    void Monster::move_to(float x, float y, float z, float rotation)
+    void Monster::MoveTo(float x, float y, float z, float rotation)
     {
-        set_position(x, y, z, rotation);
+        SetPosition(x, y, z, rotation);
         std::cout << "몬스터 " << name_ << " 이동: (" << x << ", " << y << ", " << z << ")" << std::endl;
     }
 
-    void Monster::take_damage(uint32_t damage)
+    void Monster::TakeDamage(uint32_t damage)
     {
         if (damage >= stats_.health)
         {
@@ -78,7 +78,7 @@ namespace bt
         }
     }
 
-    void Monster::heal(uint32_t amount)
+    void Monster::Heal(uint32_t amount)
     {
         if (state_ == MonsterState::DEAD)
         {
@@ -93,10 +93,10 @@ namespace bt
             stats_.health = stats_.max_health;
         }
 
-        uint32_t actual_heal = stats_.health - old_health;
-        if (actual_heal > 0)
+        uint32_t actual_Heal = stats_.health - old_health;
+        if (actual_Heal > 0)
         {
-            std::cout << "몬스터 " << name_ << " 치료됨: " << actual_heal << " (현재 체력: " << stats_.health << ")"
+            std::cout << "몬스터 " << name_ << " 치료됨: " << actual_Heal << " (현재 체력: " << stats_.health << ")"
                       << std::endl;
         }
     }
@@ -109,10 +109,10 @@ namespace bt
         // 주변 플레이어 검색
         for (const auto& player : players)
         {
-            if (!player || !player->is_alive())
+            if (!player || !player->IsAlive())
                 continue;
 
-            const auto& player_pos = player->get_position();
+            const auto& player_pos = player->GetPosition();
             float       distance =
                 std::sqrt(std::pow(player_pos.x - position_.x, 2) + std::pow(player_pos.y - position_.y, 2) +
                           std::pow(player_pos.z - position_.z, 2));
@@ -121,20 +121,20 @@ namespace bt
             static int debug_count = 0;
             if (debug_count++ % 20 == 0)
             { // 2초마다 로그 출력
-                std::cout << "Monster " << name_ << " - Player " << player->get_id() << " 거리: " << distance
+                std::cout << "Monster " << name_ << " - Player " << player->GetID() << " 거리: " << distance
                           << " (탐지범위: " << stats_.detection_range << ")" << std::endl;
             }
 
             if (distance <= stats_.detection_range)
             {
-                environment_info_.nearby_players.push_back(player->get_id());
+                environment_info_.nearby_players.push_back(player->GetID());
 
                 if (environment_info_.nearest_enemy_distance < 0 || distance < environment_info_.nearest_enemy_distance)
                 {
                     environment_info_.nearest_enemy_distance = distance;
-                    environment_info_.nearest_enemy_id       = player->get_id();
+                    environment_info_.nearest_enemy_id       = player->GetID();
 
-                    std::cout << "Monster " << name_ << " - Player " << player->get_id()
+                    std::cout << "Monster " << name_ << " - Player " << player->GetID()
                               << " 탐지됨! 거리: " << distance << std::endl;
                 }
             }
@@ -143,17 +143,17 @@ namespace bt
         // 주변 몬스터 검색
         for (const auto& monster : monsters)
         {
-            if (!monster || monster.get() == this || !monster->is_alive())
+            if (!monster || monster.get() == this || !monster->IsAlive())
                 continue;
 
-            const auto& monster_pos = monster->get_position();
+            const auto& monster_pos = monster->GetPosition();
             float       distance =
                 std::sqrt(std::pow(monster_pos.x - position_.x, 2) + std::pow(monster_pos.y - position_.y, 2) +
                           std::pow(monster_pos.z - position_.z, 2));
 
             if (distance <= stats_.detection_range)
             {
-                environment_info_.nearby_monsters.push_back(monster->get_target_id());
+                environment_info_.nearby_monsters.push_back(monster->GetTargetID());
             }
         }
 
@@ -192,14 +192,14 @@ namespace bt
         return environment_info_.nearest_enemy_id;
     }
 
-    bool Monster::can_see_target(uint32_t target_id) const
+    bool Monster::can_see_target(uint32_t tarGetID) const
     {
         // 간단한 시야 구현: 거리와 시야 확보 여부 확인
-        if (target_id == 0)
+        if (tarGetID == 0)
             return false;
 
         // 현재 타겟이 가장 가까운 적인지 확인
-        if (target_id == environment_info_.nearest_enemy_id)
+        if (tarGetID == environment_info_.nearest_enemy_id)
         {
             return environment_info_.has_line_of_sight &&
                    environment_info_.nearest_enemy_distance <= stats_.detection_range;
@@ -208,13 +208,13 @@ namespace bt
         return false;
     }
 
-    bool Monster::is_target_in_range(uint32_t target_id, float range) const
+    bool Monster::is_target_in_range(uint32_t tarGetID, float range) const
     {
-        if (target_id == 0)
+        if (tarGetID == 0)
             return false;
 
         // 현재 타겟이 가장 가까운 적인지 확인
-        if (target_id == environment_info_.nearest_enemy_id)
+        if (tarGetID == environment_info_.nearest_enemy_id)
         {
             return environment_info_.nearest_enemy_distance <= range;
         }
@@ -222,13 +222,13 @@ namespace bt
         return false;
     }
 
-    float Monster::get_distance_to_target(uint32_t target_id) const
+    float Monster::get_distance_to_target(uint32_t tarGetID) const
     {
-        if (target_id == 0)
+        if (tarGetID == 0)
             return -1.0f;
 
         // 현재 타겟이 가장 가까운 적인지 확인
-        if (target_id == environment_info_.nearest_enemy_id)
+        if (tarGetID == environment_info_.nearest_enemy_id)
         {
             return environment_info_.nearest_enemy_distance;
         }
@@ -236,9 +236,9 @@ namespace bt
         return -1.0f;
     }
 
-    void Monster::attack_target()
+    void Monster::AttackTarget()
     {
-        if (!has_target())
+        if (!HasTarget())
             return;
 
         // TODO: 실제 타겟에게 데미지 주기 (PlayerManager를 통해)
@@ -246,7 +246,7 @@ namespace bt
                   << std::endl;
 
         // 공격 상태로 변경
-        set_state(MonsterState::ATTACK);
+        SetState(MonsterState::ATTACK);
     }
 
     void Monster::update(float delta_time)
@@ -331,9 +331,9 @@ namespace bt
     {
         std::lock_guard<std::mutex> lock(monsters_mutex_);
         uint32_t                    id = next_monster_id_.fetch_add(1);
-        monster->set_id(id); // 몬스터 객체에 ID 설정
+        monster->SetID(id); // 몬스터 객체에 ID 설정
         monsters_[id] = monster;
-        std::cout << "몬스터 추가: " << monster->get_name() << " (ID: " << id << ")" << std::endl;
+        std::cout << "몬스터 추가: " << monster->GetName() << " (ID: " << id << ")" << std::endl;
     }
 
     void MonsterManager::remove_monster(uint32_t monster_id)
@@ -342,7 +342,7 @@ namespace bt
         auto                        it = monsters_.find(monster_id);
         if (it != monsters_.end())
         {
-            std::cout << "몬스터 제거: " << it->second->get_name() << " (ID: " << monster_id << ")" << std::endl;
+            std::cout << "몬스터 제거: " << it->second->GetName() << " (ID: " << monster_id << ")" << std::endl;
             monsters_.erase(it);
         }
     }
@@ -377,7 +377,7 @@ namespace bt
 
         for (const auto& [id, monster] : monsters_)
         {
-            const auto& monster_pos = monster->get_position();
+            const auto& monster_pos = monster->GetPosition();
             float       distance =
                 std::sqrt(std::pow(monster_pos.x - position.x, 2) + std::pow(monster_pos.y - position.y, 2) +
                           std::pow(monster_pos.z - position.z, 2));
@@ -399,20 +399,20 @@ namespace bt
         add_monster(monster);
 
         // AI 이름과 BT 이름 설정
-        monster->set_ai_name(name);
-        std::string bt_name = MonsterFactory::get_bt_name(type);
-        monster->set_bt_name(bt_name);
+        monster->SetAIName(name);
+        std::string bt_name = MonsterFactory::GetBTName(type);
+        monster->SetBTName(bt_name);
 
         // Behavior Tree 엔진에 AI 등록
-        if (bt_engine_ && monster->get_ai())
+        if (bt_engine_ && monster->GetAI())
         {
-            bt_engine_->register_monster_ai(monster->get_ai());
+            bt_engine_->register_monster_ai(monster->GetAI());
 
             // Behavior Tree 설정
             auto tree = bt_engine_->get_tree(bt_name);
             if (tree)
             {
-                monster->get_ai()->set_behavior_tree(tree);
+                monster->GetAI()->set_behavior_tree(tree);
                 std::cout << "몬스터 AI Behavior Tree 설정: " << name << " -> " << bt_name << std::endl;
             }
             else
@@ -683,7 +683,7 @@ namespace bt
         std::vector<uint32_t> dead_monsters;
         for (const auto& [id, monster] : monsters_)
         {
-            if (!monster->is_alive())
+            if (!monster->IsAlive())
             {
                 dead_monsters.push_back(id);
             }
@@ -754,20 +754,20 @@ namespace bt
                     if (monster)
                     {
                         nlohmann::json monster_data;
-                        monster_data["id"]       = monster->get_id();
-                        monster_data["name"]     = monster->get_name();
-                        monster_data["type"]     = MonsterFactory::monster_type_to_string(monster->get_type());
+                        monster_data["id"]       = monster->GetID();
+                        monster_data["name"]     = monster->GetName();
+                        monster_data["type"]     = MonsterFactory::monster_type_to_string(monster->GetType());
                         monster_data["position"] = {
-                            {"x",        monster->get_position().x       },
-                            {"y",        monster->get_position().y       },
-                            {"z",        monster->get_position().z       },
-                            {"rotation", monster->get_position().rotation}
+                            {"x",        monster->GetPosition().x       },
+                            {"y",        monster->GetPosition().y       },
+                            {"z",        monster->GetPosition().z       },
+                            {"rotation", monster->GetPosition().rotation}
                         };
-                        monster_data["health"]     = monster->get_stats().health;
-                        monster_data["max_health"] = monster->get_stats().max_health;
-                        monster_data["level"]      = monster->get_stats().level;
-                        monster_data["ai_name"]    = monster->get_ai_name();
-                        monster_data["bt_name"]    = monster->get_bt_name();
+                        monster_data["health"]     = monster->GetStats().health;
+                        monster_data["max_health"] = monster->GetStats().max_health;
+                        monster_data["level"]      = monster->GetStats().level;
+                        monster_data["ai_name"]    = monster->GetAIName();
+                        monster_data["bt_name"]    = monster->GetBTName();
                         event["monsters"].push_back(monster_data);
                     }
                 }
@@ -802,7 +802,7 @@ namespace bt
         size_t                      count = 0;
         for (const auto& [id, monster] : monsters_)
         {
-            if (monster->get_type() == type)
+            if (monster->GetType() == type)
             {
                 count++;
             }
@@ -816,7 +816,7 @@ namespace bt
         size_t                      count = 0;
         for (const auto& [id, monster] : monsters_)
         {
-            if (monster->get_name() == name)
+            if (monster->GetName() == name)
             {
                 count++;
             }
@@ -1018,13 +1018,13 @@ namespace bt
                 return BTNodeStatus::FAILURE;
 
             auto monster = monster_ai->get_monster();
-            if (!monster || !monster->has_target())
+            if (!monster || !monster->HasTarget())
                 return BTNodeStatus::FAILURE;
 
             // 공격 실행
-            monster->attack_target();
-            std::cout << "MonsterActions::attack - " << monster->get_name() << "이(가) 타겟 "
-                      << monster->get_target_id() << "을(를) 공격했습니다." << std::endl;
+            monster->AttackTarget();
+            std::cout << "MonsterActions::attack - " << monster->GetName() << "이(가) 타겟 "
+                      << monster->GetTargetID() << "을(를) 공격했습니다." << std::endl;
 
             return BTNodeStatus::SUCCESS;
         }
@@ -1037,15 +1037,15 @@ namespace bt
                 return BTNodeStatus::FAILURE;
 
             auto monster = monster_ai->get_monster();
-            if (!monster || !monster->has_target())
+            if (!monster || !monster->HasTarget())
                 return BTNodeStatus::FAILURE;
 
             // 타겟 방향으로 이동 (간단한 구현)
-            uint32_t target_id = monster->get_nearest_enemy_id();
-            if (target_id != 0)
+            uint32_t tarGetID = monster->get_nearest_enemy_id();
+            if (tarGetID != 0)
             {
                 // TODO: 실제 타겟 위치로 이동 구현
-                std::cout << "MonsterActions::move_to_target - " << monster->get_name() << "이(가) 타겟 " << target_id
+                std::cout << "MonsterActions::move_to_target - " << monster->GetName() << "이(가) 타겟 " << tarGetID
                           << "을(를) 향해 이동합니다." << std::endl;
                 return BTNodeStatus::SUCCESS;
             }
@@ -1067,8 +1067,8 @@ namespace bt
             if (monster->has_patrol_points())
             {
                 MonsterPosition next_point = monster->get_next_patrol_point();
-                monster->move_to(next_point.x, next_point.y, next_point.z, next_point.rotation);
-                std::cout << "MonsterActions::patrol - " << monster->get_name() << "이(가) 순찰 중입니다." << std::endl;
+                monster->MoveTo(next_point.x, next_point.y, next_point.z, next_point.rotation);
+                std::cout << "MonsterActions::patrol - " << monster->GetName() << "이(가) 순찰 중입니다." << std::endl;
                 return BTNodeStatus::SUCCESS;
             }
 
@@ -1087,7 +1087,7 @@ namespace bt
                 return BTNodeStatus::SUCCESS;
 
             // 대기 상태 (아무것도 하지 않음)
-            std::cout << "MonsterActions::idle - " << monster->get_name() << "이(가) 대기 중입니다." << std::endl;
+            std::cout << "MonsterActions::idle - " << monster->GetName() << "이(가) 대기 중입니다." << std::endl;
 
             return BTNodeStatus::SUCCESS;
         }
@@ -1104,7 +1104,7 @@ namespace bt
                 return BTNodeStatus::FAILURE;
 
             // 타겟과 반대 방향으로 이동
-            std::cout << "MonsterActions::flee - " << monster->get_name() << "이(가) 도망치고 있습니다." << std::endl;
+            std::cout << "MonsterActions::flee - " << monster->GetName() << "이(가) 도망치고 있습니다." << std::endl;
 
             return BTNodeStatus::SUCCESS;
         }
@@ -1121,8 +1121,8 @@ namespace bt
                 return BTNodeStatus::SUCCESS;
 
             // 사망 처리
-            monster->set_state(MonsterState::DEAD);
-            std::cout << "MonsterActions::die - " << monster->get_name() << "이(가) 사망했습니다." << std::endl;
+            monster->SetState(MonsterState::DEAD);
+            std::cout << "MonsterActions::die - " << monster->GetName() << "이(가) 사망했습니다." << std::endl;
 
             return BTNodeStatus::SUCCESS;
         }
@@ -1139,11 +1139,11 @@ namespace bt
                 return BTNodeStatus::FAILURE;
 
             // 타겟 초기화하고 순찰 상태로 복귀
-            monster->clear_target();
-            monster->set_state(MonsterState::PATROL);
+            monster->ClearTarget();
+            monster->SetState(MonsterState::PATROL);
             monster->reset_patrol_index();
 
-            std::cout << "MonsterActions::return_to_patrol - " << monster->get_name() << "이(가) 순찰로 복귀했습니다."
+            std::cout << "MonsterActions::return_to_patrol - " << monster->GetName() << "이(가) 순찰로 복귀했습니다."
                       << std::endl;
 
             return BTNodeStatus::SUCCESS;
@@ -1164,9 +1164,9 @@ namespace bt
             uint32_t nearest_enemy_id = monster->get_nearest_enemy_id();
             if (nearest_enemy_id != 0)
             {
-                monster->set_target_id(nearest_enemy_id);
-                monster->set_state(MonsterState::CHASE);
-                std::cout << "MonsterActions::set_target - " << monster->get_name() << "이(가) 타겟 "
+                monster->SetTargetID(nearest_enemy_id);
+                monster->SetState(MonsterState::CHASE);
+                std::cout << "MonsterActions::set_target - " << monster->GetName() << "이(가) 타겟 "
                           << nearest_enemy_id << "을(를) 설정했습니다." << std::endl;
                 return BTNodeStatus::SUCCESS;
             }
@@ -1180,7 +1180,7 @@ namespace bt
     namespace MonsterConditions
     {
 
-        bool has_target(BTContext& context)
+        bool HasTarget(BTContext& context)
         {
             // 타겟 존재 확인
             auto monster_ai = context.get_monster_ai();
@@ -1191,7 +1191,7 @@ namespace bt
             if (!monster)
                 return false;
 
-            return monster->has_target();
+            return monster->HasTarget();
         }
 
         bool is_target_in_range(BTContext& context)
@@ -1202,11 +1202,11 @@ namespace bt
                 return false;
 
             auto monster = monster_ai->get_monster();
-            if (!monster || !monster->has_target())
+            if (!monster || !monster->HasTarget())
                 return false;
 
-            uint32_t target_id = monster->get_target_id();
-            return monster->is_target_in_range(target_id, monster->get_stats().attack_range);
+            uint32_t tarGetID = monster->GetTargetID();
+            return monster->is_target_in_range(tarGetID, monster->GetStats().attack_range);
         }
 
         bool is_target_visible(BTContext& context)
@@ -1217,11 +1217,11 @@ namespace bt
                 return false;
 
             auto monster = monster_ai->get_monster();
-            if (!monster || !monster->has_target())
+            if (!monster || !monster->HasTarget())
                 return false;
 
-            uint32_t target_id = monster->get_target_id();
-            return monster->can_see_target(target_id);
+            uint32_t tarGetID = monster->GetTargetID();
+            return monster->can_see_target(tarGetID);
         }
 
         bool is_health_low(BTContext& context)
@@ -1235,7 +1235,7 @@ namespace bt
             if (!monster)
                 return false;
 
-            const auto& stats = monster->get_stats();
+            const auto& stats = monster->GetStats();
             return stats.health <= (stats.max_health * 0.3f);
         }
 
@@ -1250,7 +1250,7 @@ namespace bt
             if (!monster)
                 return false;
 
-            const auto& stats = monster->get_stats();
+            const auto& stats = monster->GetStats();
             return stats.health <= (stats.max_health * 0.1f);
         }
 
@@ -1265,7 +1265,7 @@ namespace bt
             if (!monster)
                 return false;
 
-            const auto& stats = monster->get_stats();
+            const auto& stats = monster->GetStats();
             return stats.mana <= (stats.max_mana * 0.2f);
         }
 
@@ -1280,7 +1280,7 @@ namespace bt
             if (!monster)
                 return false;
 
-            return monster->has_target() && monster->has_enemy_in_attack_range();
+            return monster->HasTarget() && monster->has_enemy_in_attack_range();
         }
 
         bool is_dead(BTContext& context)
@@ -1294,7 +1294,7 @@ namespace bt
             if (!monster)
                 return false;
 
-            return !monster->is_alive();
+            return !monster->IsAlive();
         }
 
         bool can_see_enemy(BTContext& context)
@@ -1394,7 +1394,7 @@ namespace bt
             if (!monster)
                 return false;
 
-            return monster->has_target() && monster->get_nearest_enemy_id() != 0;
+            return monster->HasTarget() && monster->get_nearest_enemy_id() != 0;
         }
 
         bool is_target_alive(BTContext& context)
@@ -1405,7 +1405,7 @@ namespace bt
                 return false;
 
             auto monster = monster_ai->get_monster();
-            if (!monster || !monster->has_target())
+            if (!monster || !monster->HasTarget())
                 return false;
 
             // TODO: 실제 타겟 생존 여부 확인 (PlayerManager를 통해)
@@ -1420,11 +1420,11 @@ namespace bt
                 return false;
 
             auto monster = monster_ai->get_monster();
-            if (!monster || !monster->has_target())
+            if (!monster || !monster->HasTarget())
                 return false;
 
-            uint32_t target_id = monster->get_target_id();
-            return monster->is_target_in_range(target_id, monster->get_stats().attack_range);
+            uint32_t tarGetID = monster->GetTargetID();
+            return monster->is_target_in_range(tarGetID, monster->GetStats().attack_range);
         }
 
         bool is_target_in_detection_range(BTContext& context)
@@ -1435,11 +1435,11 @@ namespace bt
                 return false;
 
             auto monster = monster_ai->get_monster();
-            if (!monster || !monster->has_target())
+            if (!monster || !monster->HasTarget())
                 return false;
 
-            uint32_t target_id = monster->get_target_id();
-            return monster->is_target_in_range(target_id, monster->get_stats().detection_range);
+            uint32_t tarGetID = monster->GetTargetID();
+            return monster->is_target_in_range(tarGetID, monster->GetStats().detection_range);
         }
 
         bool is_target_in_chase_range(BTContext& context)
@@ -1450,11 +1450,11 @@ namespace bt
                 return false;
 
             auto monster = monster_ai->get_monster();
-            if (!monster || !monster->has_target())
+            if (!monster || !monster->HasTarget())
                 return false;
 
-            uint32_t target_id = monster->get_target_id();
-            return monster->is_target_in_range(target_id, monster->get_chase_range());
+            uint32_t tarGetID = monster->GetTargetID();
+            return monster->is_target_in_range(tarGetID, monster->get_chase_range());
         }
 
         bool should_return_to_patrol(BTContext& context)
@@ -1469,7 +1469,7 @@ namespace bt
                 return true;
 
             // 타겟이 없거나 추적 범위를 벗어났을 때
-            return !monster->has_target() || !monster->has_enemy_in_chase_range();
+            return !monster->HasTarget() || !monster->has_enemy_in_chase_range();
         }
 
         bool can_cast_spell(BTContext& context)
@@ -1483,8 +1483,8 @@ namespace bt
             if (!monster)
                 return false;
 
-            const auto& stats = monster->get_stats();
-            return stats.mana >= 10 && monster->has_target(); // 최소 마나 10 필요
+            const auto& stats = monster->GetStats();
+            return stats.mana >= 10 && monster->HasTarget(); // 최소 마나 10 필요
         }
 
         bool can_summon_minion(BTContext& context)
@@ -1498,8 +1498,8 @@ namespace bt
             if (!monster)
                 return false;
 
-            const auto& stats = monster->get_stats();
-            return stats.mana >= 50 && monster->get_type() == MonsterType::DRAGON; // 드래곤만 소환 가능
+            const auto& stats = monster->GetStats();
+            return stats.mana >= 50 && monster->GetType() == MonsterType::DRAGON; // 드래곤만 소환 가능
         }
 
         bool has_usable_item(BTContext& context)
@@ -1521,7 +1521,7 @@ namespace bt
                 return false;
 
             auto monster = monster_ai->get_monster();
-            if (!monster || !monster->has_target())
+            if (!monster || !monster->HasTarget())
                 return false;
 
             // TODO: 실제 타겟 강도 비교 구현

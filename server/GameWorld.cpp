@@ -19,11 +19,11 @@ namespace bt
 
     GameWorld::~GameWorld()
     {
-        stop_game_loop();
+        StopGameLoop();
         std::cout << "게임 월드 소멸" << std::endl;
     }
 
-    bool GameWorld::add_player(uint32_t player_id, const std::string& name)
+    bool GameWorld::AddPlayer(uint32_t player_id, const std::string& name)
     {
         std::lock_guard<std::mutex> lock(players_mutex_);
 
@@ -37,19 +37,19 @@ namespace bt
         return true;
     }
 
-    void GameWorld::remove_player(uint32_t player_id)
+    void GameWorld::RemovePlayer(uint32_t player_id)
     {
         std::lock_guard<std::mutex> lock(players_mutex_);
 
         auto it = players_.find(player_id);
         if (it != players_.end())
         {
-            std::cout << "플레이어 제거: " << it->second->get_name() << " (ID: " << player_id << ")" << std::endl;
+            std::cout << "플레이어 제거: " << it->second->GetName() << " (ID: " << player_id << ")" << std::endl;
             players_.erase(it);
         }
     }
 
-    Player* GameWorld::get_player(uint32_t player_id)
+    Player* GameWorld::GetPlayer(uint32_t player_id)
     {
         std::lock_guard<std::mutex> lock(players_mutex_);
 
@@ -57,14 +57,14 @@ namespace bt
         return (it != players_.end()) ? it->second.get() : nullptr;
     }
 
-    std::vector<Player*> GameWorld::get_players_in_map(uint32_t map_id)
+    std::vector<Player*> GameWorld::GetPlayersInMap(uint32_t map_id)
     {
         std::lock_guard<std::mutex> lock(players_mutex_);
         std::vector<Player*>        players_in_map;
 
         for (auto& [id, player] : players_)
         {
-            if (player->get_current_map_id() == map_id)
+            if (player->GetCurrentMapID() == map_id)
             {
                 players_in_map.push_back(player.get());
             }
@@ -73,7 +73,7 @@ namespace bt
         return players_in_map;
     }
 
-    bool GameWorld::load_map(uint32_t map_id, const std::string& map_data)
+    bool GameWorld::LoadMap(uint32_t map_id, const std::string& map_data)
     {
         std::lock_guard<std::mutex> lock(maps_mutex_);
 
@@ -87,7 +87,7 @@ namespace bt
         return true;
     }
 
-    Map* GameWorld::get_map(uint32_t map_id)
+    Map* GameWorld::GetMap(uint32_t map_id)
     {
         std::lock_guard<std::mutex> lock(maps_mutex_);
 
@@ -95,7 +95,7 @@ namespace bt
         return (it != maps_.end()) ? it->second.get() : nullptr;
     }
 
-    std::vector<Map*> GameWorld::get_all_maps()
+    std::vector<Map*> GameWorld::GetAllMaps()
     {
         std::lock_guard<std::mutex> lock(maps_mutex_);
         std::vector<Map*>           all_maps;
@@ -108,7 +108,7 @@ namespace bt
         return all_maps;
     }
 
-    void GameWorld::spawn_npc(uint32_t npc_id, uint32_t map_id, float x, float y, float z)
+    void GameWorld::SpawnNPC(uint32_t npc_id, uint32_t map_id, float x, float y, float z)
     {
         std::lock_guard<std::mutex> lock(npcs_mutex_);
 
@@ -120,7 +120,7 @@ namespace bt
         }
     }
 
-    void GameWorld::remove_npc(uint32_t npc_id)
+    void GameWorld::RemoveNPC(uint32_t npc_id)
     {
         std::lock_guard<std::mutex> lock(npcs_mutex_);
 
@@ -132,7 +132,7 @@ namespace bt
         }
     }
 
-    NPC* GameWorld::get_npc(uint32_t npc_id)
+    NPC* GameWorld::GetNPC(uint32_t npc_id)
     {
         std::lock_guard<std::mutex> lock(npcs_mutex_);
 
@@ -140,28 +140,28 @@ namespace bt
         return (it != npcs_.end()) ? it->second.get() : nullptr;
     }
 
-    void GameWorld::update(float delta_time)
+    void GameWorld::Update(float delta_time)
     {
         // 플레이어 업데이트
         {
             std::lock_guard<std::mutex> lock(players_mutex_);
             for (auto& [id, player] : players_)
             {
-                player->update(delta_time);
+                player->Update(delta_time);
             }
         }
 
         // AI 처리
-        process_ai(delta_time);
+        ProcessAI(delta_time);
 
         // 이동 처리
-        process_movement(delta_time);
+        ProcessMovement(delta_time);
 
         // 전투 처리
-        process_combat(delta_time);
+        ProcessCombat(delta_time);
     }
 
-    void GameWorld::start_game_loop()
+    void GameWorld::StartGameLoop()
     {
         if (running_.load())
         {
@@ -169,11 +169,11 @@ namespace bt
         }
 
         running_.store(true);
-        game_loop_thread_ = std::thread(&GameWorld::game_loop_thread, this);
+        game_loop_thread_ = std::thread(&GameWorld::GameLoopThread, this);
         std::cout << "게임 루프 시작" << std::endl;
     }
 
-    void GameWorld::stop_game_loop()
+    void GameWorld::StopGameLoop()
     {
         if (!running_.load())
         {
@@ -190,13 +190,13 @@ namespace bt
         std::cout << "게임 루프 중지" << std::endl;
     }
 
-    void GameWorld::register_event_handler(std::function<void(const std::string&, const std::string&)> handler)
+    void GameWorld::RegisterEventHandler(std::function<void(const std::string&, const std::string&)> handler)
     {
         std::lock_guard<std::mutex> lock(event_handlers_mutex_);
         event_handlers_.push_back(handler);
     }
 
-    void GameWorld::trigger_event(const std::string& event_type, const std::string& data)
+    void GameWorld::TriggerEvent(const std::string& event_type, const std::string& data)
     {
         std::lock_guard<std::mutex> lock(event_handlers_mutex_);
 
@@ -206,7 +206,7 @@ namespace bt
         }
     }
 
-    void GameWorld::game_loop_thread()
+    void GameWorld::GameLoopThread()
     {
         std::cout << "게임 루프 스레드 시작" << std::endl;
 
@@ -220,7 +220,7 @@ namespace bt
 
             if (delta_time >= target_frame_time)
             {
-                update(delta_time);
+                Update(delta_time);
                 last_update_time_ = current_time;
             }
             else
@@ -233,21 +233,21 @@ namespace bt
         std::cout << "게임 루프 스레드 종료" << std::endl;
     }
 
-    void GameWorld::process_ai(float delta_time)
+    void GameWorld::ProcessAI(float delta_time)
     {
         // NPC AI 처리 (기본 구현)
         std::lock_guard<std::mutex> lock(npcs_mutex_);
         // 실제로는 각 NPC의 AI 로직을 실행
     }
 
-    void GameWorld::process_movement(float delta_time)
+    void GameWorld::ProcessMovement(float delta_time)
     {
         // 플레이어 이동 처리 (기본 구현)
         std::lock_guard<std::mutex> lock(players_mutex_);
         // 실제로는 각 플레이어의 이동을 처리
     }
 
-    void GameWorld::process_combat(float delta_time)
+    void GameWorld::ProcessCombat(float delta_time)
     {
         // 전투 시스템 처리 (기본 구현)
         std::lock_guard<std::mutex> lock(players_mutex_);

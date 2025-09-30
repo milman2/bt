@@ -21,7 +21,7 @@ namespace bt
         static MonsterStats get_default_stats(MonsterType type);
 
         // 몬스터별 Behavior Tree 이름 반환
-        static std::string get_bt_name(MonsterType type);
+        static std::string GetBTName(MonsterType type);
 
         // 문자열을 MonsterType으로 변환
         static MonsterType string_to_monster_type(const std::string& type_str);

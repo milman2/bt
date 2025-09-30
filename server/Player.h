@@ -50,41 +50,41 @@ namespace bt
         ~Player();
 
         // 기본 정보
-        uint32_t           get_id() const { return id_; }
-        const std::string& get_name() const { return name_; }
-        PlayerState        get_state() const { return state_; }
-        void               set_state(PlayerState state) { state_ = state; }
+        uint32_t           GetID() const { return id_; }
+        const std::string& GetName() const { return name_; }
+        PlayerState        GetState() const { return state_; }
+        void               SetState(PlayerState state) { state_ = state; }
 
         // 위치 관련
-        const Position& get_position() const { return position_; }
-        void            set_position(const Position& pos) { position_ = pos; }
-        void            set_position(float x, float y, float z, float rotation = 0.0f);
-        void            move_to(float x, float y, float z, float rotation = 0.0f);
+        const Position& GetPosition() const { return position_; }
+        void            SetPosition(const Position& pos) { position_ = pos; }
+        void            SetPosition(float x, float y, float z, float rotation = 0.0f);
+        void            MoveTo(float x, float y, float z, float rotation = 0.0f);
 
         // 통계 관련
-        const PlayerStats& get_stats() const { return stats_; }
-        void               set_stats(const PlayerStats& stats) { stats_ = stats; }
-        void               add_experience(uint32_t exp);
-        void               level_up();
-        void               take_damage(uint32_t damage);
-        void               heal(uint32_t amount);
-        bool               is_alive() const { return stats_.health > 0; }
+        const PlayerStats& GetStats() const { return stats_; }
+        void               SetStats(const PlayerStats& stats) { stats_ = stats; }
+        void               AddExperience(uint32_t exp);
+        void               LevelUp();
+        void               TakeDamage(uint32_t damage);
+        void               Heal(uint32_t amount);
+        bool               IsAlive() const { return stats_.health > 0; }
 
         // 맵 관련
-        uint32_t get_current_map_id() const { return current_map_id_; }
-        void     set_current_map_id(uint32_t map_id) { current_map_id_ = map_id; }
+        uint32_t GetCurrentMapID() const { return current_map_id_; }
+        void     SetCurrentMapID(uint32_t map_id) { current_map_id_ = map_id; }
 
         // 소켓 관련
-        int  get_socket_fd() const { return socket_fd_; }
-        void set_socket_fd(int fd) { socket_fd_ = fd; }
+        int  GetSocketFD() const { return socket_fd_; }
+        void SetSocketFD(int fd) { socket_fd_ = fd; }
 
         // 시간 관련
-        std::chrono::steady_clock::time_point get_last_activity() const { return last_activity_; }
-        void                                  update_activity() { last_activity_ = std::chrono::steady_clock::now(); }
+        std::chrono::steady_clock::time_point GetLastActivity() const { return last_activity_; }
+        void                                  UpdateActivity() { last_activity_ = std::chrono::steady_clock::now(); }
 
         // 게임 로직
-        void update(float delta_time);
-        void respawn();
+        void Update(float delta_time);
+        void Respawn();
 
     private:
         uint32_t                              id_;

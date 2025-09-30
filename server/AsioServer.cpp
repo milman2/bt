@@ -291,10 +291,10 @@ namespace bt
             auto player = player_manager_->create_player_for_client(client_id, player_name, spawn_position);
             if (player)
             {
-                info.player_id          = player->get_id();
+                info.player_id          = player->GetID();
                 std::string client_info = info.ip_address + ":" + std::to_string(info.port);
                 log_message("클라이언트 연결: " + client_info + " -> 플레이어 생성: " + player_name +
-                            " (ID: " + std::to_string(player->get_id()) + ")");
+                            " (ID: " + std::to_string(player->GetID()) + ")");
             }
         }
     }

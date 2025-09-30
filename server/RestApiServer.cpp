@@ -266,11 +266,11 @@ namespace bt
                 first = false;
 
                 json << "    {\n";
-                json << "      \"id\": " << monster->get_target_id() << ",\n";
-                json << "      \"name\": \"" << monster->get_name() << "\",\n";
-                json << "      \"type\": \"" << monster_type_to_string(monster->get_type()) << "\",\n";
+                json << "      \"id\": " << monster->GetTargetID() << ",\n";
+                json << "      \"name\": \"" << monster->GetName() << "\",\n";
+                json << "      \"type\": \"" << monster_type_to_string(monster->GetType()) << "\",\n";
 
-                const auto& pos = monster->get_position();
+                const auto& pos = monster->GetPosition();
                 json << "      \"position\": {\n";
                 json << "        \"x\": " << std::fixed << std::setprecision(2) << pos.x << ",\n";
                 json << "        \"y\": " << pos.y << ",\n";
@@ -278,19 +278,19 @@ namespace bt
                 json << "        \"rotation\": " << pos.rotation << "\n";
                 json << "      },\n";
 
-                json << "      \"state\": \"" << monster_state_to_string(monster->get_state()) << "\",\n";
+                json << "      \"state\": \"" << monster_state_to_string(monster->GetState()) << "\",\n";
 
-                const auto& stats = monster->get_stats();
+                const auto& stats = monster->GetStats();
                 json << "      \"health\": " << stats.health << ",\n";
                 json << "      \"max_health\": " << stats.max_health << ",\n";
-                json << "      \"target_id\": " << monster->get_target_id() << ",\n";
-                json << "      \"has_target\": " << (monster->has_target() ? "true" : "false") << ",\n";
+                json << "      \"tarGetID\": " << monster->GetTargetID() << ",\n";
+                json << "      \"HasTarget\": " << (monster->HasTarget() ? "true" : "false") << ",\n";
 
-                auto ai = monster->get_ai();
+                auto ai = monster->GetAI();
                 if (ai)
                 {
-                    json << "      \"ai_name\": \"" << ai->get_name() << "\",\n";
-                    json << "      \"bt_name\": \"" << ai->get_bt_name() << "\",\n";
+                    json << "      \"ai_name\": \"" << ai->GetName() << "\",\n";
+                    json << "      \"bt_name\": \"" << ai->GetBTName() << "\",\n";
                     json << "      \"is_active\": " << (ai->is_active() ? "true" : "false") << ",\n";
                 }
                 else
@@ -382,10 +382,10 @@ namespace bt
                 first = false;
 
                 json << "    {\n";
-                json << "      \"id\": " << player->get_id() << ",\n";
-                json << "      \"name\": \"" << player->get_name() << "\",\n";
+                json << "      \"id\": " << player->GetID() << ",\n";
+                json << "      \"name\": \"" << player->GetName() << "\",\n";
 
-                const auto& pos = player->get_position();
+                const auto& pos = player->GetPosition();
                 json << "      \"position\": {\n";
                 json << "        \"x\": " << std::fixed << std::setprecision(2) << pos.x << ",\n";
                 json << "        \"y\": " << pos.y << ",\n";
@@ -393,11 +393,11 @@ namespace bt
                 json << "        \"rotation\": " << pos.rotation << "\n";
                 json << "      },\n";
 
-                json << "      \"state\": \"" << static_cast<int>(player->get_state()) << "\",\n";
-                const auto& stats = player->get_stats();
+                json << "      \"state\": \"" << static_cast<int>(player->GetState()) << "\",\n";
+                const auto& stats = player->GetStats();
                 json << "      \"health\": " << stats.health << ",\n";
                 json << "      \"max_health\": " << stats.max_health << ",\n";
-                json << "      \"is_alive\": " << (player->is_alive() ? "true" : "false") << "\n";
+                json << "      \"IsAlive\": " << (player->IsAlive() ? "true" : "false") << "\n";
                 json << "    }";
             }
         }

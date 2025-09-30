@@ -46,7 +46,7 @@ namespace bt
         }
 
         // 게임 월드 시작
-        game_world_->start_game_loop();
+        game_world_->StartGameLoop();
 
         // 워커 스레드 시작
         for (int i = 0; i < config_.worker_threads; ++i)
@@ -94,7 +94,7 @@ namespace bt
         // 게임 월드 중지
         if (game_world_)
         {
-            game_world_->stop_game_loop();
+            game_world_->StopGameLoop();
         }
 
         // 워커 스레드 종료

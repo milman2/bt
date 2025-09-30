@@ -269,7 +269,7 @@ namespace bt
                     sessions_.push_back(session);
                 }
 
-                std::cout << "WebSocket 클라이언트 연결됨 (세션 ID: " << session->get_id() << ")" << std::endl;
+                std::cout << "WebSocket 클라이언트 연결됨 (세션 ID: " << session->GetID() << ")" << std::endl;
 
                 // 환영 메시지 전송
                 std::string welcome_msg =
@@ -302,7 +302,7 @@ namespace bt
 
                 // 세션 제거
                 remove_session(session);
-                std::cout << "WebSocket 클라이언트 연결 종료 (세션 ID: " << session->get_id() << ")" << std::endl;
+                std::cout << "WebSocket 클라이언트 연결 종료 (세션 ID: " << session->GetID() << ")" << std::endl;
             }
         }
 
