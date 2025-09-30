@@ -22,6 +22,7 @@ set(BT_HEADERS
     Engine.h
     IExecutor.h
     EnvironmentInfo.h
+    Blackboard.h
     Action/Action.h
     Condition/Condition.h
     Control/Sequence.h

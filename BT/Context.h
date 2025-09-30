@@ -1,17 +1,17 @@
 #pragma once
 
-#include <any>
 #include <chrono>
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include "EnvironmentInfo.h"
+#include "Blackboard.h"
 
 namespace bt
 {
 
     // 전방 선언
     class IExecutor;
+    class IOwner;
 
     // Behavior Tree 컨텍스트 (Blackboard)
     class Context
@@ -20,51 +20,39 @@ namespace bt
         Context() : start_time_(std::chrono::steady_clock::now()), execution_count_(0) {}
         ~Context() = default;
 
-        // 데이터 관리
-        void SetData(const std::string& key, const std::any& value) { data_[key] = value; }
-        
-        std::any GetData(const std::string& key) const 
-        { 
-            auto it = data_.find(key);
-            if (it != data_.end())
-            {
-                return it->second;
-            }
-            return std::any{};
-        }
-        
-        bool HasData(const std::string& key) const { return data_.find(key) != data_.end(); }
-        
-        void RemoveData(const std::string& key) { data_.erase(key); }
+        // Blackboard 데이터 관리 (위임)
+        void SetData(const std::string& key, const std::any& value) { blackboard_.SetData(key, value); }
+        std::any GetData(const std::string& key) const { return blackboard_.GetData(key); }
+        bool HasData(const std::string& key) const { return blackboard_.HasData(key); }
+        void RemoveData(const std::string& key) { blackboard_.RemoveData(key); }
+        void ClearData() { blackboard_.Clear(); }
+        size_t GetDataSize() const { return blackboard_.Size(); }
+        bool IsDataEmpty() const { return blackboard_.Empty(); }
 
-        // 타입 안전한 데이터 접근
+        // 타입 안전한 데이터 접근 (위임)
         template <typename T>
         T GetDataAs(const std::string& key) const
         {
-            auto it = data_.find(key);
-            if (it != data_.end())
-            {
-                try
-                {
-                    return std::any_cast<T>(it->second);
-                }
-                catch (const std::bad_any_cast&)
-                {
-                    return T{};
-                }
-            }
-            return T{};
+            return blackboard_.GetDataAs<T>(key);
         }
 
         template <typename T>
         void SetData(const std::string& key, const T& value)
         {
-            data_[key] = value;
+            blackboard_.SetData(key, value);
         }
+
+        // Owner 참조 (IOwner 인터페이스 사용)
+        void SetOwner(std::shared_ptr<IOwner> owner) { owner_ = owner; }
+        std::shared_ptr<IOwner> GetOwner() const { return owner_; }
 
         // AI 참조 (IExecutor 인터페이스 사용)
         void SetAI(std::shared_ptr<IExecutor> ai) { ai_ = ai; }
         std::shared_ptr<IExecutor> GetAI() const { return ai_; }
+
+        // Blackboard 직접 접근
+        Blackboard& GetBlackboard() { return blackboard_; }
+        const Blackboard& GetBlackboard() const { return blackboard_; }
 
         // 실행 시간 관리
         void SetStartTime(std::chrono::steady_clock::time_point time) { start_time_ = time; }
@@ -84,9 +72,10 @@ namespace bt
         const std::string& GetCurrentRunningNode() const { return current_running_node_; }
         void ClearCurrentRunningNode() { current_running_node_.clear(); }
 
-    private:
-        std::unordered_map<std::string, std::any> data_;
+    private:        
+        std::shared_ptr<IOwner>                    owner_;
         std::shared_ptr<IExecutor>                     ai_;
+        Blackboard                                blackboard_;
         std::chrono::steady_clock::time_point     start_time_;
         const EnvironmentInfo*                    environment_info_ = nullptr;
         uint64_t                                 execution_count_;

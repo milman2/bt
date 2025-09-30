@@ -48,6 +48,8 @@ namespace test
         TestResult TestTreeInitialization();
         TestResult TestContextManagement();
         TestResult TestEngineRegistration();
+        TestResult TestBlackboardFunctionality();
+        TestResult TestEnvironmentInfoFunctionality();
         
         // 헬퍼 함수들
         std::shared_ptr<MockAIExecutor> CreateMockAI(const std::string& name = "TestAI");
@@ -63,12 +65,15 @@ namespace test
         bool AssertEqual(const std::string& test_name, bool expected, bool actual);
         bool AssertEqual(const std::string& test_name, int expected, int actual);
         bool AssertEqual(const std::string& test_name, const std::string& expected, const std::string& actual);
+        bool AssertEqual(const std::string& test_name, size_t expected, size_t actual);
+        bool AssertEqual(const std::string& test_name, float expected, float actual);
         bool AssertTrue(const std::string& test_name, bool condition);
         bool AssertFalse(const std::string& test_name, bool condition);
     };
 
     // 테스트 실행 함수
     void RunBehaviorTreeTests();
+    void RunPerformanceTest();
 
 } // namespace test
 } // namespace bt

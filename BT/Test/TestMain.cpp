@@ -1,4 +1,5 @@
 #include "BehaviorTreeTests.h"
+#include "PerformanceTest.cpp"
 #include <iostream>
 #include <chrono>
 
@@ -12,6 +13,7 @@ int main()
     try
     {
         bt::test::RunBehaviorTreeTests();
+        bt::test::RunPerformanceTest();
     }
     catch (const std::exception& e)
     {

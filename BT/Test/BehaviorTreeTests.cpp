@@ -2,6 +2,7 @@
 #include <iostream>
 #include <chrono>
 #include <thread>
+#include <cmath>
 
 namespace bt
 {
@@ -31,6 +32,8 @@ namespace test
         results.push_back(TestTreeInitialization());
         results.push_back(TestContextManagement());
         results.push_back(TestEngineRegistration());
+        results.push_back(TestBlackboardFunctionality());
+        results.push_back(TestEnvironmentInfoFunctionality());
         
         return results;
     }
@@ -613,6 +616,27 @@ namespace test
         return false;
     }
 
+    bool BehaviorTreeTestSuite::AssertEqual(const std::string& test_name, size_t expected, size_t actual)
+    {
+        if (expected == actual)
+            return true;
+        
+        std::cout << "    ✗ " << test_name << ": 예상 " << expected 
+                  << ", 실제 " << actual << "\n";
+        return false;
+    }
+
+    bool BehaviorTreeTestSuite::AssertEqual(const std::string& test_name, float expected, float actual)
+    {
+        const float epsilon = 0.0001f;
+        if (std::abs(expected - actual) < epsilon)
+            return true;
+        
+        std::cout << "    ✗ " << test_name << ": 예상 " << expected 
+                  << ", 실제 " << actual << "\n";
+        return false;
+    }
+
     bool BehaviorTreeTestSuite::AssertTrue(const std::string& test_name, bool condition)
     {
         if (condition)
@@ -629,6 +653,209 @@ namespace test
         
         std::cout << "    ✗ " << test_name << ": 예상 false, 실제 true\n";
         return false;
+    }
+
+    TestResult BehaviorTreeTestSuite::TestBlackboardFunctionality()
+    {
+        std::cout << "테스트: Blackboard 기능\n";
+        
+        try
+        {
+            // Blackboard 직접 테스트
+            Blackboard bb;
+            
+            // 기본 데이터 설정/조회
+            bb.SetData("health", 100);
+            bb.SetData("name", std::string("TestPlayer"));
+            bb.SetData("level", 5);
+            bb.SetData("is_alive", true);
+            
+            if (!AssertEqual("데이터 개수", size_t(4), bb.Size()))
+                return TestResult("TestBlackboardFunctionality", false, "데이터 개수 불일치");
+            
+            if (!AssertTrue("데이터 존재 확인", bb.HasData("health")))
+                return TestResult("TestBlackboardFunctionality", false, "데이터 존재 확인 실패");
+            
+            // 타입 안전한 데이터 조회
+            int health = bb.GetDataAs<int>("health");
+            if (!AssertEqual("정수 데이터 조회", 100, health))
+                return TestResult("TestBlackboardFunctionality", false, "정수 데이터 조회 실패");
+            
+            std::string name = bb.GetDataAs<std::string>("name");
+            if (!AssertEqual("문자열 데이터 조회", std::string("TestPlayer"), name))
+                return TestResult("TestBlackboardFunctionality", false, "문자열 데이터 조회 실패");
+            
+            bool is_alive = bb.GetDataAs<bool>("is_alive");
+            if (!AssertTrue("불린 데이터 조회", is_alive))
+                return TestResult("TestBlackboardFunctionality", false, "불린 데이터 조회 실패");
+            
+            // 존재하지 않는 데이터 조회 (기본값)
+            int missing = bb.GetDataAs<int>("missing_key");
+            if (!AssertEqual("기본값 반환", 0, missing))
+                return TestResult("TestBlackboardFunctionality", false, "기본값 반환 실패");
+            
+            // 데이터 삭제
+            bb.RemoveData("level");
+            if (!AssertEqual("데이터 삭제 후 개수", size_t(3), bb.Size()))
+                return TestResult("TestBlackboardFunctionality", false, "데이터 삭제 실패");
+            
+            if (!AssertFalse("삭제된 데이터 존재 확인", bb.HasData("level")))
+                return TestResult("TestBlackboardFunctionality", false, "삭제된 데이터 존재 확인 실패");
+            
+            // 키 목록 조회
+            auto keys = bb.GetKeys();
+            if (!AssertEqual("키 개수", size_t(3), keys.size()))
+                return TestResult("TestBlackboardFunctionality", false, "키 개수 불일치");
+            
+            // 특정 타입 데이터 조회
+            auto int_data = bb.GetDataOfType<int>();
+            if (!AssertEqual("정수 타입 데이터 개수", size_t(1), int_data.size()))
+                return TestResult("TestBlackboardFunctionality", false, "정수 타입 데이터 개수 불일치");
+            
+            // Context를 통한 Blackboard 테스트
+            Context context;
+            context.SetData("context_health", 200);
+            context.SetData("context_name", std::string("ContextPlayer"));
+            
+            if (!AssertEqual("Context 데이터 개수", size_t(2), context.GetDataSize()))
+                return TestResult("TestBlackboardFunctionality", false, "Context 데이터 개수 불일치");
+            
+            int context_health = context.GetDataAs<int>("context_health");
+            if (!AssertEqual("Context 정수 데이터", 200, context_health))
+                return TestResult("TestBlackboardFunctionality", false, "Context 정수 데이터 실패");
+            
+            // Blackboard 직접 접근
+            Blackboard& context_bb = context.GetBlackboard();
+            context_bb.SetData("direct_access", 300);
+            
+            if (!AssertEqual("직접 접근 데이터", 300, context_bb.GetDataAs<int>("direct_access")))
+                return TestResult("TestBlackboardFunctionality", false, "직접 접근 데이터 실패");
+            
+            // 모든 데이터 삭제
+            bb.Clear();
+            if (!AssertTrue("모든 데이터 삭제", bb.Empty()))
+                return TestResult("TestBlackboardFunctionality", false, "모든 데이터 삭제 실패");
+            
+            std::cout << "  ✓ Blackboard 기능 테스트 통과\n";
+            return TestResult("TestBlackboardFunctionality", true);
+        }
+        catch (const std::exception& e)
+        {
+            return TestResult("TestBlackboardFunctionality", false, std::string("예외 발생: ") + e.what());
+        }
+    }
+
+    TestResult BehaviorTreeTestSuite::TestEnvironmentInfoFunctionality()
+    {
+        std::cout << "테스트: EnvironmentInfo 기능\n";
+        
+        try
+        {
+            EnvironmentInfo env_info;
+            
+            // 초기 상태 확인
+            if (!AssertTrue("초기 상태 - 시야 확보", env_info.has_line_of_sight))
+                return TestResult("TestEnvironmentInfoFunctionality", false, "초기 시야 확보 상태 실패");
+            
+            if (!AssertFalse("초기 상태 - 적 없음", env_info.HasEnemy()))
+                return TestResult("TestEnvironmentInfoFunctionality", false, "초기 적 상태 실패");
+            
+            // 주변 플레이어 추가
+            env_info.nearby_players.push_back(1001);
+            env_info.nearby_players.push_back(1002);
+            
+            if (!AssertTrue("주변 플레이어 있음", env_info.HasNearbyPlayers()))
+                return TestResult("TestEnvironmentInfoFunctionality", false, "주변 플레이어 확인 실패");
+            
+            if (!AssertEqual("주변 플레이어 개수", size_t(2), env_info.nearby_players.size()))
+                return TestResult("TestEnvironmentInfoFunctionality", false, "주변 플레이어 개수 실패");
+            
+            // 주변 몬스터 추가
+            env_info.nearby_monsters.push_back(2001);
+            env_info.nearby_monsters.push_back(2002);
+            env_info.nearby_monsters.push_back(2003);
+            
+            if (!AssertTrue("주변 몬스터 있음", env_info.HasNearbyMonsters()))
+                return TestResult("TestEnvironmentInfoFunctionality", false, "주변 몬스터 확인 실패");
+            
+            if (!AssertEqual("주변 몬스터 개수", size_t(3), env_info.nearby_monsters.size()))
+                return TestResult("TestEnvironmentInfoFunctionality", false, "주변 몬스터 개수 실패");
+            
+            // 가장 가까운 적 설정
+            env_info.nearest_enemy_id = 2001;
+            env_info.nearest_enemy_distance = 5.5f;
+            
+            if (!AssertTrue("적 있음", env_info.HasEnemy()))
+                return TestResult("TestEnvironmentInfoFunctionality", false, "적 존재 확인 실패");
+            
+            if (!AssertEqual("적 거리", 5.5f, env_info.nearest_enemy_distance))
+                return TestResult("TestEnvironmentInfoFunctionality", false, "적 거리 실패");
+            
+            // 거리 기반 판단
+            if (!AssertTrue("공격 범위 내", env_info.IsEnemyInRange(10.0f)))
+                return TestResult("TestEnvironmentInfoFunctionality", false, "공격 범위 내 판단 실패");
+            
+            if (!AssertFalse("공격 범위 밖", env_info.IsEnemyInRange(3.0f)))
+                return TestResult("TestEnvironmentInfoFunctionality", false, "공격 범위 밖 판단 실패");
+            
+            // 적 타입 확인
+            if (!AssertTrue("가장 가까운 적이 몬스터", env_info.IsNearestEnemyMonster()))
+                return TestResult("TestEnvironmentInfoFunctionality", false, "가장 가까운 적이 몬스터 확인 실패");
+            
+            if (!AssertFalse("가장 가까운 적이 플레이어 아님", env_info.IsNearestEnemyPlayer()))
+                return TestResult("TestEnvironmentInfoFunctionality", false, "가장 가까운 적이 플레이어 확인 실패");
+            
+            // 플레이어를 가장 가까운 적으로 설정
+            env_info.nearest_enemy_id = 1001;
+            env_info.nearest_enemy_distance = 3.0f;
+            
+            if (!AssertTrue("가장 가까운 적이 플레이어", env_info.IsNearestEnemyPlayer()))
+                return TestResult("TestEnvironmentInfoFunctionality", false, "가장 가까운 적이 플레이어 확인 실패");
+            
+            if (!AssertFalse("가장 가까운 적이 몬스터 아님", env_info.IsNearestEnemyMonster()))
+                return TestResult("TestEnvironmentInfoFunctionality", false, "가장 가까운 적이 몬스터 확인 실패");
+            
+            // 장애물 추가
+            env_info.obstacles.push_back(3001);
+            env_info.obstacles.push_back(3002);
+            
+            if (!AssertTrue("장애물 있음", env_info.HasObstacles()))
+                return TestResult("TestEnvironmentInfoFunctionality", false, "장애물 확인 실패");
+            
+            if (!AssertEqual("장애물 개수", size_t(2), env_info.obstacles.size()))
+                return TestResult("TestEnvironmentInfoFunctionality", false, "장애물 개수 실패");
+            
+            // 시야 차단
+            env_info.has_line_of_sight = false;
+            
+            if (!AssertFalse("시야 차단됨", env_info.has_line_of_sight))
+                return TestResult("TestEnvironmentInfoFunctionality", false, "시야 차단 확인 실패");
+            
+            // 모든 데이터 클리어
+            env_info.Clear();
+            
+            if (!AssertFalse("클리어 후 - 주변 플레이어 없음", env_info.HasNearbyPlayers()))
+                return TestResult("TestEnvironmentInfoFunctionality", false, "클리어 후 주변 플레이어 확인 실패");
+            
+            if (!AssertFalse("클리어 후 - 주변 몬스터 없음", env_info.HasNearbyMonsters()))
+                return TestResult("TestEnvironmentInfoFunctionality", false, "클리어 후 주변 몬스터 확인 실패");
+            
+            if (!AssertFalse("클리어 후 - 장애물 없음", env_info.HasObstacles()))
+                return TestResult("TestEnvironmentInfoFunctionality", false, "클리어 후 장애물 확인 실패");
+            
+            if (!AssertFalse("클리어 후 - 적 없음", env_info.HasEnemy()))
+                return TestResult("TestEnvironmentInfoFunctionality", false, "클리어 후 적 확인 실패");
+            
+            if (!AssertTrue("클리어 후 - 시야 확보", env_info.has_line_of_sight))
+                return TestResult("TestEnvironmentInfoFunctionality", false, "클리어 후 시야 확보 확인 실패");
+            
+            std::cout << "  ✓ EnvironmentInfo 기능 테스트 통과\n";
+            return TestResult("TestEnvironmentInfoFunctionality", true);
+        }
+        catch (const std::exception& e)
+        {
+            return TestResult("TestEnvironmentInfoFunctionality", false, std::string("예외 발생: ") + e.what());
+        }
     }
 
     // 메인 테스트 실행 함수
