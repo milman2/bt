@@ -52,24 +52,24 @@ namespace bt
         // PlayerManager에 WebSocket 서버 설정
         player_manager_->set_websocket_server(websocket_server_);
 
-        log_message("AsioServer 인스턴스가 생성되었습니다.");
+        LogMessage("AsioServer 인스턴스가 생성되었습니다.");
     }
 
     AsioServer::~AsioServer()
     {
-        stop();
-        log_message("AsioServer 인스턴스가 소멸되었습니다.");
+        Stop();
+        LogMessage("AsioServer 인스턴스가 소멸되었습니다.");
     }
 
-    bool AsioServer::start()
+    bool AsioServer::Start()
     {
         if (running_.load())
         {
-            log_message("서버가 이미 실행 중입니다.", true);
+            LogMessage("서버가 이미 실행 중입니다.", true);
             return false;
         }
 
-        log_message("서버 시작 중...");
+        LogMessage("서버 시작 중...");
 
         try
         {
@@ -89,7 +89,7 @@ namespace bt
             server_start_time_ = std::chrono::steady_clock::now();
 
             // 연결 수락 시작 (워커 스레드 시작 전에)
-            start_accept();
+            StartAccept();
 
             // 워커 스레드 시작 (async_accept 후에)
             for (size_t i = 0; i < config_.worker_threads; ++i)
@@ -97,9 +97,9 @@ namespace bt
                 worker_threads_.create_thread(
                     [this, i]()
                     {
-                        log_message("워커 스레드 " + std::to_string(i) + " 시작");
+                        LogMessage("워커 스레드 " + std::to_string(i) + " 시작");
                         io_context_.run();
-                        log_message("워커 스레드 " + std::to_string(i) + " 종료");
+                        LogMessage("워커 스레드 " + std::to_string(i) + " 종료");
                     });
             }
 
@@ -115,27 +115,27 @@ namespace bt
                 websocket_server_->start();
             }
 
-            log_message("서버가 성공적으로 시작되었습니다. 포트: " + std::to_string(config_.port));
-            log_message("REST API 서버: http://localhost:8081");
-            log_message("WebSocket 실시간 연결: ws://localhost:8082");
+            LogMessage("서버가 성공적으로 시작되었습니다. 포트: " + std::to_string(config_.port));
+            LogMessage("REST API 서버: http://localhost:8081");
+            LogMessage("WebSocket 실시간 연결: ws://localhost:8082");
 
             return true;
         }
         catch (const std::exception& e)
         {
-            log_message("서버 시작 실패: " + std::string(e.what()), true);
+            LogMessage("서버 시작 실패: " + std::string(e.what()), true);
             return false;
         }
     }
 
-    void AsioServer::stop()
+    void AsioServer::Stop()
     {
         if (!running_.load())
         {
             return;
         }
 
-        log_message("서버 종료 중...");
+        LogMessage("서버 종료 중...");
         running_.store(false);
 
         try
@@ -148,7 +148,7 @@ namespace bt
                 boost::lock_guard<boost::mutex> lock(clients_mutex_);
                 for (auto& [client, info] : clients_)
                 {
-                    client->stop();
+                    client->Stop();
                 }
                 clients_.clear();
             }
@@ -171,103 +171,103 @@ namespace bt
                 websocket_server_->stop();
             }
 
-            log_message("서버가 종료되었습니다.");
+            LogMessage("서버가 종료되었습니다.");
         }
         catch (const std::exception& e)
         {
-            log_message("서버 종료 중 오류: " + std::string(e.what()), true);
+            LogMessage("서버 종료 중 오류: " + std::string(e.what()), true);
         }
     }
 
-    void AsioServer::start_accept()
+    void AsioServer::StartAccept()
     {
         if (!running_.load())
         {
-            log_message("서버가 실행 중이 아니므로 연결 수락을 시작하지 않습니다.", true);
+            LogMessage("서버가 실행 중이 아니므로 연결 수락을 시작하지 않습니다.", true);
             return;
         }
 
         auto client = boost::make_shared<AsioClient>(io_context_, this);
 
-        log_message("새로운 클라이언트 연결을 기다리는 중...");
-        log_message("async_accept 호출 중...");
+        LogMessage("새로운 클라이언트 연결을 기다리는 중...");
+        LogMessage("async_accept 호출 중...");
 
         try
         {
             acceptor_.async_accept(
-                client->socket(),
+                client->Socket(),
                 [this, client](const boost::system::error_code& error)
                 {
-                    log_message("async_accept 콜백 호출됨, 에러: " + (error ? error.message() : "없음"));
-                    handle_accept(client, error);
+                    LogMessage("async_accept 콜백 호출됨, 에러: " + (error ? error.message() : "없음"));
+                    HandleAccept(client, error);
                 });
-            log_message("async_accept 호출 완료");
+            LogMessage("async_accept 호출 완료");
         }
         catch (const std::exception& e)
         {
-            log_message("async_accept 호출 중 예외 발생: " + std::string(e.what()), true);
+            LogMessage("async_accept 호출 중 예외 발생: " + std::string(e.what()), true);
         }
     }
 
-    void AsioServer::handle_accept(boost::shared_ptr<AsioClient> client, const boost::system::error_code& error)
+    void AsioServer::HandleAccept(boost::shared_ptr<AsioClient> client, const boost::system::error_code& error)
     {
-        log_message("handle_accept 호출됨, 에러: " + (error ? error.message() : "없음"));
+        LogMessage("handle_accept 호출됨, 에러: " + (error ? error.message() : "없음"));
 
         if (!error)
         {
-            log_message("클라이언트 연결 성공, IP: " + client->get_ip_address() + ":" +
-                        std::to_string(client->get_port()));
+            LogMessage("클라이언트 연결 성공, IP: " + client->GetIPAddress() + ":" +
+                        std::to_string(client->GetPort()));
 
             // 클라이언트 수 제한 확인
             {
                 boost::lock_guard<boost::mutex> lock(clients_mutex_);
                 if (clients_.size() >= config_.max_clients)
                 {
-                    log_message("최대 클라이언트 수 초과. 연결 거부", true);
-                    client->stop();
-                    start_accept();
+                    LogMessage("최대 클라이언트 수 초과. 연결 거부", true);
+                    client->Stop();
+                    StartAccept();
                     return;
                 }
             }
 
             // 클라이언트 추가
-            add_client(client);
-            client->start();
+            AddClient(client);
+            client->Start();
 
-            log_message("새 클라이언트 연결 완료: " + client->get_ip_address() + ":" +
-                        std::to_string(client->get_port()));
+            LogMessage("새 클라이언트 연결 완료: " + client->GetIPAddress() + ":" +
+                        std::to_string(client->GetPort()));
         }
         else
         {
             if (running_.load())
             {
-                log_message("연결 수락 오류: " + error.message(), true);
+                LogMessage("연결 수락 오류: " + error.message(), true);
             }
             else
             {
-                log_message("서버가 종료 중이므로 연결 수락 오류 무시: " + error.message());
+                LogMessage("서버가 종료 중이므로 연결 수락 오류 무시: " + error.message());
             }
         }
 
         // 다음 연결 수락 시작
         if (running_.load())
         {
-            log_message("다음 클라이언트 연결을 기다리는 중...");
-            start_accept();
+            LogMessage("다음 클라이언트 연결을 기다리는 중...");
+            StartAccept();
         }
         else
         {
-            log_message("서버가 종료 중이므로 다음 연결 수락을 시작하지 않습니다.");
+            LogMessage("서버가 종료 중이므로 다음 연결 수락을 시작하지 않습니다.");
         }
     }
 
-    void AsioServer::add_client(boost::shared_ptr<AsioClient> client)
+    void AsioServer::AddClient(boost::shared_ptr<AsioClient> client)
     {
         AsioClientInfo info;
         info.client           = client;
-        info.ip_address       = client->get_ip_address();
-        info.port             = client->get_port();
-        info.connect_time     = client->get_connect_time();
+        info.ip_address       = client->GetIPAddress();
+        info.port             = client->GetPort();
+        info.connect_time     = client->GetConnectTime();
         info.is_authenticated = false;
         info.player_id        = 0;
         info.client_type      = "unknown";
@@ -293,13 +293,13 @@ namespace bt
             {
                 info.player_id          = player->GetID();
                 std::string client_info = info.ip_address + ":" + std::to_string(info.port);
-                log_message("클라이언트 연결: " + client_info + " -> 플레이어 생성: " + player_name +
+                LogMessage("클라이언트 연결: " + client_info + " -> 플레이어 생성: " + player_name +
                             " (ID: " + std::to_string(player->GetID()) + ")");
             }
         }
     }
 
-    void AsioServer::remove_client(boost::shared_ptr<AsioClient> client)
+    void AsioServer::RemoveClient(boost::shared_ptr<AsioClient> client)
     {
         std::string client_info;
         uint32_t    client_id = 0;
@@ -323,11 +323,11 @@ namespace bt
 
         if (!client_info.empty())
         {
-            log_message("클라이언트 연결 종료: " + client_info);
+            LogMessage("클라이언트 연결 종료: " + client_info);
         }
     }
 
-    void AsioServer::broadcast_packet(const Packet& packet, boost::shared_ptr<AsioClient> exclude_client)
+    void AsioServer::BroadcastPacket(const Packet& packet, boost::shared_ptr<AsioClient> exclude_client)
     {
         boost::lock_guard<boost::mutex> lock(clients_mutex_);
 
@@ -335,21 +335,21 @@ namespace bt
         {
             if (client != exclude_client)
             {
-                send_packet(client, packet);
+                SendPacket(client, packet);
             }
         }
     }
 
-    void AsioServer::send_packet(boost::shared_ptr<AsioClient> client, const Packet& packet)
+    void AsioServer::SendPacket(boost::shared_ptr<AsioClient> client, const Packet& packet)
     {
-        if (client && client->is_connected())
+        if (client && client->IsConnected())
         {
-            client->send_packet(packet);
+            client->SendPacket(packet);
             total_packets_sent_.fetch_add(1);
         }
     }
 
-    void AsioServer::process_packet(boost::shared_ptr<AsioClient> client, const Packet& packet)
+    void AsioServer::ProcessPacket(boost::shared_ptr<AsioClient> client, const Packet& packet)
     {
         total_packets_received_.fetch_add(1);
 
@@ -358,48 +358,48 @@ namespace bt
         {
             case PacketType::CONNECT_REQUEST:
                 // 연결 요청 처리
-                log_message("연결 요청 수신: " + client->get_ip_address());
+                LogMessage("연결 요청 수신: " + client->GetIPAddress());
                 // 연결 응답 전송
-                send_connect_response(client);
+                SendConnectResponse(client);
                 break;
 
             case PacketType::MONSTER_SPAWN:
                 // 몬스터 스폰 요청 처리
-                log_message("몬스터 스폰 요청 수신");
+                LogMessage("몬스터 스폰 요청 수신");
                 // 몬스터 스폰 응답 전송
-                send_monster_spawn_response(client, true);
+                SendMonsterSpawnResponse(client, true);
                 break;
 
             case PacketType::MONSTER_UPDATE:
                 // 몬스터 업데이트 처리
-                log_message("몬스터 업데이트 요청 수신");
+                LogMessage("몬스터 업데이트 요청 수신");
                 // 몬스터 업데이트 응답 전송
-                send_monster_update_response(client, true);
+                SendMonsterUpdateResponse(client, true);
                 break;
 
             case PacketType::BT_EXECUTE:
                 // Behavior Tree 실행 요청 처리
-                log_message("BT 실행 요청 수신");
+                LogMessage("BT 실행 요청 수신");
                 if (bt_engine_)
                 {
                     // BT 실행 로직
-                    send_bt_execute_response(client, true);
+                    SendBTExecuteResponse(client, true);
                 }
                 else
                 {
-                    send_bt_execute_response(client, false);
+                    SendBTExecuteResponse(client, false);
                 }
                 break;
 
             default:
-                log_message("알 수 없는 패킷 타입: " + std::to_string(packet.type), true);
+                LogMessage("알 수 없는 패킷 타입: " + std::to_string(packet.type), true);
                 // 에러 응답 전송
-                send_error_response(client, "알 수 없는 패킷 타입");
+                SendErrorResponse(client, "알 수 없는 패킷 타입");
                 break;
         }
     }
 
-    void AsioServer::send_connect_response(boost::shared_ptr<AsioClient> client)
+    void AsioServer::SendConnectResponse(boost::shared_ptr<AsioClient> client)
     {
         Packet response;
         response.type = static_cast<uint32_t>(PacketType::CONNECT_RESPONSE);
@@ -410,12 +410,12 @@ namespace bt
         memcpy(response.data.data(), &response.type, sizeof(uint32_t));
         memcpy(response.data.data() + sizeof(uint32_t), &success, sizeof(uint32_t));
 
-        client->send_packet(response);
+        client->SendPacket(response);
         total_packets_sent_.fetch_add(1);
-        log_message("연결 응답 전송 완료");
+        LogMessage("연결 응답 전송 완료");
     }
 
-    void AsioServer::send_monster_spawn_response(boost::shared_ptr<AsioClient> client, bool success)
+    void AsioServer::SendMonsterSpawnResponse(boost::shared_ptr<AsioClient> client, bool success)
     {
         Packet response;
         response.type = static_cast<uint32_t>(PacketType::CONNECT_RESPONSE);
@@ -426,12 +426,12 @@ namespace bt
         memcpy(response.data.data(), &response.type, sizeof(uint32_t));
         memcpy(response.data.data() + sizeof(uint32_t), &success_value, sizeof(uint32_t));
 
-        client->send_packet(response);
+        client->SendPacket(response);
         total_packets_sent_.fetch_add(1);
-        log_message("몬스터 스폰 응답 전송 완료: " + std::string(success ? "성공" : "실패"));
+        LogMessage("몬스터 스폰 응답 전송 완료: " + std::string(success ? "성공" : "실패"));
     }
 
-    void AsioServer::send_monster_update_response(boost::shared_ptr<AsioClient> client, bool success)
+    void AsioServer::SendMonsterUpdateResponse(boost::shared_ptr<AsioClient> client, bool success)
     {
         Packet response;
         response.type = static_cast<uint32_t>(PacketType::CONNECT_RESPONSE);
@@ -442,12 +442,12 @@ namespace bt
         memcpy(response.data.data(), &response.type, sizeof(uint32_t));
         memcpy(response.data.data() + sizeof(uint32_t), &success_value, sizeof(uint32_t));
 
-        client->send_packet(response);
+        client->SendPacket(response);
         total_packets_sent_.fetch_add(1);
-        log_message("몬스터 업데이트 응답 전송 완료: " + std::string(success ? "성공" : "실패"));
+        LogMessage("몬스터 업데이트 응답 전송 완료: " + std::string(success ? "성공" : "실패"));
     }
 
-    void AsioServer::send_bt_execute_response(boost::shared_ptr<AsioClient> client, bool success)
+    void AsioServer::SendBTExecuteResponse(boost::shared_ptr<AsioClient> client, bool success)
     {
         Packet response;
         response.type = static_cast<uint32_t>(PacketType::CONNECT_RESPONSE);
@@ -458,12 +458,12 @@ namespace bt
         memcpy(response.data.data(), &response.type, sizeof(uint32_t));
         memcpy(response.data.data() + sizeof(uint32_t), &success_value, sizeof(uint32_t));
 
-        client->send_packet(response);
+        client->SendPacket(response);
         total_packets_sent_.fetch_add(1);
-        log_message("BT 실행 응답 전송 완료: " + std::string(success ? "성공" : "실패"));
+        LogMessage("BT 실행 응답 전송 완료: " + std::string(success ? "성공" : "실패"));
     }
 
-    void AsioServer::send_error_response(boost::shared_ptr<AsioClient> client, const std::string& error_message)
+    void AsioServer::SendErrorResponse(boost::shared_ptr<AsioClient> client, const std::string& error_message)
     {
         Packet response;
         response.type = static_cast<uint32_t>(PacketType::ERROR_MESSAGE);
@@ -473,18 +473,18 @@ namespace bt
         memcpy(response.data.data(), &response.type, sizeof(uint32_t));
         memcpy(response.data.data() + sizeof(uint32_t), error_message.c_str(), error_message.length());
 
-        client->send_packet(response);
+        client->SendPacket(response);
         total_packets_sent_.fetch_add(1);
-        log_message("에러 응답 전송 완료: " + error_message);
+        LogMessage("에러 응답 전송 완료: " + error_message);
     }
 
-    size_t AsioServer::get_connected_clients() const
+    size_t AsioServer::GetConnectedClients() const
     {
         boost::lock_guard<boost::mutex> lock(clients_mutex_);
         return clients_.size();
     }
 
-    void AsioServer::log_message(const std::string& message, bool is_error)
+    void AsioServer::LogMessage(const std::string& message, bool is_error)
     {
         boost::lock_guard<boost::mutex> lock(log_mutex_);
 
@@ -505,7 +505,7 @@ namespace bt
     }
 
     // 서버 상태 모니터링을 위한 헬스체크 추가
-    bool AsioServer::is_healthy() const
+    bool AsioServer::IsHealthy() const
     {
         try
         {
@@ -537,11 +537,11 @@ namespace bt
     }
 
     // 서버 통계 정보 반환
-    ServerHealthInfo AsioServer::get_health_info() const
+    ServerHealthInfo AsioServer::GetHealthInfo() const
     {
         ServerHealthInfo info;
-        info.is_healthy             = is_healthy();
-        info.connected_clients      = get_connected_clients();
+        info.is_healthy             = IsHealthy();
+        info.connected_clients      = GetConnectedClients();
         info.total_packets_sent     = total_packets_sent_.load();
         info.total_packets_received = total_packets_received_.load();
         info.worker_threads         = config_.worker_threads;
@@ -567,16 +567,16 @@ namespace bt
 
     AsioClient::~AsioClient()
     {
-        stop();
+        Stop();
     }
 
-    void AsioClient::start()
+    void AsioClient::Start()
     {
         connected_.store(true);
-        receive_packet();
+        ReceivePacket();
     }
 
-    void AsioClient::stop()
+    void AsioClient::Stop()
     {
         if (connected_.load())
         {
@@ -587,12 +587,12 @@ namespace bt
 
             if (server_)
             {
-                server_->remove_client(shared_from_this());
+                server_->RemoveClient(shared_from_this());
             }
         }
     }
 
-    void AsioClient::send_packet(const Packet& packet)
+    void AsioClient::SendPacket(const Packet& packet)
     {
         if (!connected_.load())
         {
@@ -610,7 +610,7 @@ namespace bt
         }
     }
 
-    void AsioClient::receive_packet()
+    void AsioClient::ReceivePacket()
     {
         if (!connected_.load())
         {
@@ -622,11 +622,11 @@ namespace bt
                                 boost::asio::buffer(&expected_packet_size_, sizeof(expected_packet_size_)),
                                 [this](const boost::system::error_code& error, size_t bytes_transferred)
                                 {
-                                    handle_packet_size(error, bytes_transferred);
+                                    HandlePacketSize(error, bytes_transferred);
                                 });
     }
 
-    void AsioClient::handle_packet_size(const boost::system::error_code& error, size_t bytes_transferred)
+    void AsioClient::HandlePacketSize(const boost::system::error_code& error, size_t bytes_transferred)
     {
         if (!error && bytes_transferred == sizeof(expected_packet_size_))
         {
@@ -637,16 +637,16 @@ namespace bt
                                     boost::asio::buffer(packet_buffer_),
                                     [this](const boost::system::error_code& error, size_t bytes_transferred)
                                     {
-                                        handle_packet_data(error, bytes_transferred);
+                                        HandlePacketData(error, bytes_transferred);
                                     });
         }
         else
         {
-            handle_disconnect();
+            HandleDisconnect();
         }
     }
 
-    void AsioClient::handle_packet_data(const boost::system::error_code& error, size_t bytes_transferred)
+    void AsioClient::HandlePacketData(const boost::system::error_code& error, size_t bytes_transferred)
     {
         if (!error && bytes_transferred == packet_buffer_.size())
         {
@@ -659,19 +659,19 @@ namespace bt
             // 서버에 패킷 전달
             if (server_)
             {
-                server_->process_packet(shared_from_this(), packet);
+                server_->ProcessPacket(shared_from_this(), packet);
             }
 
             // 다음 패킷 수신
-            receive_packet();
+            ReceivePacket();
         }
         else
         {
-            handle_disconnect();
+            HandleDisconnect();
         }
     }
 
-    void AsioClient::handle_send(const boost::system::error_code& error, size_t /* bytes_transferred */)
+    void AsioClient::HandleSend(const boost::system::error_code& error, size_t /* bytes_transferred */)
     {
         if (!error)
         {
@@ -690,11 +690,11 @@ namespace bt
         }
         else
         {
-            handle_disconnect();
+            HandleDisconnect();
         }
     }
 
-    void AsioClient::handle_disconnect()
+    void AsioClient::HandleDisconnect()
     {
         if (connected_.load())
         {
@@ -702,12 +702,12 @@ namespace bt
 
             if (server_)
             {
-                server_->remove_client(shared_from_this());
+                server_->RemoveClient(shared_from_this());
             }
         }
     }
 
-    std::string AsioClient::get_ip_address() const
+    std::string AsioClient::GetIPAddress() const
     {
         try
         {
@@ -719,7 +719,7 @@ namespace bt
         }
     }
 
-    uint16_t AsioClient::get_port() const
+    uint16_t AsioClient::GetPort() const
     {
         try
         {

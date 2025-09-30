@@ -27,7 +27,7 @@ namespace bt
         std::cout << "\n시그널 " << signal << " 수신됨. 서버를 종료합니다...\n";
         if (g_server)
         {
-            g_server->stop();
+            g_server->Stop();
         }
         
         // 5초 후 강제 종료
@@ -110,7 +110,7 @@ int main(int argc, char* argv[])
     // 서버 생성 및 시작
     g_server = std::make_unique<AsioServer>(config);
 
-    if (!g_server->start())
+    if (!g_server->Start())
     {
         LOG_ERROR("서버 시작 실패!");
         return 1;
@@ -120,9 +120,9 @@ int main(int argc, char* argv[])
     LOG_INFO("종료하려면 Ctrl+C를 누르세요.");
 
     // Behavior Tree 엔진 초기화 및 몬스터 AI 등록
-    auto bt_engine       = g_server->get_bt_engine();
-    auto monster_manager = g_server->get_monster_manager();
-    auto player_manager  = g_server->get_player_manager();
+    auto bt_engine       = g_server->GetBTEngine();
+    auto monster_manager = g_server->GetMonsterManager();
+    auto player_manager  = g_server->GetPlayerManager();
 
     if (bt_engine && monster_manager && player_manager)
     {
@@ -180,7 +180,7 @@ int main(int argc, char* argv[])
     }
 
     // 서버가 실행 중인 동안 대기
-    while (g_server->is_running())
+    while (g_server->IsRunning())
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
@@ -213,9 +213,9 @@ int main(int argc, char* argv[])
         auto        now             = std::chrono::steady_clock::now();
         if (std::chrono::duration_cast<std::chrono::seconds>(now - last_stats_time).count() >= 10)
         {
-            LOG_INFO("연결된 클라이언트: " + std::to_string(g_server->get_connected_clients()) +
-                     ", 전송된 패킷: " + std::to_string(g_server->get_total_packets_sent()) +
-                     ", 수신된 패킷: " + std::to_string(g_server->get_total_packets_received()));
+            LOG_INFO("연결된 클라이언트: " + std::to_string(g_server->GetConnectedClients()) +
+                     ", 전송된 패킷: " + std::to_string(g_server->GetTotalPacketsSent()) +
+                     ", 수신된 패킷: " + std::to_string(g_server->GetTotalPacketsReceived()));
             if (monster_manager)
             {
                 LOG_INFO("활성 몬스터: " + std::to_string(monster_manager->GetMonsterCount()) + "마리");
