@@ -9,7 +9,7 @@
 
 #include "AsioServer.h"
 #include "BehaviorTree.h"
-#include "../shared/logger.h"
+#include "../shared/Logger.h"
 #include "MonsterAI.h"
 #include "Player.h"
 #include "PlayerManager.h"

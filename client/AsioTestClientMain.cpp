@@ -3,7 +3,7 @@
 #include <string>
 #include <thread>
 
-#include "asio_test_client.h"
+#include "AsioTestClient.h"
 
 namespace bt
 {
