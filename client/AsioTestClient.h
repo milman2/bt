@@ -41,49 +41,49 @@ namespace bt
         ~AsioTestClient();
 
         // 연결 관리
-        bool connect();
-        void disconnect();
-        bool is_connected() const { return connected_.load(); }
+        bool Connect();
+        void Disconnect();
+        bool IsConnected() const { return connected_.load(); }
 
         // 패킷 송수신
-        bool send_packet(const Packet& packet);
-        bool receive_packet(Packet& packet);
+        bool SendPacket(const Packet& packet);
+        bool ReceivePacket(Packet& packet);
 
         // 테스트 시나리오
-        bool test_connection();
-        bool test_player_join(const std::string& player_name);
-        bool test_player_move(float x, float y, float z);
-        bool test_player_attack(uint32_t target_id);
-        bool test_bt_execute(const std::string& bt_name);
-        bool test_monster_update();
-        bool test_disconnect();
+        bool TestConnection();
+        bool TestPlayerJoin(const std::string& player_name);
+        bool TestPlayerMove(float x, float y, float z);
+        bool TestPlayerAttack(uint32_t target_id);
+        bool TestBTExecute(const std::string& bt_name);
+        bool TestMonsterUpdate();
+        bool TestDisconnect();
 
         // 자동 테스트
-        bool run_automated_test();
-        bool run_stress_test(int num_connections, int duration_seconds);
+        bool RunAutomatedTest();
+        bool RunStressTest(int num_connections, int duration_seconds);
 
         // 유틸리티
-        void set_verbose(bool verbose) { verbose_ = verbose; }
-        void log_message(const std::string& message, bool is_error = false);
+        void SetVerbose(bool verbose) { verbose_ = verbose; }
+        void LogMessage(const std::string& message, bool is_error = false);
 
     private:
         // 네트워킹
-        bool create_connection();
-        void close_connection();
+        bool CreateConnection();
+        void CloseConnection();
 
         // 패킷 처리
-        Packet create_connect_request();
-        Packet create_player_join_packet(const std::string& name);
-        Packet create_player_move_packet(float x, float y, float z);
-        Packet create_player_attack_packet(uint32_t target_id);
-        Packet create_bt_execute_packet(const std::string& bt_name);
-        Packet create_monster_update_packet();
-        Packet create_disconnect_packet();
+        Packet CreateConnectRequest();
+        Packet CreatePlayerJoinPacket(const std::string& name);
+        Packet CreatePlayerMovePacket(float x, float y, float z);
+        Packet CreatePlayerAttackPacket(uint32_t target_id);
+        Packet CreateBTExecutePacket(const std::string& bt_name);
+        Packet CreateMonsterUpdatePacket();
+        Packet CreateDisconnectPacket();
 
-        bool parse_packet_response(const Packet& packet);
+        bool ParsePacketResponse(const Packet& packet);
 
         // 테스트 결과
-        void record_test_result(const std::string& test_name, bool success, const std::string& message = "");
+        void RecordTestResult(const std::string& test_name, bool success, const std::string& message = "");
 
     private:
         AsioClientConfig                                config_;

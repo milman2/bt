@@ -13,83 +13,83 @@ namespace bt
         : config_(config), connected_(false), verbose_(false), tests_passed_(0), tests_failed_(0)
     {
         socket_ = boost::make_shared<boost::asio::ip::tcp::socket>(io_context_);
-        log_message("AsioTestClient 생성됨");
+        LogMessage("AsioTestClient 생성됨");
     }
 
     AsioTestClient::~AsioTestClient()
     {
-        disconnect();
-        log_message("AsioTestClient 소멸됨");
+        DisConnect();
+        LogMessage("AsioTestClient 소멸됨");
     }
 
-    bool AsioTestClient::connect()
+    bool AsioTestClient::Connect()
     {
         if (connected_.load())
         {
-            log_message("이미 연결되어 있습니다", true);
+            LogMessage("이미 연결되어 있습니다", true);
             return true;
         }
 
-        log_message("서버에 연결 시도 중: " + config_.server_host + ":" + std::to_string(config_.server_port));
+        LogMessage("서버에 연결 시도 중: " + config_.server_host + ":" + std::to_string(config_.server_port));
 
-        if (!create_connection())
+        if (!CreateConnection())
         {
-            log_message("서버 연결 실패", true);
+            LogMessage("서버 연결 실패", true);
             return false;
         }
 
         connected_.store(true);
-        log_message("서버 연결 성공");
+        LogMessage("서버 연결 성공");
 
         // 연결 요청 패킷 전송
-        Packet connect_packet = create_connect_request();
-        if (!send_packet(connect_packet))
+        Packet connect_packet = CreateConnectRequest();
+        if (!SendPacket(connect_packet))
         {
-            log_message("연결 요청 패킷 전송 실패", true);
-            disconnect();
+            LogMessage("연결 요청 패킷 전송 실패", true);
+            DisConnect();
             return false;
         }
 
         // 연결 응답 대기
         Packet response;
-        if (!receive_packet(response))
+        if (!ReceivePacket(response))
         {
-            log_message("연결 응답 수신 실패", true);
-            disconnect();
+            LogMessage("연결 응답 수신 실패", true);
+            DisConnect();
             return false;
         }
 
-        if (!parse_packet_response(response))
+        if (!ParsePacketResponse(response))
         {
-            log_message("연결 응답 파싱 실패", true);
-            disconnect();
+            LogMessage("연결 응답 파싱 실패", true);
+            DisConnect();
             return false;
         }
 
-        log_message("연결 완료");
+        LogMessage("연결 완료");
         return true;
     }
 
-    void AsioTestClient::disconnect()
+    void AsioTestClient::DisConnect()
     {
         if (!connected_.load())
         {
             return;
         }
 
-        log_message("서버 연결 해제 중");
+        LogMessage("서버 연결 해제 중");
 
         // 연결 해제 패킷 전송
-        Packet disconnect_packet = create_disconnect_packet();
-        send_packet(disconnect_packet);
+        Packet disconnect_packet = CreateDisconnectPacket();
+        SendPacket(disconnect_packet);
 
-        close_connection();
+        CloseConnection();
         connected_.store(false);
 
-        log_message("서버 연결 해제 완료");
+        LogMessage("서버 연결 해제 완료");
     }
 
-    bool AsioTestClient::create_connection()
+    bool AsioTestClient::CreateConnection()
     {
         try
         {
@@ -102,12 +102,12 @@ namespace bt
         }
         catch (const std::exception& e)
         {
-            log_message("연결 생성 실패: " + std::string(e.what()), true);
+            LogMessage("연결 생성 실패: " + std::string(e.what()), true);
             return false;
         }
     }
 
-    void AsioTestClient::close_connection()
+    void AsioTestClient::CloseConnection()
     {
         if (socket_ && socket_->is_open())
         {
@@ -117,16 +117,16 @@ namespace bt
             }
             catch (const std::exception& e)
             {
-                log_message("연결 종료 중 오류: " + std::string(e.what()), true);
+                LogMessage("연결 종료 중 오류: " + std::string(e.what()), true);
             }
         }
     }
 
-    bool AsioTestClient::send_packet(const Packet& packet)
+    bool AsioTestClient::SendPacket(const Packet& packet)
     {
         if (!connected_.load())
         {
-            log_message("연결되지 않은 상태에서 패킷 전송 시도", true);
+            LogMessage("연결되지 않은 상태에서 패킷 전송 시도", true);
             return false;
         }
 
@@ -148,7 +148,7 @@ namespace bt
 
             if (verbose_)
             {
-                log_message("패킷 전송: 타입=" + std::to_string(packet.type) + ", 크기=" + std::to_string(total_size) +
+                LogMessage("패킷 전송: 타입=" + std::to_string(packet.type) + ", 크기=" + std::to_string(total_size) +
                             "바이트");
             }
 
@@ -156,16 +156,16 @@ namespace bt
         }
         catch (const std::exception& e)
         {
-            log_message("패킷 전송 실패: " + std::string(e.what()), true);
+            LogMessage("패킷 전송 실패: " + std::string(e.what()), true);
             return false;
         }
     }
 
-    bool AsioTestClient::receive_packet(Packet& packet)
+    bool AsioTestClient::ReceivePacket(Packet& packet)
     {
         if (!connected_.load())
         {
-            log_message("연결되지 않은 상태에서 패킷 수신 시도", true);
+            LogMessage("연결되지 않은 상태에서 패킷 수신 시도", true);
             return false;
         }
 
@@ -186,7 +186,7 @@ namespace bt
 
             if (verbose_)
             {
-                log_message("패킷 수신: 타입=" + std::to_string(packet.type) + ", 크기=" + std::to_string(packet_size) +
+                LogMessage("패킷 수신: 타입=" + std::to_string(packet.type) + ", 크기=" + std::to_string(packet_size) +
                             "바이트");
             }
 
@@ -194,265 +194,265 @@ namespace bt
         }
         catch (const std::exception& e)
         {
-            log_message("패킷 수신 실패: " + std::string(e.what()), true);
+            LogMessage("패킷 수신 실패: " + std::string(e.what()), true);
             return false;
         }
     }
 
-    bool AsioTestClient::test_connection()
+    bool AsioTestClient::TestConnection()
     {
-        log_message("=== 연결 테스트 시작 ===");
+        LogMessage("=== 연결 테스트 시작 ===");
 
-        bool success = connect();
+        bool success = Connect();
         if (success)
         {
-            log_message("연결 성공! 연결 유지 테스트 중...");
+            LogMessage("연결 성공! 연결 유지 테스트 중...");
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-            if (is_connected())
+            if (IsConnected())
             {
-                log_message("연결 유지 확인됨");
+                LogMessage("연결 유지 확인됨");
             }
             else
             {
-                log_message("연결이 끊어짐");
+                LogMessage("연결이 끊어짐");
                 success = false;
             }
 
-            log_message("연결 해제 중...");
-            disconnect();
-            log_message("연결 테스트 완료");
+            LogMessage("연결 해제 중...");
+            DisConnect();
+            LogMessage("연결 테스트 완료");
         }
         else
         {
-            log_message("연결 실패");
+            LogMessage("연결 실패");
         }
 
-        record_test_result("연결 테스트", success, success ? "연결 성공" : "연결 실패");
+        RecordTestResult("연결 테스트", success, success ? "연결 성공" : "연결 실패");
         return success;
     }
 
-    bool AsioTestClient::test_player_join(const std::string& player_name)
+    bool AsioTestClient::TestPlayerJoin(const std::string& player_name)
     {
-        log_message("=== 플레이어 접속 테스트 시작 ===");
-        log_message("플레이어 이름: " + player_name);
+        LogMessage("=== 플레이어 접속 테스트 시작 ===");
+        LogMessage("플레이어 이름: " + player_name);
 
-        if (!connect())
+        if (!Connect())
         {
-            record_test_result("플레이어 접속 테스트", false, "연결 실패");
+            RecordTestResult("플레이어 접속 테스트", false, "연결 실패");
             return false;
         }
 
-        log_message("플레이어 접속 요청 전송 중...");
+        LogMessage("플레이어 접속 요청 전송 중...");
         // 플레이어 접속 요청 전송
-        Packet join_packet = create_player_join_packet(player_name);
-        if (!send_packet(join_packet))
+        Packet join_packet = CreatePlayerJoinPacket(player_name);
+        if (!SendPacket(join_packet))
         {
-            record_test_result("플레이어 접속 테스트", false, "접속 요청 전송 실패");
-            disconnect();
+            RecordTestResult("플레이어 접속 테스트", false, "접속 요청 전송 실패");
+            DisConnect();
             return false;
         }
 
-        log_message("서버 응답 대기 중...");
+        LogMessage("서버 응답 대기 중...");
         // 응답 대기
         Packet response;
-        if (!receive_packet(response))
+        if (!ReceivePacket(response))
         {
-            record_test_result("플레이어 접속 테스트", false, "응답 수신 실패");
-            disconnect();
+            RecordTestResult("플레이어 접속 테스트", false, "응답 수신 실패");
+            DisConnect();
             return false;
         }
 
-        bool success = parse_packet_response(response);
-        log_message("플레이어 접속 " + std::string(success ? "성공" : "실패"));
-        record_test_result("플레이어 접속 테스트", success, success ? "접속 성공" : "접속 실패");
+        bool success = ParsePacketResponse(response);
+        LogMessage("플레이어 접속 " + std::string(success ? "성공" : "실패"));
+        RecordTestResult("플레이어 접속 테스트", success, success ? "접속 성공" : "접속 실패");
 
-        log_message("연결 해제 중...");
-        disconnect();
-        log_message("플레이어 접속 테스트 완료");
+        LogMessage("연결 해제 중...");
+        DisConnect();
+        LogMessage("플레이어 접속 테스트 완료");
         return success;
     }
 
-    bool AsioTestClient::test_player_move(float x, float y, float z)
+    bool AsioTestClient::TestPlayerMove(float x, float y, float z)
     {
-        log_message("=== 플레이어 이동 테스트 시작 ===");
-        log_message("이동 좌표: (" + std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z) + ")");
+        LogMessage("=== 플레이어 이동 테스트 시작 ===");
+        LogMessage("이동 좌표: (" + std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z) + ")");
 
-        if (!connect())
+        if (!Connect())
         {
-            record_test_result("플레이어 이동 테스트", false, "연결 실패");
+            RecordTestResult("플레이어 이동 테스트", false, "연결 실패");
             return false;
         }
 
         // 플레이어 이동 요청 전송
-        Packet move_packet = create_player_move_packet(x, y, z);
-        if (!send_packet(move_packet))
+        Packet move_packet = CreatePlayerMovePacket(x, y, z);
+        if (!SendPacket(move_packet))
         {
-            record_test_result("플레이어 이동 테스트", false, "이동 요청 전송 실패");
-            disconnect();
+            RecordTestResult("플레이어 이동 테스트", false, "이동 요청 전송 실패");
+            DisConnect();
             return false;
         }
 
-        record_test_result("플레이어 이동 테스트", true, "이동 요청 전송 성공");
-        disconnect();
+        RecordTestResult("플레이어 이동 테스트", true, "이동 요청 전송 성공");
+        DisConnect();
         return true;
     }
 
-    bool AsioTestClient::test_player_attack(uint32_t target_id)
+    bool AsioTestClient::TestPlayerAttack(uint32_t target_id)
     {
-        log_message("=== 플레이어 공격 테스트 시작 ===");
-        log_message("공격 대상 ID: " + std::to_string(target_id));
+        LogMessage("=== 플레이어 공격 테스트 시작 ===");
+        LogMessage("공격 대상 ID: " + std::to_string(target_id));
 
-        if (!connect())
+        if (!Connect())
         {
-            record_test_result("플레이어 공격 테스트", false, "연결 실패");
+            RecordTestResult("플레이어 공격 테스트", false, "연결 실패");
             return false;
         }
 
         // 플레이어 공격 요청 전송
-        Packet attack_packet = create_player_attack_packet(target_id);
-        if (!send_packet(attack_packet))
+        Packet attack_packet = CreatePlayerAttackPacket(target_id);
+        if (!SendPacket(attack_packet))
         {
-            record_test_result("플레이어 공격 테스트", false, "공격 요청 전송 실패");
-            disconnect();
+            RecordTestResult("플레이어 공격 테스트", false, "공격 요청 전송 실패");
+            DisConnect();
             return false;
         }
 
-        record_test_result("플레이어 공격 테스트", true, "공격 요청 전송 성공");
-        disconnect();
+        RecordTestResult("플레이어 공격 테스트", true, "공격 요청 전송 성공");
+        DisConnect();
         return true;
     }
 
-    bool AsioTestClient::test_bt_execute(const std::string& bt_name)
+    bool AsioTestClient::TestBTExecute(const std::string& bt_name)
     {
-        log_message("=== Behavior Tree 실행 테스트 시작 ===");
+        LogMessage("=== Behavior Tree 실행 테스트 시작 ===");
 
-        if (!connect())
+        if (!Connect())
         {
-            record_test_result("BT 실행 테스트", false, "연결 실패");
+            RecordTestResult("BT 실행 테스트", false, "연결 실패");
             return false;
         }
 
         // BT 실행 요청 전송
-        Packet bt_packet = create_bt_execute_packet(bt_name);
-        if (!send_packet(bt_packet))
+        Packet bt_packet = CreateBTExecutePacket(bt_name);
+        if (!SendPacket(bt_packet))
         {
-            record_test_result("BT 실행 테스트", false, "BT 요청 전송 실패");
-            disconnect();
+            RecordTestResult("BT 실행 테스트", false, "BT 요청 전송 실패");
+            DisConnect();
             return false;
         }
 
         // 응답 대기
         Packet response;
-        if (!receive_packet(response))
+        if (!ReceivePacket(response))
         {
-            record_test_result("BT 실행 테스트", false, "응답 수신 실패");
-            disconnect();
+            RecordTestResult("BT 실행 테스트", false, "응답 수신 실패");
+            DisConnect();
             return false;
         }
 
-        bool success = parse_packet_response(response);
-        record_test_result("BT 실행 테스트", success, success ? "BT 실행 성공" : "BT 실행 실패");
+        bool success = ParsePacketResponse(response);
+        RecordTestResult("BT 실행 테스트", success, success ? "BT 실행 성공" : "BT 실행 실패");
 
-        disconnect();
+        DisConnect();
         return success;
     }
 
-    bool AsioTestClient::test_monster_update()
+    bool AsioTestClient::TestMonsterUpdate()
     {
-        log_message("=== 몬스터 업데이트 테스트 시작 ===");
+        LogMessage("=== 몬스터 업데이트 테스트 시작 ===");
 
-        if (!connect())
+        if (!Connect())
         {
-            record_test_result("몬스터 업데이트 테스트", false, "연결 실패");
+            RecordTestResult("몬스터 업데이트 테스트", false, "연결 실패");
             return false;
         }
 
         // 몬스터 업데이트 요청 전송
-        Packet update_packet = create_monster_update_packet();
-        if (!send_packet(update_packet))
+        Packet update_packet = CreateMonsterUpdatePacket();
+        if (!SendPacket(update_packet))
         {
-            record_test_result("몬스터 업데이트 테스트", false, "업데이트 요청 전송 실패");
-            disconnect();
+            RecordTestResult("몬스터 업데이트 테스트", false, "업데이트 요청 전송 실패");
+            DisConnect();
             return false;
         }
 
-        record_test_result("몬스터 업데이트 테스트", true, "업데이트 요청 전송 성공");
-        disconnect();
+        RecordTestResult("몬스터 업데이트 테스트", true, "업데이트 요청 전송 성공");
+        DisConnect();
         return true;
     }
 
-    bool AsioTestClient::test_disconnect()
+    bool AsioTestClient::TestDisConnect()
     {
-        log_message("=== 연결 해제 테스트 시작 ===");
+        LogMessage("=== 연결 해제 테스트 시작 ===");
 
-        if (!connect())
+        if (!Connect())
         {
-            record_test_result("연결 해제 테스트", false, "연결 실패");
+            RecordTestResult("연결 해제 테스트", false, "연결 실패");
             return false;
         }
 
-        disconnect();
-        record_test_result("연결 해제 테스트", true, "연결 해제 성공");
+        DisConnect();
+        RecordTestResult("연결 해제 테스트", true, "연결 해제 성공");
         return true;
     }
 
-    bool AsioTestClient::run_automated_test()
+    bool AsioTestClient::RunAutomatedTest()
     {
-        log_message("=== 자동화된 테스트 시작 ===");
-        log_message("총 5개 테스트를 순차적으로 실행합니다.");
+        LogMessage("=== 자동화된 테스트 시작 ===");
+        LogMessage("총 5개 테스트를 순차적으로 실행합니다.");
 
         tests_passed_ = 0;
         tests_failed_ = 0;
         test_results_.clear();
 
         // 1. 연결 테스트
-        log_message("\n[1/6] 연결 테스트 실행 중...");
-        test_connection();
+        LogMessage("\n[1/6] 연결 테스트 실행 중...");
+        TestConnection();
 
         // 2. 플레이어 접속 테스트
-        log_message("\n[2/6] 플레이어 접속 테스트 실행 중...");
-        test_player_join("test_player");
+        LogMessage("\n[2/6] 플레이어 접속 테스트 실행 중...");
+        TestPlayerJoin("test_player");
 
         // 3. 플레이어 이동 테스트
-        log_message("\n[3/6] 플레이어 이동 테스트 실행 중...");
-        test_player_move(100.0f, 200.0f, 300.0f);
+        LogMessage("\n[3/6] 플레이어 이동 테스트 실행 중...");
+        TestPlayerMove(100.0f, 200.0f, 300.0f);
 
         // 4. 플레이어 공격 테스트
-        log_message("\n[4/6] 플레이어 공격 테스트 실행 중...");
-        test_player_attack(1);
+        LogMessage("\n[4/6] 플레이어 공격 테스트 실행 중...");
+        TestPlayerAttack(1);
 
         // 5. Behavior Tree 실행 테스트
-        log_message("\n[5/6] Behavior Tree 실행 테스트 실행 중...");
-        test_bt_execute("goblin_bt");
+        LogMessage("\n[5/6] Behavior Tree 실행 테스트 실행 중...");
+        TestBTExecute("goblin_bt");
 
         // 6. 연결 해제 테스트
-        log_message("\n[6/6] 연결 해제 테스트 실행 중...");
-        test_disconnect();
+        LogMessage("\n[6/6] 연결 해제 테스트 실행 중...");
+        TestDisConnect();
 
         // 테스트 결과 출력
-        log_message("\n=== 테스트 결과 요약 ===");
-        log_message("성공: " + std::to_string(tests_passed_) + "개");
-        log_message("실패: " + std::to_string(tests_failed_) + "개");
+        LogMessage("\n=== 테스트 결과 요약 ===");
+        LogMessage("성공: " + std::to_string(tests_passed_) + "개");
+        LogMessage("실패: " + std::to_string(tests_failed_) + "개");
 
-        log_message("\n=== 상세 결과 ===");
+        LogMessage("\n=== 상세 결과 ===");
         for (const auto& result : test_results_)
         {
-            log_message(result);
+            LogMessage(result);
         }
 
         bool all_passed = (tests_failed_ == 0);
-        log_message("\n=== 전체 테스트 결과 ===");
-        log_message("결과: " + std::string(all_passed ? "✅ 모든 테스트 성공" : "❌ 일부 테스트 실패"));
-        log_message("자동화된 테스트 완료");
+        LogMessage("\n=== 전체 테스트 결과 ===");
+        LogMessage("결과: " + std::string(all_passed ? "✅ 모든 테스트 성공" : "❌ 일부 테스트 실패"));
+        LogMessage("자동화된 테스트 완료");
 
         return all_passed;
     }
 
-    bool AsioTestClient::run_stress_test(int num_connections, int duration_seconds)
+    bool AsioTestClient::RunStressTest(int num_connections, int duration_seconds)
     {
-        log_message("=== 스트레스 테스트 시작 ===");
-        log_message("연결 수: " + std::to_string(num_connections) + ", 지속 시간: " + std::to_string(duration_seconds) +
+        LogMessage("=== 스트레스 테스트 시작 ===");
+        LogMessage("연결 수: " + std::to_string(num_connections) + ", 지속 시간: " + std::to_string(duration_seconds) +
                     "초");
 
         std::vector<std::unique_ptr<AsioTestClient>> clients;
@@ -462,16 +462,16 @@ namespace bt
         for (int i = 0; i < num_connections; ++i)
         {
             auto client = std::make_unique<AsioTestClient>(config_);
-            client->set_verbose(false); // 스트레스 테스트에서는 상세 로그 비활성화
+            client->SetVerbose(false); // 스트레스 테스트에서는 상세 로그 비활성화
 
             client_threads.emplace_back(
                 [&client]()
                 {
-                    if (client->connect())
+                    if (client->Connect())
                     {
                         // 연결 유지
                         std::this_thread::sleep_for(std::chrono::seconds(1));
-                        client->disconnect();
+                        client->DisConnect();
                     }
                 });
 
@@ -484,18 +484,18 @@ namespace bt
             thread.join();
         }
 
-        log_message("스트레스 테스트 완료");
+        LogMessage("스트레스 테스트 완료");
         return true;
     }
 
-    Packet AsioTestClient::create_connect_request()
+    Packet AsioTestClient::CreateConnectRequest()
     {
         std::vector<uint8_t> data;
         data.push_back(0x01); // 프로토콜 버전
         return Packet(static_cast<uint16_t>(PacketType::CONNECT_REQUEST), data);
     }
 
-    Packet AsioTestClient::create_player_join_packet(const std::string& name)
+    Packet AsioTestClient::CreatePlayerJoinPacket(const std::string& name)
     {
         std::vector<uint8_t> data;
 
@@ -508,7 +508,7 @@ namespace bt
         return Packet(static_cast<uint16_t>(PacketType::PLAYER_JOIN), data);
     }
 
-    Packet AsioTestClient::create_player_move_packet(float x, float y, float z)
+    Packet AsioTestClient::CreatePlayerMovePacket(float x, float y, float z)
     {
         std::vector<uint8_t> data;
 
@@ -535,7 +535,7 @@ namespace bt
         return Packet(static_cast<uint16_t>(PacketType::PLAYER_MOVE), data);
     }
 
-    Packet AsioTestClient::create_player_attack_packet(uint32_t target_id)
+    Packet AsioTestClient::CreatePlayerAttackPacket(uint32_t target_id)
     {
         std::vector<uint8_t> data;
 
@@ -548,7 +548,7 @@ namespace bt
         return Packet(static_cast<uint16_t>(PacketType::PLAYER_ATTACK), data);
     }
 
-    Packet AsioTestClient::create_bt_execute_packet(const std::string& bt_name)
+    Packet AsioTestClient::CreateBTExecutePacket(const std::string& bt_name)
     {
         std::vector<uint8_t> data;
 
@@ -561,24 +561,24 @@ namespace bt
         return Packet(static_cast<uint16_t>(PacketType::BT_EXECUTE), data);
     }
 
-    Packet AsioTestClient::create_monster_update_packet()
+    Packet AsioTestClient::CreateMonsterUpdatePacket()
     {
         std::vector<uint8_t> data;
         data.push_back(0x01); // 업데이트 요청
         return Packet(static_cast<uint16_t>(PacketType::MONSTER_UPDATE), data);
     }
 
-    Packet AsioTestClient::create_disconnect_packet()
+    Packet AsioTestClient::CreateDisconnectPacket()
     {
         std::vector<uint8_t> data;
         return Packet(static_cast<uint16_t>(PacketType::DISCONNECT), data);
     }
 
-    bool AsioTestClient::parse_packet_response(const Packet& packet)
+    bool AsioTestClient::ParsePacketResponse(const Packet& packet)
     {
         if (packet.data.size() < sizeof(uint32_t))
         {
-            log_message("응답 패킷 크기가 너무 작음: " + std::to_string(packet.data.size()) + "바이트", true);
+            LogMessage("응답 패킷 크기가 너무 작음: " + std::to_string(packet.data.size()) + "바이트", true);
             return false;
         }
 
@@ -590,14 +590,14 @@ namespace bt
 
         if (verbose_)
         {
-            log_message("응답 패킷 파싱: 타입=" + std::to_string(packet_type) +
+            LogMessage("응답 패킷 파싱: 타입=" + std::to_string(packet_type) +
                         ", 성공=" + std::string(success ? "true" : "false"));
         }
 
         return success;
     }
 
-    void AsioTestClient::record_test_result(const std::string& test_name, bool success, const std::string& message)
+    void AsioTestClient::RecordTestResult(const std::string& test_name, bool success, const std::string& message)
     {
         if (success)
         {
@@ -611,7 +611,7 @@ namespace bt
         }
     }
 
-    void AsioTestClient::log_message(const std::string& message, bool is_error)
+    void AsioTestClient::LogMessage(const std::string& message, bool is_error)
     {
         boost::lock_guard<boost::mutex> lock(log_mutex_);
 
