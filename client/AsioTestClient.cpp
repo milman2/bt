@@ -26,13 +26,19 @@ namespace bt
         
         // Behavior Tree 생성
         behavior_tree_ = PlayerBTs::CreatePlayerBT();
-        context_.SetAI(shared_from_this());
+        // context_.SetAI는 나중에 설정됨 (shared_from_this() 사용을 위해)
         
         // 환경 인지 정보 초기화
         environment_info_.Clear();
         context_.SetEnvironmentInfo(&environment_info_);
         
         LogMessage("AI 플레이어 클라이언트 생성됨: " + config_.player_name);
+    }
+    
+    void AsioTestClient::SetContextAI()
+    {
+        // shared_from_this() 사용을 위해 context에 AI 설정
+        context_.SetAI(shared_from_this());
     }
 
     AsioTestClient::~AsioTestClient()
@@ -156,19 +162,30 @@ namespace bt
             return false;
         }
 
-        // 응답 대기
-        Packet response;
-        if (ReceivePacket(response))
+        LogMessage("게임 참여 패킷 전송 완료, 응답 대기 중...");
+
+        // 응답 대기 (타임아웃 포함)
+        auto start_time = std::chrono::steady_clock::now();
+        const auto timeout = std::chrono::seconds(5);
+        
+        while (std::chrono::steady_clock::now() - start_time < timeout)
         {
-            if (ParsePacketResponse(response))
+            Packet response;
+            if (ReceivePacket(response))
             {
-                LogMessage("게임 참여 성공: " + config_.player_name);
-                return true;
+                if (ParsePacketResponse(response))
+                {
+                    LogMessage("게임 참여 성공: " + config_.player_name);
+                    return true;
+                }
             }
+            
+            // 짧은 대기
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
 
-        LogMessage("게임 참여 실패", true);
-            return false;
+        LogMessage("게임 참여 타임아웃", true);
+        return false;
     }
 
     bool AsioTestClient::MoveTo(float x, float y, float z)
@@ -564,7 +581,22 @@ namespace bt
         try
         {
             boost::array<uint8_t, 1024> buffer;
-            size_t bytes_read = socket_->read_some(boost::asio::buffer(buffer));
+            
+            // 비블로킹 읽기 시도
+            boost::system::error_code ec;
+            size_t bytes_read = socket_->read_some(boost::asio::buffer(buffer), ec);
+            
+            if (ec == boost::asio::error::would_block || ec == boost::asio::error::try_again)
+            {
+                // 데이터가 없으면 false 반환
+            return false;
+        }
+
+            if (ec)
+            {
+                LogMessage("패킷 수신 오류: " + ec.message(), true);
+                return false;
+            }
             
             if (bytes_read > 0)
             {
@@ -684,6 +716,26 @@ namespace bt
                         else
                         {
                             LogMessage("서버 연결 응답 실패", true);
+                            return false;
+                        }
+                    }
+                }
+                break;
+
+            case PacketType::PLAYER_JOIN_RESPONSE:
+                {
+                    if (packet.data.size() >= sizeof(bool) + sizeof(uint32_t))
+                    {
+                        bool success = *reinterpret_cast<const bool*>(packet.data.data());
+                        if (success)
+                        {
+                            player_id_ = *reinterpret_cast<const uint32_t*>(packet.data.data() + sizeof(bool));
+                            LogMessage("게임 참여 성공, 플레이어 ID: " + std::to_string(player_id_));
+                            return true;
+                        }
+                        else
+                        {
+                            LogMessage("게임 참여 실패", true);
             return false;
                         }
                     }

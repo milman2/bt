@@ -100,6 +100,9 @@ namespace bt
         float GetDistanceToTarget() const;
         uint32_t GetNearestMonster() const;
         
+        // Context 설정 (shared_from_this() 사용을 위해)
+        void SetContextAI();
+        
         // BT 노드에서 사용할 헬퍼 메서드들
         bool HasPatrolPoints() const { return !patrol_points_.empty(); }
         PlayerPosition GetNextPatrolPoint() const;

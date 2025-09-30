@@ -384,16 +384,22 @@ namespace bt
     void SimpleWebSocketServer::broadcast(const std::string& message)
     {
         std::lock_guard<std::mutex> lock(sessions_mutex_);
+        size_t connected_count = 0;
+        size_t sent_count = 0;
+        
         for (auto it = sessions_.begin(); it != sessions_.end();)
         {
             if ((*it)->is_connected())
             {
+                connected_count++;
                 if ((*it)->send(message))
                 {
+                    sent_count++;
                     ++it;
                 }
                 else
                 {
+                    std::cout << "WebSocket 메시지 전송 실패, 세션 제거" << std::endl;
                     it = sessions_.erase(it);
                 }
             }
@@ -401,6 +407,11 @@ namespace bt
             {
                 it = sessions_.erase(it);
             }
+        }
+        
+        if (connected_count > 0)
+        {
+            std::cout << "WebSocket 브로드캐스트: " << connected_count << "개 연결 중 " << sent_count << "개 전송 성공" << std::endl;
         }
     }
 

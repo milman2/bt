@@ -352,6 +352,7 @@ namespace bt
     {
         if (client && client->IsConnected())
         {
+            LogMessage("패킷 전송: type=" + std::to_string(packet.type) + ", size=" + std::to_string(packet.data.size()));
             client->SendPacket(packet);
             total_packets_sent_.fetch_add(1);
         }
@@ -369,6 +370,12 @@ namespace bt
                 LogMessage("연결 요청 수신: " + client->GetIPAddress());
                 // 연결 응답 전송
                 SendConnectResponse(client);
+                break;
+
+            case PacketType::PLAYER_JOIN:
+                // 플레이어 참여 요청 처리
+                LogMessage("플레이어 참여 요청 수신: " + client->GetIPAddress());
+                HandlePlayerJoin(client, packet);
                 break;
 
             case PacketType::MONSTER_SPAWN:
@@ -884,6 +891,91 @@ namespace bt
         
     //     std::cout << "Behavior Tree 초기화 완료 - " << bt_engine_->GetRegisteredTrees() << "개 등록됨" << std::endl;
     // }
+
+    void AsioServer::HandlePlayerJoin(boost::shared_ptr<AsioClient> client, const Packet& packet)
+    {
+        try
+        {
+            // 패킷 데이터 파싱
+            const uint8_t* data = packet.data.data();
+            size_t offset = 0;
+
+            // 이름 길이 읽기
+            uint32_t name_len = *reinterpret_cast<const uint32_t*>(data + offset);
+            offset += sizeof(uint32_t);
+
+            // 이름 읽기
+            std::string player_name(data + offset, data + offset + name_len);
+            offset += name_len;
+
+            // 위치 읽기
+            float x = *reinterpret_cast<const float*>(data + offset);
+            offset += sizeof(float);
+            float y = *reinterpret_cast<const float*>(data + offset);
+            offset += sizeof(float);
+            float z = *reinterpret_cast<const float*>(data + offset);
+            offset += sizeof(float);
+            float rotation = *reinterpret_cast<const float*>(data + offset);
+
+            LogMessage("플레이어 참여 요청: " + player_name + " 위치(" + 
+                      std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z) + ")");
+
+            // 플레이어 매니저를 통해 플레이어 생성
+            if (player_manager_)
+            {
+                // MonsterPosition 구조체 생성
+                MonsterPosition position;
+                position.x = x;
+                position.y = y;
+                position.z = z;
+                position.rotation = rotation;
+                
+                auto player = player_manager_->CreatePlayer(player_name, position);
+                if (player)
+                {
+                    // 성공 응답 전송
+                    SendPlayerJoinResponse(client, true, player->GetID());
+                    
+                    LogMessage("플레이어 생성 성공: " + player_name + " (ID: " + std::to_string(player->GetID()) + ")");
+                }
+                else
+                {
+                    // 실패 응답 전송
+                    SendPlayerJoinResponse(client, false, 0);
+                    LogMessage("플레이어 생성 실패: " + player_name, true);
+                }
+            }
+            else
+            {
+                // 플레이어 매니저가 없는 경우
+                SendPlayerJoinResponse(client, false, 0);
+                LogMessage("플레이어 매니저가 초기화되지 않음", true);
+            }
+        }
+        catch (const std::exception& e)
+        {
+            LogMessage("플레이어 참여 처리 중 오류: " + std::string(e.what()), true);
+            SendPlayerJoinResponse(client, false, 0);
+        }
+    }
+
+    void AsioServer::SendPlayerJoinResponse(boost::shared_ptr<AsioClient> client, bool success, uint32_t player_id)
+    {
+        LogMessage("PLAYER_JOIN_RESPONSE 전송 시작: success=" + std::to_string(success) + ", player_id=" + std::to_string(player_id));
+        
+        std::vector<uint8_t> data;
+        
+        // 성공 여부
+        data.insert(data.end(), reinterpret_cast<uint8_t*>(&success), reinterpret_cast<uint8_t*>(&success) + sizeof(bool));
+        
+        // 플레이어 ID
+        data.insert(data.end(), reinterpret_cast<uint8_t*>(&player_id), reinterpret_cast<uint8_t*>(&player_id) + sizeof(uint32_t));
+        
+        Packet response(static_cast<uint16_t>(PacketType::PLAYER_JOIN_RESPONSE), data);
+        SendPacket(client, response);
+        
+        LogMessage("PLAYER_JOIN_RESPONSE 전송 완료");
+    }
 
 
 } // namespace bt

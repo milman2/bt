@@ -22,10 +22,14 @@ export const WebSocketProvider = ({ children, onConnectionChange, onServerStatsU
       return;
     }
 
-    const ws = new WebSocket('ws://localhost:8082');
+    const wsUrl = 'ws://localhost:8082';
+    console.log('WebSocket 연결 시도:', wsUrl);
+    console.log('연결 대상 IP: localhost, 포트: 8082');
+    
+    const ws = new WebSocket(wsUrl);
     
     ws.onopen = () => {
-      console.log('WebSocket 연결됨');
+      console.log('WebSocket 연결 성공 - IP: localhost, 포트: 8082');
       setConnectionStatus('connected');
       setSocket(ws);
       onConnectionChange?.('connected');
@@ -127,8 +131,9 @@ export const WebSocketProvider = ({ children, onConnectionChange, onServerStatsU
       }
     };
 
-    ws.onclose = () => {
-      console.log('WebSocket 연결 종료');
+    ws.onclose = (event) => {
+      console.log('WebSocket 연결 종료 - IP: localhost, 포트: 8082');
+      console.log('연결 종료 코드:', event.code, '이유:', event.reason);
       setConnectionStatus('disconnected');
       setSocket(null);
       onConnectionChange?.('disconnected');
@@ -136,13 +141,15 @@ export const WebSocketProvider = ({ children, onConnectionChange, onServerStatsU
       // 3초 후 재연결 시도
       setTimeout(() => {
         if (connectionStatus !== 'connected') {
+          console.log('WebSocket 재연결 시도 중...');
           connect();
         }
       }, 3000);
     };
 
     ws.onerror = (error) => {
-      console.error('WebSocket 오류:', error);
+      console.error('WebSocket 연결 오류 - IP: localhost, 포트: 8082');
+      console.error('오류 상세:', error);
       setConnectionStatus('error');
       onConnectionChange?.('error');
     };

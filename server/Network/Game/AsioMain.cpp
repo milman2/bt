@@ -192,8 +192,7 @@ int main(int argc, char* argv[])
             update_count++;
             if (update_count % 100 == 0)
             { // 10초마다 로그 출력
-                LOG_DEBUG("asio_main.cpp에서 MonsterManager::update 호출 (카운트: " + std::to_string(update_count) +
-                          ")");
+                std::cout << "asio_main.cpp에서 MonsterManager::update 호출 (카운트: " << update_count << ")" << std::endl;
             }
             monster_manager->Update(0.1f); // 100ms 간격으로 업데이트
         }

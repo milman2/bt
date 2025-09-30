@@ -78,7 +78,7 @@ namespace bt
         void ClearCurrentRunningNode() { current_running_node_.clear(); }
 
     private:        
-        std::unordered_map<std::string, std::shared_ptr<IInterface>> interfaces_;
+        std::unordered_map<std::string, std::shared_ptr<IInterface>> interfaces_; // std::shared_ptr<IInterface> 이걸 std::any로 하면 그냥 Blackboard 쓰는 거잖아.
         std::shared_ptr<IOwner> owner_;
         std::shared_ptr<IExecutor> ai_;
         // 불변값을 갖는 blackboard를 추가하는 것을 고려해보자 => BT의 스크립트 설정값?

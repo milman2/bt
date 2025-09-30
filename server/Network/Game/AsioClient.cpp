@@ -50,14 +50,26 @@ namespace bt
             return;
         }
 
-        boost::lock_guard<boost::mutex> lock(send_queue_mutex_);
-        send_queue_.push(packet);
-
-        if (!sending_)
+        try
         {
-            sending_ = true;
-            // 실제 전송은 비동기로 처리
-            // 여기서는 큐에 추가만 함
+            // 패킷 크기 + 타입 + 데이터 전송
+            uint32_t total_size = sizeof(uint32_t) + sizeof(uint16_t) + packet.data.size();
+            std::vector<uint8_t> send_buffer(total_size);
+
+            // 패킷 크기
+            *reinterpret_cast<uint32_t*>(send_buffer.data()) = total_size;
+            // 패킷 타입
+            *reinterpret_cast<uint16_t*>(send_buffer.data() + sizeof(uint32_t)) = packet.type;
+            // 패킷 데이터
+            std::copy(packet.data.begin(), packet.data.end(), send_buffer.begin() + sizeof(uint32_t) + sizeof(uint16_t));
+
+            // 동기 전송
+            boost::asio::write(socket_, boost::asio::buffer(send_buffer));
+        }
+        catch (const std::exception& e)
+        {
+            // 전송 실패 시 연결 종료
+            HandleDisconnect();
         }
     }
 

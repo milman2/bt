@@ -140,6 +140,9 @@ int main(int argc, char* argv[])
     // AI 플레이어 클라이언트 생성 (shared_ptr로 생성)
     auto client = std::make_shared<AsioTestClient>(config);
     client->SetVerbose(verbose);
+    
+    // shared_from_this() 사용을 위해 context에 AI 설정
+    client->SetContextAI();
 
     try
     {

@@ -395,6 +395,11 @@ namespace bt
     {
         static int update_count = 0;
         update_count++;
+        
+        if (update_count % 10 == 0)
+        {
+            std::cout << "MonsterManager::Update 호출됨 (카운트: " << update_count << ")" << std::endl;
+        }
 
         // 10초마다 로그 출력 (성능 개선)
         if (update_count % 100 == 0)
@@ -436,6 +441,7 @@ namespace bt
         if (broadcast_timer >= 1.0f)
         { // 1초마다 브로드캐스트
             broadcast_timer = 0.0f;
+            std::cout << "WebSocket 브로드캐스트 시도 중..." << std::endl;
 
             if (websocket_server_)
             {

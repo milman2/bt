@@ -130,11 +130,15 @@ namespace bt
         void ProcessPacket(boost::shared_ptr<AsioClient> client, const Packet& packet);
 
     private:
+        // 패킷 처리 함수들
+        void HandlePlayerJoin(boost::shared_ptr<AsioClient> client, const Packet& packet);
+        
         // 응답 전송 함수들
         void SendConnectResponse(boost::shared_ptr<AsioClient> client);
         void SendMonsterSpawnResponse(boost::shared_ptr<AsioClient> client, bool success);
         void SendMonsterUpdateResponse(boost::shared_ptr<AsioClient> client, bool success);
         void SendBTExecuteResponse(boost::shared_ptr<AsioClient> client, bool success);
+        void SendPlayerJoinResponse(boost::shared_ptr<AsioClient> client, bool success, uint32_t player_id);
         void SendErrorResponse(boost::shared_ptr<AsioClient> client, const std::string& error_message);
 
         // 로깅
