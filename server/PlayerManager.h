@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "BT/Monster/Monster.h" // MonsterPosition을 위해 필요
+#include "BT/Monster/MonsterTypes.h" // MonsterPosition을 위해 필요
 #include "Player.h"
 
 namespace bt

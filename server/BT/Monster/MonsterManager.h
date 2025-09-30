@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "MonsterTypes.h"
 #include "Monster.h"
 
 // 전방 선언

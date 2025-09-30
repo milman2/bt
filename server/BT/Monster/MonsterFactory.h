@@ -3,6 +3,7 @@
 #include <memory>
 #include <string>
 
+#include "MonsterTypes.h"
 #include "Monster.h"
 
 namespace bt

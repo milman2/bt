@@ -4,7 +4,7 @@
 
 #include "AsioServer.h"
 #include "BT/BehaviorTree.h"
-#include "BT/Monster/Monster.h"
+#include "BT/Monster/MonsterTypes.h"
 #include "Player.h"
 #include "PlayerManager.h"
 #include "RestApiServer.h"
