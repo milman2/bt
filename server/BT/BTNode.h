@@ -42,19 +42,19 @@ namespace bt
         virtual ~BTNode() = default;
 
         // 노드 실행
-        virtual BTNodeStatus execute(BTContext& context) = 0;
+        virtual BTNodeStatus Execute(BTContext& context) = 0;
 
         // 노드 정보
-        const std::string& get_name() const { return name_; }
-        BTNodeType         get_type() const { return type_; }
+        const std::string& GetName() const { return name_; }
+        BTNodeType         GetType() const { return type_; }
 
         // 자식 노드 관리
-        void                                        add_child(std::shared_ptr<BTNode> child);
-        const std::vector<std::shared_ptr<BTNode>>& get_children() const { return children_; }
+        void                                        AddChild(std::shared_ptr<BTNode> child);
+        const std::vector<std::shared_ptr<BTNode>>& GetChildren() const { return children_; }
 
         // 노드 상태
-        BTNodeStatus get_last_status() const { return last_status_; }
-        void         set_last_status(BTNodeStatus status) { last_status_ = status; }
+        BTNodeStatus GetLastStatus() const { return last_status_; }
+        void         SetLastStatus(BTNodeStatus status) { last_status_ = status; }
 
     protected:
         std::string                          name_;

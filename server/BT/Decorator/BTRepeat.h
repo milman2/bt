@@ -15,7 +15,7 @@ namespace bt
     {
     public:
         BTRepeat(const std::string& name, int count = -1); // -1은 무한 반복
-        BTNodeStatus execute(BTContext& context) override;
+        BTNodeStatus Execute(BTContext& context) override;
 
     private:
         int repeat_count_;

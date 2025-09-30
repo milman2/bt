@@ -22,7 +22,7 @@ namespace bt
         };
 
         BTParallel(const std::string& name, Policy policy = Policy::SUCCEED_ON_ONE);
-        BTNodeStatus execute(BTContext& context) override;
+        BTNodeStatus Execute(BTContext& context) override;
 
     private:
         Policy policy_;

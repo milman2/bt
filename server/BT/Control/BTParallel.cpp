@@ -9,14 +9,14 @@ namespace bt
     {
     }
 
-    BTNodeStatus BTParallel::execute(BTContext& context)
+    BTNodeStatus BTParallel::Execute(BTContext& context)
     {
         std::vector<BTNodeStatus> results;
         results.reserve(children_.size());
 
         for (auto& child : children_)
         {
-            results.push_back(child->execute(context));
+            results.push_back(child->Execute(context));
         }
 
         switch (policy_)

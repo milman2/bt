@@ -10,7 +10,7 @@ namespace bt
     {
     }
 
-    BTNodeStatus BTRepeat::execute(BTContext& context)
+    BTNodeStatus BTRepeat::Execute(BTContext& context)
     {
         if (children_.empty())
         {
@@ -22,7 +22,7 @@ namespace bt
 
         while (repeat_count_ == -1 || current_count_ < repeat_count_)
         {
-            BTNodeStatus status = child->execute(context);
+            BTNodeStatus status = child->Execute(context);
 
             if (status == BTNodeStatus::RUNNING)
             {

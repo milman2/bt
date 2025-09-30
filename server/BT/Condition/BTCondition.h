@@ -18,7 +18,7 @@ namespace bt
         using ConditionFunction = std::function<bool(BTContext&)>;
 
         BTCondition(const std::string& name, ConditionFunction func);
-        BTNodeStatus execute(BTContext& context) override;
+        BTNodeStatus Execute(BTContext& context) override;
 
     private:
         ConditionFunction condition_func_;

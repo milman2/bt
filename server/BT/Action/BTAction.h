@@ -18,7 +18,7 @@ namespace bt
         using ActionFunction = std::function<BTNodeStatus(BTContext&)>;
 
         BTAction(const std::string& name, ActionFunction func);
-        BTNodeStatus execute(BTContext& context) override;
+        BTNodeStatus Execute(BTContext& context) override;
 
     private:
         ActionFunction action_func_;

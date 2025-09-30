@@ -42,7 +42,7 @@ namespace bt
         context_.set_monster_ai(shared_from_this());
 
         // Behavior Tree 실행
-        behavior_tree_->execute(context_);
+        behavior_tree_->Execute(context_);
 
         last_update_time_ = now;
     }

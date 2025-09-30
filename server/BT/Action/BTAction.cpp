@@ -10,7 +10,7 @@ namespace bt
     {
     }
 
-    BTNodeStatus BTAction::execute(BTContext& context)
+    BTNodeStatus BTAction::Execute(BTContext& context)
     {
         if (action_func_)
         {

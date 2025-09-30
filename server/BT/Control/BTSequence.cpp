@@ -7,11 +7,11 @@ namespace bt
     // BTSequence 구현
     BTSequence::BTSequence(const std::string& name) : BTNode(name, BTNodeType::SEQUENCE) {}
 
-    BTNodeStatus BTSequence::execute(BTContext& context)
+    BTNodeStatus BTSequence::Execute(BTContext& context)
     {
         for (auto& child : children_)
         {
-            BTNodeStatus status = child->execute(context);
+            BTNodeStatus status = child->Execute(context);
             if (status == BTNodeStatus::FAILURE)
             {
                 last_status_ = BTNodeStatus::FAILURE;

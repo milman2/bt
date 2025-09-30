@@ -15,7 +15,7 @@ namespace bt
     {
     public:
         BTSequence(const std::string& name);
-        BTNodeStatus execute(BTContext& context) override;
+        BTNodeStatus Execute(BTContext& context) override;
     };
 
 } // namespace bt

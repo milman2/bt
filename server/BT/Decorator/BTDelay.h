@@ -16,7 +16,7 @@ namespace bt
     {
     public:
         BTDelay(const std::string& name, std::chrono::milliseconds delay);
-        BTNodeStatus execute(BTContext& context) override;
+        BTNodeStatus Execute(BTContext& context) override;
 
     private:
         std::chrono::milliseconds             delay_;

@@ -7,7 +7,7 @@ namespace bt
     // BTInvert 구현
     BTInvert::BTInvert(const std::string& name) : BTNode(name, BTNodeType::INVERT) {}
 
-    BTNodeStatus BTInvert::execute(BTContext& context)
+    BTNodeStatus BTInvert::Execute(BTContext& context)
     {
         if (children_.empty())
         {
@@ -15,7 +15,7 @@ namespace bt
             return last_status_;
         }
 
-        BTNodeStatus status = children_[0]->execute(context);
+        BTNodeStatus status = children_[0]->Execute(context);
 
         switch (status)
         {

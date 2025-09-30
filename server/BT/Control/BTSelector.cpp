@@ -7,11 +7,11 @@ namespace bt
     // BTSelector 구현
     BTSelector::BTSelector(const std::string& name) : BTNode(name, BTNodeType::SELECTOR) {}
 
-    BTNodeStatus BTSelector::execute(BTContext& context)
+    BTNodeStatus BTSelector::Execute(BTContext& context)
     {
         for (auto& child : children_)
         {
-            BTNodeStatus status = child->execute(context);
+            BTNodeStatus status = child->Execute(context);
             if (status == BTNodeStatus::SUCCESS)
             {
                 last_status_ = BTNodeStatus::SUCCESS;

@@ -39,7 +39,7 @@ namespace bt
         auto tree = get_tree(name);
         if (tree)
         {
-            return tree->execute(context);
+            return tree->Execute(context);
         }
         return BTNodeStatus::FAILURE;
     }

@@ -10,7 +10,7 @@ namespace bt
     {
     }
 
-    BTNodeStatus BTDelay::execute(BTContext& /* context */)
+    BTNodeStatus BTDelay::Execute(BTContext& /* context */)
     {
         auto now = std::chrono::steady_clock::now();
 

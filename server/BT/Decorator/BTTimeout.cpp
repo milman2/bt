@@ -10,7 +10,7 @@ namespace bt
     {
     }
 
-    BTNodeStatus BTTimeout::execute(BTContext& context)
+    BTNodeStatus BTTimeout::Execute(BTContext& context)
     {
         if (children_.empty())
         {
@@ -21,7 +21,7 @@ namespace bt
         auto  start_time = std::chrono::steady_clock::now();
         auto& child      = children_[0];
 
-        BTNodeStatus status = child->execute(context);
+        BTNodeStatus status = child->Execute(context);
 
         if (status == BTNodeStatus::RUNNING)
         {

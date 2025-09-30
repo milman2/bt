@@ -9,7 +9,7 @@ namespace bt
     // BTRandom 구현
     BTRandom::BTRandom(const std::string& name) : BTNode(name, BTNodeType::RANDOM) {}
 
-    BTNodeStatus BTRandom::execute(BTContext& context)
+    BTNodeStatus BTRandom::Execute(BTContext& context)
     {
         if (children_.empty())
         {
@@ -22,7 +22,7 @@ namespace bt
         std::uniform_int_distribution<> dis(0, children_.size() - 1);
 
         int random_index = dis(gen);
-        last_status_     = children_[random_index]->execute(context);
+        last_status_     = children_[random_index]->Execute(context);
         return last_status_;
     }
 

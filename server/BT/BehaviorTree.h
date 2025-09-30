@@ -19,14 +19,14 @@ namespace bt
         ~BehaviorTree() = default;
 
         // 트리 구성
-        void                    set_root(std::shared_ptr<BTNode> root);
-        std::shared_ptr<BTNode> get_root() const { return root_; }
+        void                    SetRoot(std::shared_ptr<BTNode> root);
+        std::shared_ptr<BTNode> GetRoot() const { return root_; }
 
         // 트리 실행
-        BTNodeStatus execute(BTContext& context);
+        BTNodeStatus Execute(BTContext& context);
 
         // 트리 정보
-        const std::string& get_name() const { return name_; }
+        const std::string& GetName() const { return name_; }
 
     private:
         std::string             name_;

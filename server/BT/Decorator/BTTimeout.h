@@ -16,7 +16,7 @@ namespace bt
     {
     public:
         BTTimeout(const std::string& name, std::chrono::milliseconds timeout);
-        BTNodeStatus execute(BTContext& context) override;
+        BTNodeStatus Execute(BTContext& context) override;
 
     private:
         std::chrono::milliseconds timeout_;
