@@ -8,30 +8,30 @@
 #include <unordered_map>
 #include <vector>
 
-#include "BehaviorTree.h"
-#include "BTContext.h"
+#include "Tree.h"
+#include "Context.h"
 
 namespace bt
 {
 
     // 전방 선언
-    class BTContext;
+    class Context;
 
     // Behavior Tree 엔진
-    class BehaviorTreeEngine
+    class Engine
     {
     public:
-        BehaviorTreeEngine() {}
-        ~BehaviorTreeEngine() {}
+        Engine() {}
+        ~Engine() {}
 
         // 트리 관리
-        void RegisterTree(const std::string& name, std::shared_ptr<BehaviorTree> tree)
+        void RegisterTree(const std::string& name, std::shared_ptr<Tree> tree)
         {
             std::lock_guard<std::mutex> lock(trees_mutex_);
             trees_[name] = tree;
         }
         
-        std::shared_ptr<BehaviorTree> GetTree(const std::string& name)
+        std::shared_ptr<Tree> GetTree(const std::string& name)
         {
             std::lock_guard<std::mutex> lock(trees_mutex_);
             auto it = trees_.find(name);
@@ -49,21 +49,21 @@ namespace bt
         }
 
         // 트리 실행
-        BTNodeStatus ExecuteTree(const std::string& name, BTContext& context)
+        NodeStatus ExecuteTree(const std::string& name, Context& context)
         {
             auto tree = GetTree(name);
             if (tree)
             {
                 return tree->Execute(context);
             }
-            return BTNodeStatus::FAILURE;
+            return NodeStatus::FAILURE;
         }
 
         // 통계
         size_t GetRegisteredTrees() const { return trees_.size(); }
 
     private:
-        std::unordered_map<std::string, std::shared_ptr<BehaviorTree>> trees_;
+        std::unordered_map<std::string, std::shared_ptr<Tree>> trees_;
         mutable std::mutex                                             trees_mutex_;
     };
 

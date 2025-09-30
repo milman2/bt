@@ -5,9 +5,9 @@
 #include <memory>
 #include <string>
 
-#include "../../BT/BehaviorTree.h"
-#include "../../BT/BTContext.h"
-#include "../../BT/IBTExecutor.h"
+#include "../../BT/Tree.h"
+#include "../../BT/Context.h"
+#include "../../BT/IExecutor.h"
 
 namespace bt
 {
@@ -16,7 +16,7 @@ namespace bt
     class Monster;
 
     // 몬스터 Behavior Tree 실행자 클래스
-    class MonsterBTExecutor : public IBTExecutor, public std::enable_shared_from_this<MonsterBTExecutor>
+    class MonsterBTExecutor : public IExecutor, public std::enable_shared_from_this<MonsterBTExecutor>
     {
     public:
         MonsterBTExecutor(const std::string& name, const std::string& bt_name);
@@ -26,12 +26,12 @@ namespace bt
         void Update(float delta_time) override;
 
         // Behavior Tree 설정
-        void                          SetBehaviorTree(std::shared_ptr<BehaviorTree> tree) override;
-        std::shared_ptr<BehaviorTree> GetBehaviorTree() const override { return behavior_tree_; }
+        void                          SetBehaviorTree(std::shared_ptr<Tree> tree) override;
+        std::shared_ptr<Tree> GetBehaviorTree() const override { return behavior_tree_; }
 
         // 컨텍스트 접근
-        BTContext&       GetContext() override { return context_; }
-        const BTContext& GetContext() const override { return context_; }
+        Context&       GetContext() override { return context_; }
+        const Context& GetContext() const override { return context_; }
 
         // 몬스터 정보
         const std::string& GetName() const override { return name_; }
@@ -48,8 +48,8 @@ namespace bt
     private:
         std::string                           name_;
         std::string                           bt_name_;
-        std::shared_ptr<BehaviorTree>         behavior_tree_;
-        BTContext                             context_;
+        std::shared_ptr<Tree>         behavior_tree_;
+        Context                             context_;
         std::shared_ptr<Monster>              monster_;
         std::atomic<bool>                     active_;
         std::chrono::steady_clock::time_point last_update_time_;

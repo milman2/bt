@@ -7,25 +7,25 @@ namespace bt
 {
 
     // 전방 선언
-    class BTContext;
-    class BehaviorTree;
+    class Context;
+    class Tree;
 
     // Behavior Tree 실행자 인터페이스
-    class IBTExecutor
+    class IExecutor
     {
     public:
-        virtual ~IBTExecutor() = default;
+        virtual ~IExecutor() = default;
 
         // AI 업데이트
         virtual void Update(float delta_time) = 0;
 
         // Behavior Tree 설정
-        virtual void SetBehaviorTree(std::shared_ptr<BehaviorTree> tree) = 0;
-        virtual std::shared_ptr<BehaviorTree> GetBehaviorTree() const = 0;
+        virtual void SetBehaviorTree(std::shared_ptr<Tree> tree) = 0;
+        virtual std::shared_ptr<Tree> GetBehaviorTree() const = 0;
 
         // 컨텍스트 접근
-        virtual BTContext& GetContext() = 0;
-        virtual const BTContext& GetContext() const = 0;
+        virtual Context& GetContext() = 0;
+        virtual const Context& GetContext() const = 0;
 
         // 실행자 정보
         virtual const std::string& GetName() const = 0;

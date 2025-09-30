@@ -72,7 +72,7 @@ namespace bt
         player_manager_ = manager;
     }
 
-    void RestApiServer::SetBTEngine(std::shared_ptr<BehaviorTreeEngine> engine)
+    void RestApiServer::SetBTEngine(std::shared_ptr<Engine> engine)
     {
         bt_engine_ = engine;
     }

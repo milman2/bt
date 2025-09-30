@@ -47,7 +47,7 @@ namespace bt
         last_update_time_ = now;
     }
 
-    void MonsterBTExecutor::SetBehaviorTree(std::shared_ptr<BehaviorTree> tree)
+    void MonsterBTExecutor::SetBehaviorTree(std::shared_ptr<Tree> tree)
     {
         behavior_tree_ = tree;
     }

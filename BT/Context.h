@@ -11,14 +11,14 @@ namespace bt
 
     // 전방 선언
     struct EnvironmentInfo;
-    class IBTExecutor;
+    class IExecutor;
 
     // Behavior Tree 컨텍스트 (Blackboard)
-    class BTContext
+    class Context
     {
     public:
-        BTContext() : start_time_(std::chrono::steady_clock::now()) {}
-        ~BTContext() = default;
+        Context() : start_time_(std::chrono::steady_clock::now()) {}
+        ~Context() = default;
 
         // 데이터 관리
         void SetData(const std::string& key, const std::any& value) { data_[key] = value; }
@@ -62,9 +62,9 @@ namespace bt
             data_[key] = value;
         }
 
-        // AI 참조 (IBTExecutor 인터페이스 사용)
-        void SetAI(std::shared_ptr<IBTExecutor> ai) { ai_ = ai; }
-        std::shared_ptr<IBTExecutor> GetAI() const { return ai_; }
+        // AI 참조 (IExecutor 인터페이스 사용)
+        void SetAI(std::shared_ptr<IExecutor> ai) { ai_ = ai; }
+        std::shared_ptr<IExecutor> GetAI() const { return ai_; }
 
         // 실행 시간 관리
         void SetStartTime(std::chrono::steady_clock::time_point time) { start_time_ = time; }
@@ -76,7 +76,7 @@ namespace bt
 
     private:
         std::unordered_map<std::string, std::any> data_;
-        std::shared_ptr<IBTExecutor>                     ai_;
+        std::shared_ptr<IExecutor>                     ai_;
         std::chrono::steady_clock::time_point     start_time_;
         const EnvironmentInfo*                    environment_info_ = nullptr;
     };

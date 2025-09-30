@@ -2,20 +2,20 @@
 
 #include <string>
 
-#include "../BTNode.h"
+#include "../Node.h"
 
 namespace bt
 {
 
     // 전방 선언
-    class BTContext;
+    class Context;
 
     // Repeat 노드 (반복 실행)
-    class BTRepeat : public BTNode
+    class Repeat : public Node
     {
     public:
-        BTRepeat(const std::string& name, int count = -1); // -1은 무한 반복
-        BTNodeStatus Execute(BTContext& context) override;
+        Repeat(const std::string& name, int count = -1); // -1은 무한 반복
+        NodeStatus Execute(Context& context) override;
 
     private:
         int repeat_count_;

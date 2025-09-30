@@ -23,14 +23,14 @@
 #include <boost/thread/mutex.hpp>
 
 #include "PacketProtocol.h"
-#include "../../BT/BehaviorTreeEngine.h"
+#include "../../BT/Engine.h"
 #include "AsioClient.h"
 
 namespace bt
 {
 
     // 전방 선언
-    class BehaviorTreeEngine;
+    class Engine;
     class MonsterBTExecutor;
     class MonsterManager;
     class PlayerManager;
@@ -92,7 +92,7 @@ namespace bt
         void SendPacket(boost::shared_ptr<AsioClient> client, const Packet& packet);
 
         // Behavior Tree 엔진 접근
-        BehaviorTreeEngine* GetBTEngine() { return bt_engine_.get(); }
+        Engine* GetBTEngine() { return bt_engine_.get(); }
 
         // 매니저 접근
         std::shared_ptr<MonsterManager> GetMonsterManager() const { return monster_manager_; }
@@ -154,7 +154,7 @@ namespace bt
         mutable boost::mutex                                              clients_mutex_;
 
         // Behavior Tree 엔진
-        std::unique_ptr<BehaviorTreeEngine> bt_engine_;
+        std::unique_ptr<Engine> bt_engine_;
 
         // 몬스터 및 플레이어 매니저
         std::shared_ptr<MonsterManager> monster_manager_;

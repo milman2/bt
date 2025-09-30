@@ -3,20 +3,20 @@
 #include <chrono>
 #include <string>
 
-#include "../BTNode.h"
+#include "../Node.h"
 
 namespace bt
 {
 
     // 전방 선언
-    class BTContext;
+    class Context;
 
     // Timeout 노드 (시간 제한)
-    class BTTimeout : public BTNode
+    class Timeout : public Node
     {
     public:
-        BTTimeout(const std::string& name, std::chrono::milliseconds timeout);
-        BTNodeStatus Execute(BTContext& context) override;
+        Timeout(const std::string& name, std::chrono::milliseconds timeout);
+        NodeStatus Execute(Context& context) override;
 
     private:
         std::chrono::milliseconds timeout_;

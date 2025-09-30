@@ -3,33 +3,33 @@
 #include <memory>
 #include <string>
 
-#include "BTNode.h"
+#include "Node.h"
 
 namespace bt
 {
 
     // 전방 선언
-    class BTContext;
+    class Context;
 
     // Behavior Tree 클래스
-    class BehaviorTree
+    class Tree
     {
     public:
-        BehaviorTree(const std::string& name) : name_(name) {}
-        ~BehaviorTree() = default;
+        Tree(const std::string& name) : name_(name) {}
+        ~Tree() = default;
 
         // 트리 구성
-        void SetRoot(std::shared_ptr<BTNode> root) { root_ = root; }
-        std::shared_ptr<BTNode> GetRoot() const { return root_; }
+        void SetRoot(std::shared_ptr<Node> root) { root_ = root; }
+        std::shared_ptr<Node> GetRoot() const { return root_; }
 
         // 트리 실행
-        BTNodeStatus Execute(BTContext& context)
+        NodeStatus Execute(Context& context)
         {
             if (root_)
             {
                 return root_->Execute(context);
             }
-            return BTNodeStatus::FAILURE;
+            return NodeStatus::FAILURE;
         }
 
         // 트리 정보
@@ -37,7 +37,7 @@ namespace bt
 
     private:
         std::string             name_;
-        std::shared_ptr<BTNode> root_;
+        std::shared_ptr<Node> root_;
     };
 
 } // namespace bt

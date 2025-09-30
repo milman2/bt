@@ -15,7 +15,7 @@ namespace bt
 {
     class SimpleWebSocketServer;
     class PlayerManager;
-    class BehaviorTreeEngine;
+    class Engine;
 } // namespace bt
 
 namespace bt
@@ -54,7 +54,7 @@ namespace bt
         void Update(float delta_time);
 
         // Behavior Tree 엔진 설정
-        void SetBTEngine(std::shared_ptr<BehaviorTreeEngine> engine);
+        void SetBTEngine(std::shared_ptr<Engine> engine);
 
         // WebSocket 서버 설정
         void SetWebSocketServer(std::shared_ptr<bt::SimpleWebSocketServer> server);
@@ -73,7 +73,7 @@ namespace bt
         std::unordered_map<std::string, std::chrono::steady_clock::time_point> last_spawn_times_;
         std::atomic<uint32_t>                                                  next_monster_id_;
         std::atomic<bool>                                                      auto_spawn_enabled_;
-        std::shared_ptr<BehaviorTreeEngine>                                    bt_engine_;
+        std::shared_ptr<Engine>                                    bt_engine_;
         std::shared_ptr<bt::SimpleWebSocketServer>                             websocket_server_;
         std::shared_ptr<PlayerManager>                                         player_manager_;
         mutable std::mutex                                                     monsters_mutex_;

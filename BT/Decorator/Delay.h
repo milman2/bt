@@ -3,20 +3,20 @@
 #include <chrono>
 #include <string>
 
-#include "../BTNode.h"
+#include "../Node.h"
 
 namespace bt
 {
 
     // 전방 선언
-    class BTContext;
+    class Context;
 
     // Delay 노드 (지연 실행)
-    class BTDelay : public BTNode
+    class Delay : public Node
     {
     public:
-        BTDelay(const std::string& name, std::chrono::milliseconds delay);
-        BTNodeStatus Execute(BTContext& context) override;
+        Delay(const std::string& name, std::chrono::milliseconds delay);
+        NodeStatus Execute(Context& context) override;
 
     private:
         std::chrono::milliseconds             delay_;

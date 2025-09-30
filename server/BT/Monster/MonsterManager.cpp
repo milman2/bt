@@ -2,7 +2,7 @@
 #include "MonsterFactory.h"
 #include "MonsterBTExecutor.h"
 #include "../../PlayerManager.h"
-#include "../../BT/BehaviorTreeEngine.h"
+#include "../../BT/Engine.h"
 
 #include <algorithm>
 #include <fstream>
@@ -158,7 +158,7 @@ namespace bt
         std::cout << "모든 몬스터 스폰 설정이 초기화되었습니다." << std::endl;
     }
 
-    void MonsterManager::SetBTEngine(std::shared_ptr<BehaviorTreeEngine> engine)
+    void MonsterManager::SetBTEngine(std::shared_ptr<Engine> engine)
     {
         bt_engine_ = engine;
         std::cout << "MonsterManager에 Behavior Tree 엔진 설정 완료" << std::endl;

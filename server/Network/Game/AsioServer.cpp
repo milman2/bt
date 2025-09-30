@@ -3,7 +3,7 @@
 #include <sstream>
 
 #include "AsioServer.h"
-#include "../../BT/BehaviorTree.h"
+#include "../../BT/Tree.h"
 #include "BT/Monster/MonsterTypes.h"
 #include "Player.h"
 #include "PlayerManager.h"
@@ -17,7 +17,7 @@ namespace bt
         : config_(config), running_(false), acceptor_(io_context_), total_packets_sent_(0), total_packets_received_(0)
     {
         // Behavior Tree 엔진 초기화
-        bt_engine_ = std::make_unique<BehaviorTreeEngine>();
+        bt_engine_ = std::make_unique<Engine>();
 
         // 매니저들 초기화
         monster_manager_ = std::make_shared<MonsterManager>();
@@ -28,8 +28,8 @@ namespace bt
         rest_api_server_->SetMonsterManager(monster_manager_);
         rest_api_server_->SetPlayerManager(player_manager_);
         // bt_engine_을 shared_ptr로 변환 (원본은 유지)
-        std::shared_ptr<BehaviorTreeEngine> shared_bt_engine(bt_engine_.get(),
-                                                             [](BehaviorTreeEngine*)
+        std::shared_ptr<Engine> shared_bt_engine(bt_engine_.get(),
+                                                             [](Engine*)
                                                              {
                                                              });
         rest_api_server_->SetBTEngine(shared_bt_engine);

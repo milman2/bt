@@ -2,16 +2,16 @@
 
 #include <string>
 
-#include "../BTNode.h"
+#include "../Node.h"
 
 namespace bt
 {
 
     // 전방 선언
-    class BTContext;
+    class Context;
 
     // Parallel 노드 (병렬 실행)
-    class BTParallel : public BTNode
+    class Parallel : public Node
     {
     public:
         enum class Policy
@@ -21,8 +21,8 @@ namespace bt
             FAIL_ON_ONE     // 하나라도 실패하면 실패
         };
 
-        BTParallel(const std::string& name, Policy policy = Policy::SUCCEED_ON_ONE);
-        BTNodeStatus Execute(BTContext& context) override;
+        Parallel(const std::string& name, Policy policy = Policy::SUCCEED_ON_ONE);
+        NodeStatus Execute(Context& context) override;
 
     private:
         Policy policy_;

@@ -16,21 +16,21 @@ endif()
 
 # 헤더 파일들
 set(BT_HEADERS
-    BTNode.h
-    BTContext.h
-    BehaviorTree.h
-    BehaviorTreeEngine.h
-    IBTExecutor.h
-    Action/BTAction.h
-    Condition/BTCondition.h
-    Control/BTSequence.h
-    Control/BTSelector.h
-    Control/BTParallel.h
-    Control/BTRandom.h
-    Decorator/BTDelay.h
-    Decorator/BTInvert.h
-    Decorator/BTRepeat.h
-    Decorator/BTTimeout.h
+    Node.h
+    Context.h
+    Tree.h
+    Engine.h
+    IExecutor.h
+    Action/Action.h
+    Condition/Condition.h
+    Control/Sequence.h
+    Control/Selector.h
+    Control/Parallel.h
+    Control/Random.h
+    Decorator/Delay.h
+    Decorator/Invert.h
+    Decorator/Repeat.h
+    Decorator/Timeout.h
 )
 
 # 소스 파일들 (모든 구현이 헤더 파일에 있음)

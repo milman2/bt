@@ -9,7 +9,7 @@
 #include "BT/Monster/MonsterTypes.h"
 #include "BT/Monster/MonsterManager.h"
 #include "PlayerManager.h"
-#include "../../BT/BehaviorTreeEngine.h"
+#include "../../BT/Engine.h"
 
 namespace bt
 {
@@ -61,7 +61,7 @@ namespace bt
         // 매니저 설정
         void SetMonsterManager(std::shared_ptr<MonsterManager> manager);
         void SetPlayerManager(std::shared_ptr<PlayerManager> manager);
-        void SetBTEngine(std::shared_ptr<BehaviorTreeEngine> engine);
+        void SetBTEngine(std::shared_ptr<Engine> engine);
         void SetWebSocketServer(std::shared_ptr<SimpleWebSocketServer> server);
 
         // 포트 설정
@@ -80,7 +80,7 @@ namespace bt
 
         std::shared_ptr<MonsterManager>        monster_manager_;
         std::shared_ptr<PlayerManager>         player_manager_;
-        std::shared_ptr<BehaviorTreeEngine>    bt_engine_;
+        std::shared_ptr<Engine>    bt_engine_;
         std::shared_ptr<SimpleWebSocketServer> websocket_server_;
 
         std::thread server_thread_;
