@@ -51,8 +51,19 @@ namespace bt
 
     void Monster::MoveTo(float x, float y, float z, float rotation)
     {
+        // 이전 위치 저장
+        float old_x = position_.x;
+        float old_z = position_.z;
+        
+        // 새 위치 설정
         SetPosition(x, y, z, rotation);
-        std::cout << "몬스터 " << name_ << " 이동: (" << x << ", " << y << ", " << z << ")" << std::endl;
+        
+        // 실제로 위치가 변경되었는지 확인
+        if (std::abs(old_x - x) > 0.01f || std::abs(old_z - z) > 0.01f)
+        {
+            std::cout << "몬스터 " << name_ << " 이동: (" << old_x << ", " << old_z << ") -> (" 
+                      << x << ", " << z << ")" << std::endl;
+        }
     }
 
     void Monster::TakeDamage(uint32_t damage)
