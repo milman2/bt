@@ -81,6 +81,7 @@ namespace bt
         std::unordered_map<std::string, std::shared_ptr<IInterface>> interfaces_;
         std::shared_ptr<IOwner> owner_;
         std::shared_ptr<IExecutor> ai_;
+        // 불변값을 갖는 blackboard를 추가하는 것을 고려해보자 => BT의 스크립트 설정값?
         Blackboard blackboard_;
         std::chrono::steady_clock::time_point start_time_;
         const EnvironmentInfo*                    environment_info_ = nullptr;
