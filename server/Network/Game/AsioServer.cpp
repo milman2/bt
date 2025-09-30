@@ -25,7 +25,7 @@ namespace bt
         bt_engine_ = std::make_unique<Engine>();
         
         // Behavior Tree 초기화
-        InitializeBehaviorTrees();
+        //InitializeBehaviorTrees();
 
         // 매니저들 초기화
         monster_manager_ = std::make_shared<MonsterManager>();
@@ -561,329 +561,329 @@ namespace bt
         return info;
     }
 
-    void AsioServer::InitializeBehaviorTrees()
-    {
-        // Goblin Behavior Tree 생성
-        auto goblin_tree = std::make_shared<Tree>("goblin_bt");
-        auto goblin_root = std::make_shared<Selector>("goblin_root");
+    // void AsioServer::InitializeBehaviorTrees()
+    // {
+    //     // Goblin Behavior Tree 생성
+    //     auto goblin_tree = std::make_shared<Tree>("goblin_bt");
+    //     auto goblin_root = std::make_shared<Selector>("goblin_root");
         
-        // Patrol Action
-        auto patrol_action = std::make_shared<Action>("patrol", [](Context& context) -> NodeStatus {
-            std::cout << "Goblin patrol action executed" << std::endl;
+    //     // Patrol Action
+    //     auto patrol_action = std::make_shared<Action>("patrol", [](Context& context) -> NodeStatus {
+    //         std::cout << "Goblin patrol action executed" << std::endl;
             
-            // AI를 통해 몬스터 정보 가져오기
-            auto ai = context.GetAI();
-            if (!ai) {
-                std::cout << "Patrol action: AI가 없음" << std::endl;
-                return NodeStatus::FAILURE;
-            }
+    //         // AI를 통해 몬스터 정보 가져오기
+    //         auto ai = context.GetAI();
+    //         if (!ai) {
+    //             std::cout << "Patrol action: AI가 없음" << std::endl;
+    //             return NodeStatus::FAILURE;
+    //         }
             
-            // MonsterBTExecutor로 캐스팅
-            auto monster_ai = std::dynamic_pointer_cast<MonsterBTExecutor>(ai);
-            if (!monster_ai) {
-                std::cout << "Patrol action: MonsterBTExecutor 캐스팅 실패" << std::endl;
-                return NodeStatus::FAILURE;
-            }
+    //         // MonsterBTExecutor로 캐스팅
+    //         auto monster_ai = std::dynamic_pointer_cast<MonsterBTExecutor>(ai);
+    //         if (!monster_ai) {
+    //             std::cout << "Patrol action: MonsterBTExecutor 캐스팅 실패" << std::endl;
+    //             return NodeStatus::FAILURE;
+    //         }
             
-            auto monster = monster_ai->GetMonster();
-            if (!monster) {
-                std::cout << "Patrol action: 몬스터 참조가 없음" << std::endl;
-                return NodeStatus::FAILURE;
-            }
+    //         auto monster = monster_ai->GetMonster();
+    //         if (!monster) {
+    //             std::cout << "Patrol action: 몬스터 참조가 없음" << std::endl;
+    //             return NodeStatus::FAILURE;
+    //         }
             
-            // 다음 순찰점 가져오기
-            auto next_point = monster->GetNextPatrolPoint();
-            auto current_pos = monster->GetPosition();
+    //         // 다음 순찰점 가져오기
+    //         auto next_point = monster->GetNextPatrolPoint();
+    //         auto current_pos = monster->GetPosition();
             
-            // 현재 위치와 목표 위치의 거리 계산
-            float dx = next_point.x - current_pos.x;
-            float dz = next_point.z - current_pos.z;
-            float distance = std::sqrt(dx * dx + dz * dz);
+    //         // 현재 위치와 목표 위치의 거리 계산
+    //         float dx = next_point.x - current_pos.x;
+    //         float dz = next_point.z - current_pos.z;
+    //         float distance = std::sqrt(dx * dx + dz * dz);
             
-            // 목표 지점에 도달했는지 확인 (1.0f 이내)
-            if (distance < 1.0f) {
-                // 다음 순찰점으로 이동 완료
-                monster->SetPosition(next_point.x, next_point.y, next_point.z, next_point.rotation);
-                std::cout << "Goblin " << monster->GetName() << " reached patrol point: (" 
-                         << next_point.x << ", " << next_point.y << ", " << next_point.z << ")" << std::endl;
-                return NodeStatus::SUCCESS;
-            }
+    //         // 목표 지점에 도달했는지 확인 (1.0f 이내)
+    //         if (distance < 1.0f) {
+    //             // 다음 순찰점으로 이동 완료
+    //             monster->SetPosition(next_point.x, next_point.y, next_point.z, next_point.rotation);
+    //             std::cout << "Goblin " << monster->GetName() << " reached patrol point: (" 
+    //                      << next_point.x << ", " << next_point.y << ", " << next_point.z << ")" << std::endl;
+    //             return NodeStatus::SUCCESS;
+    //         }
             
-            // 목표 지점으로 이동
-            float move_speed = 50.0f; // 이동 속도 (크게 증가)
-            float move_distance = move_speed * 0.016f; // 60fps 기준
+    //         // 목표 지점으로 이동
+    //         float move_speed = 50.0f; // 이동 속도 (크게 증가)
+    //         float move_distance = move_speed * 0.016f; // 60fps 기준
             
-            if (distance > 0.0f) {
-                // 정규화된 방향 벡터
-                float dir_x = dx / distance;
-                float dir_z = dz / distance;
+    //         if (distance > 0.0f) {
+    //             // 정규화된 방향 벡터
+    //             float dir_x = dx / distance;
+    //             float dir_z = dz / distance;
                 
-                // 새로운 위치 계산
-                float new_x = current_pos.x + dir_x * move_distance;
-                float new_z = current_pos.z + dir_z * move_distance;
+    //             // 새로운 위치 계산
+    //             float new_x = current_pos.x + dir_x * move_distance;
+    //             float new_z = current_pos.z + dir_z * move_distance;
                 
-                // 몬스터 위치 업데이트
-                monster->SetPosition(new_x, current_pos.y, new_z, current_pos.rotation);
+    //             // 몬스터 위치 업데이트
+    //             monster->SetPosition(new_x, current_pos.y, new_z, current_pos.rotation);
                 
-                std::cout << "Goblin " << monster->GetName() << " moving to patrol point: (" 
-                         << new_x << ", " << current_pos.y << ", " << new_z << ")" << std::endl;
-            }
+    //             std::cout << "Goblin " << monster->GetName() << " moving to patrol point: (" 
+    //                      << new_x << ", " << current_pos.y << ", " << new_z << ")" << std::endl;
+    //         }
             
-            return NodeStatus::RUNNING;
-        });
+    //         return NodeStatus::RUNNING;
+    //     });
         
-        goblin_root->AddChild(patrol_action);
-        goblin_tree->SetRoot(goblin_root);
-        bt_engine_->RegisterTree("goblin_bt", goblin_tree);
+    //     goblin_root->AddChild(patrol_action);
+    //     goblin_tree->SetRoot(goblin_root);
+    //     bt_engine_->RegisterTree("goblin_bt", goblin_tree);
         
-        // Orc Behavior Tree 생성
-        auto orc_tree = std::make_shared<Tree>("orc_bt");
-        auto orc_root = std::make_shared<Selector>("orc_root");
+    //     // Orc Behavior Tree 생성
+    //     auto orc_tree = std::make_shared<Tree>("orc_bt");
+    //     auto orc_root = std::make_shared<Selector>("orc_root");
         
-        auto orc_patrol_action = std::make_shared<Action>("patrol", [](Context& context) -> NodeStatus {
-            auto ai = context.GetAI();
-            if (!ai) return NodeStatus::FAILURE;
+    //     auto orc_patrol_action = std::make_shared<Action>("patrol", [](Context& context) -> NodeStatus {
+    //         auto ai = context.GetAI();
+    //         if (!ai) return NodeStatus::FAILURE;
             
-            auto monster_ai = std::dynamic_pointer_cast<MonsterBTExecutor>(ai);
-            if (!monster_ai) return NodeStatus::FAILURE;
+    //         auto monster_ai = std::dynamic_pointer_cast<MonsterBTExecutor>(ai);
+    //         if (!monster_ai) return NodeStatus::FAILURE;
             
-            auto monster = monster_ai->GetMonster();
-            if (!monster) return NodeStatus::FAILURE;
+    //         auto monster = monster_ai->GetMonster();
+    //         if (!monster) return NodeStatus::FAILURE;
             
-            auto next_point = monster->GetNextPatrolPoint();
-            auto current_pos = monster->GetPosition();
+    //         auto next_point = monster->GetNextPatrolPoint();
+    //         auto current_pos = monster->GetPosition();
             
-            float dx = next_point.x - current_pos.x;
-            float dz = next_point.z - current_pos.z;
-            float distance = std::sqrt(dx * dx + dz * dz);
+    //         float dx = next_point.x - current_pos.x;
+    //         float dz = next_point.z - current_pos.z;
+    //         float distance = std::sqrt(dx * dx + dz * dz);
             
-            if (distance < 1.0f) {
-                monster->SetPosition(next_point.x, next_point.y, next_point.z, next_point.rotation);
-                return NodeStatus::SUCCESS;
-            }
+    //         if (distance < 1.0f) {
+    //             monster->SetPosition(next_point.x, next_point.y, next_point.z, next_point.rotation);
+    //             return NodeStatus::SUCCESS;
+    //         }
             
-            float move_speed = 40.0f; // Orc는 조금 느림 (속도 증가)
-            float move_distance = move_speed * 0.016f;
+    //         float move_speed = 40.0f; // Orc는 조금 느림 (속도 증가)
+    //         float move_distance = move_speed * 0.016f;
             
-            if (distance > 0.0f) {
-                float dir_x = dx / distance;
-                float dir_z = dz / distance;
-                float new_x = current_pos.x + dir_x * move_distance;
-                float new_z = current_pos.z + dir_z * move_distance;
-                monster->SetPosition(new_x, current_pos.y, new_z, current_pos.rotation);
-            }
+    //         if (distance > 0.0f) {
+    //             float dir_x = dx / distance;
+    //             float dir_z = dz / distance;
+    //             float new_x = current_pos.x + dir_x * move_distance;
+    //             float new_z = current_pos.z + dir_z * move_distance;
+    //             monster->SetPosition(new_x, current_pos.y, new_z, current_pos.rotation);
+    //         }
             
-            return NodeStatus::RUNNING;
-        });
+    //         return NodeStatus::RUNNING;
+    //     });
         
-        orc_root->AddChild(orc_patrol_action);
-        orc_tree->SetRoot(orc_root);
-        bt_engine_->RegisterTree("orc_bt", orc_tree);
+    //     orc_root->AddChild(orc_patrol_action);
+    //     orc_tree->SetRoot(orc_root);
+    //     bt_engine_->RegisterTree("orc_bt", orc_tree);
         
-        // Dragon Behavior Tree 생성
-        auto dragon_tree = std::make_shared<Tree>("dragon_bt");
-        auto dragon_root = std::make_shared<Selector>("dragon_root");
+    //     // Dragon Behavior Tree 생성
+    //     auto dragon_tree = std::make_shared<Tree>("dragon_bt");
+    //     auto dragon_root = std::make_shared<Selector>("dragon_root");
         
-        auto dragon_patrol_action = std::make_shared<Action>("patrol", [](Context& context) -> NodeStatus {
-            auto ai = context.GetAI();
-            if (!ai) return NodeStatus::FAILURE;
+    //     auto dragon_patrol_action = std::make_shared<Action>("patrol", [](Context& context) -> NodeStatus {
+    //         auto ai = context.GetAI();
+    //         if (!ai) return NodeStatus::FAILURE;
             
-            auto monster_ai = std::dynamic_pointer_cast<MonsterBTExecutor>(ai);
-            if (!monster_ai) return NodeStatus::FAILURE;
+    //         auto monster_ai = std::dynamic_pointer_cast<MonsterBTExecutor>(ai);
+    //         if (!monster_ai) return NodeStatus::FAILURE;
             
-            auto monster = monster_ai->GetMonster();
-            if (!monster) return NodeStatus::FAILURE;
+    //         auto monster = monster_ai->GetMonster();
+    //         if (!monster) return NodeStatus::FAILURE;
             
-            auto next_point = monster->GetNextPatrolPoint();
-            auto current_pos = monster->GetPosition();
+    //         auto next_point = monster->GetNextPatrolPoint();
+    //         auto current_pos = monster->GetPosition();
             
-            float dx = next_point.x - current_pos.x;
-            float dz = next_point.z - current_pos.z;
-            float distance = std::sqrt(dx * dx + dz * dz);
+    //         float dx = next_point.x - current_pos.x;
+    //         float dz = next_point.z - current_pos.z;
+    //         float distance = std::sqrt(dx * dx + dz * dz);
             
-            if (distance < 1.0f) {
-                monster->SetPosition(next_point.x, next_point.y, next_point.z, next_point.rotation);
-                return NodeStatus::SUCCESS;
-            }
+    //         if (distance < 1.0f) {
+    //             monster->SetPosition(next_point.x, next_point.y, next_point.z, next_point.rotation);
+    //             return NodeStatus::SUCCESS;
+    //         }
             
-            float move_speed = 60.0f; // Dragon은 빠름 (속도 증가)
-            float move_distance = move_speed * 0.016f;
+    //         float move_speed = 60.0f; // Dragon은 빠름 (속도 증가)
+    //         float move_distance = move_speed * 0.016f;
             
-            if (distance > 0.0f) {
-                float dir_x = dx / distance;
-                float dir_z = dz / distance;
-                float new_x = current_pos.x + dir_x * move_distance;
-                float new_z = current_pos.z + dir_z * move_distance;
-                monster->SetPosition(new_x, current_pos.y, new_z, current_pos.rotation);
-            }
+    //         if (distance > 0.0f) {
+    //             float dir_x = dx / distance;
+    //             float dir_z = dz / distance;
+    //             float new_x = current_pos.x + dir_x * move_distance;
+    //             float new_z = current_pos.z + dir_z * move_distance;
+    //             monster->SetPosition(new_x, current_pos.y, new_z, current_pos.rotation);
+    //         }
             
-            return NodeStatus::RUNNING;
-        });
+    //         return NodeStatus::RUNNING;
+    //     });
         
-        dragon_root->AddChild(dragon_patrol_action);
-        dragon_tree->SetRoot(dragon_root);
-        bt_engine_->RegisterTree("dragon_bt", dragon_tree);
+    //     dragon_root->AddChild(dragon_patrol_action);
+    //     dragon_tree->SetRoot(dragon_root);
+    //     bt_engine_->RegisterTree("dragon_bt", dragon_tree);
         
-        // Skeleton Behavior Tree 생성
-        auto skeleton_tree = std::make_shared<Tree>("skeleton_bt");
-        auto skeleton_root = std::make_shared<Selector>("skeleton_root");
+    //     // Skeleton Behavior Tree 생성
+    //     auto skeleton_tree = std::make_shared<Tree>("skeleton_bt");
+    //     auto skeleton_root = std::make_shared<Selector>("skeleton_root");
         
-        auto skeleton_patrol_action = std::make_shared<Action>("patrol", [](Context& context) -> NodeStatus {
-            auto ai = context.GetAI();
-            if (!ai) return NodeStatus::FAILURE;
+    //     auto skeleton_patrol_action = std::make_shared<Action>("patrol", [](Context& context) -> NodeStatus {
+    //         auto ai = context.GetAI();
+    //         if (!ai) return NodeStatus::FAILURE;
             
-            auto monster_ai = std::dynamic_pointer_cast<MonsterBTExecutor>(ai);
-            if (!monster_ai) return NodeStatus::FAILURE;
+    //         auto monster_ai = std::dynamic_pointer_cast<MonsterBTExecutor>(ai);
+    //         if (!monster_ai) return NodeStatus::FAILURE;
             
-            auto monster = monster_ai->GetMonster();
-            if (!monster) return NodeStatus::FAILURE;
+    //         auto monster = monster_ai->GetMonster();
+    //         if (!monster) return NodeStatus::FAILURE;
             
-            auto next_point = monster->GetNextPatrolPoint();
-            auto current_pos = monster->GetPosition();
+    //         auto next_point = monster->GetNextPatrolPoint();
+    //         auto current_pos = monster->GetPosition();
             
-            float dx = next_point.x - current_pos.x;
-            float dz = next_point.z - current_pos.z;
-            float distance = std::sqrt(dx * dx + dz * dz);
+    //         float dx = next_point.x - current_pos.x;
+    //         float dz = next_point.z - current_pos.z;
+    //         float distance = std::sqrt(dx * dx + dz * dz);
             
-            if (distance < 1.0f) {
-                monster->SetPosition(next_point.x, next_point.y, next_point.z, next_point.rotation);
-                return NodeStatus::SUCCESS;
-            }
+    //         if (distance < 1.0f) {
+    //             monster->SetPosition(next_point.x, next_point.y, next_point.z, next_point.rotation);
+    //             return NodeStatus::SUCCESS;
+    //         }
             
-            float move_speed = 45.0f; // Skeleton은 보통 속도 (속도 증가)
-            float move_distance = move_speed * 0.016f;
+    //         float move_speed = 45.0f; // Skeleton은 보통 속도 (속도 증가)
+    //         float move_distance = move_speed * 0.016f;
             
-            if (distance > 0.0f) {
-                float dir_x = dx / distance;
-                float dir_z = dz / distance;
-                float new_x = current_pos.x + dir_x * move_distance;
-                float new_z = current_pos.z + dir_z * move_distance;
-                monster->SetPosition(new_x, current_pos.y, new_z, current_pos.rotation);
-            }
+    //         if (distance > 0.0f) {
+    //             float dir_x = dx / distance;
+    //             float dir_z = dz / distance;
+    //             float new_x = current_pos.x + dir_x * move_distance;
+    //             float new_z = current_pos.z + dir_z * move_distance;
+    //             monster->SetPosition(new_x, current_pos.y, new_z, current_pos.rotation);
+    //         }
             
-            return NodeStatus::RUNNING;
-        });
+    //         return NodeStatus::RUNNING;
+    //     });
         
-        skeleton_root->AddChild(skeleton_patrol_action);
-        skeleton_tree->SetRoot(skeleton_root);
-        bt_engine_->RegisterTree("skeleton_bt", skeleton_tree);
+    //     skeleton_root->AddChild(skeleton_patrol_action);
+    //     skeleton_tree->SetRoot(skeleton_root);
+    //     bt_engine_->RegisterTree("skeleton_bt", skeleton_tree);
         
-        // Zombie Behavior Tree 생성
-        auto zombie_tree = std::make_shared<Tree>("zombie_bt");
-        auto zombie_root = std::make_shared<Selector>("zombie_root");
+    //     // Zombie Behavior Tree 생성
+    //     auto zombie_tree = std::make_shared<Tree>("zombie_bt");
+    //     auto zombie_root = std::make_shared<Selector>("zombie_root");
         
-        auto zombie_patrol_action = std::make_shared<Action>("patrol", [](Context& context) -> NodeStatus {
-            auto ai = context.GetAI();
-            if (!ai) return NodeStatus::FAILURE;
+    //     auto zombie_patrol_action = std::make_shared<Action>("patrol", [](Context& context) -> NodeStatus {
+    //         auto ai = context.GetAI();
+    //         if (!ai) return NodeStatus::FAILURE;
             
-            auto monster_ai = std::dynamic_pointer_cast<MonsterBTExecutor>(ai);
-            if (!monster_ai) return NodeStatus::FAILURE;
+    //         auto monster_ai = std::dynamic_pointer_cast<MonsterBTExecutor>(ai);
+    //         if (!monster_ai) return NodeStatus::FAILURE;
             
-            auto monster = monster_ai->GetMonster();
-            if (!monster) return NodeStatus::FAILURE;
+    //         auto monster = monster_ai->GetMonster();
+    //         if (!monster) return NodeStatus::FAILURE;
             
-            auto next_point = monster->GetNextPatrolPoint();
-            auto current_pos = monster->GetPosition();
+    //         auto next_point = monster->GetNextPatrolPoint();
+    //         auto current_pos = monster->GetPosition();
             
-            float dx = next_point.x - current_pos.x;
-            float dz = next_point.z - current_pos.z;
-            float distance = std::sqrt(dx * dx + dz * dz);
+    //         float dx = next_point.x - current_pos.x;
+    //         float dz = next_point.z - current_pos.z;
+    //         float distance = std::sqrt(dx * dx + dz * dz);
             
-            if (distance < 1.0f) {
-                monster->SetPosition(next_point.x, next_point.y, next_point.z, next_point.rotation);
-                return NodeStatus::SUCCESS;
-            }
+    //         if (distance < 1.0f) {
+    //             monster->SetPosition(next_point.x, next_point.y, next_point.z, next_point.rotation);
+    //             return NodeStatus::SUCCESS;
+    //         }
             
-            float move_speed = 30.0f; // Zombie는 느림 (속도 증가)
-            float move_distance = move_speed * 0.016f;
+    //         float move_speed = 30.0f; // Zombie는 느림 (속도 증가)
+    //         float move_distance = move_speed * 0.016f;
             
-            if (distance > 0.0f) {
-                float dir_x = dx / distance;
-                float dir_z = dz / distance;
-                float new_x = current_pos.x + dir_x * move_distance;
-                float new_z = current_pos.z + dir_z * move_distance;
-                monster->SetPosition(new_x, current_pos.y, new_z, current_pos.rotation);
-            }
+    //         if (distance > 0.0f) {
+    //             float dir_x = dx / distance;
+    //             float dir_z = dz / distance;
+    //             float new_x = current_pos.x + dir_x * move_distance;
+    //             float new_z = current_pos.z + dir_z * move_distance;
+    //             monster->SetPosition(new_x, current_pos.y, new_z, current_pos.rotation);
+    //         }
             
-            return NodeStatus::RUNNING;
-        });
+    //         return NodeStatus::RUNNING;
+    //     });
         
-        zombie_root->AddChild(zombie_patrol_action);
-        zombie_tree->SetRoot(zombie_root);
-        bt_engine_->RegisterTree("zombie_bt", zombie_tree);
+    //     zombie_root->AddChild(zombie_patrol_action);
+    //     zombie_tree->SetRoot(zombie_root);
+    //     bt_engine_->RegisterTree("zombie_bt", zombie_tree);
         
-        // Merchant Behavior Tree 생성
-        auto merchant_tree = std::make_shared<Tree>("merchant_bt");
-        auto merchant_root = std::make_shared<Selector>("merchant_root");
+    //     // Merchant Behavior Tree 생성
+    //     auto merchant_tree = std::make_shared<Tree>("merchant_bt");
+    //     auto merchant_root = std::make_shared<Selector>("merchant_root");
         
-        auto merchant_idle_action = std::make_shared<Action>("idle", [](Context& context) -> NodeStatus {
-            std::cout << "Merchant idle action executed" << std::endl;
-            return NodeStatus::SUCCESS;
-        });
+    //     auto merchant_idle_action = std::make_shared<Action>("idle", [](Context& context) -> NodeStatus {
+    //         std::cout << "Merchant idle action executed" << std::endl;
+    //         return NodeStatus::SUCCESS;
+    //     });
         
-        merchant_root->AddChild(merchant_idle_action);
-        merchant_tree->SetRoot(merchant_root);
-        bt_engine_->RegisterTree("merchant_bt", merchant_tree);
+    //     merchant_root->AddChild(merchant_idle_action);
+    //     merchant_tree->SetRoot(merchant_root);
+    //     bt_engine_->RegisterTree("merchant_bt", merchant_tree);
         
-        // Guard Behavior Tree 생성
-        auto guard_tree = std::make_shared<Tree>("guard_bt");
-        auto guard_root = std::make_shared<Selector>("guard_root");
+    //     // Guard Behavior Tree 생성
+    //     auto guard_tree = std::make_shared<Tree>("guard_bt");
+    //     auto guard_root = std::make_shared<Selector>("guard_root");
         
-        auto guard_patrol_action = std::make_shared<Action>("patrol", [](Context& context) -> NodeStatus {
-            auto ai = context.GetAI();
-            if (!ai) return NodeStatus::FAILURE;
+    //     auto guard_patrol_action = std::make_shared<Action>("patrol", [](Context& context) -> NodeStatus {
+    //         auto ai = context.GetAI();
+    //         if (!ai) return NodeStatus::FAILURE;
             
-            auto monster_ai = std::dynamic_pointer_cast<MonsterBTExecutor>(ai);
-            if (!monster_ai) return NodeStatus::FAILURE;
+    //         auto monster_ai = std::dynamic_pointer_cast<MonsterBTExecutor>(ai);
+    //         if (!monster_ai) return NodeStatus::FAILURE;
             
-            auto monster = monster_ai->GetMonster();
-            if (!monster) return NodeStatus::FAILURE;
+    //         auto monster = monster_ai->GetMonster();
+    //         if (!monster) return NodeStatus::FAILURE;
             
-            auto next_point = monster->GetNextPatrolPoint();
-            auto current_pos = monster->GetPosition();
+    //         auto next_point = monster->GetNextPatrolPoint();
+    //         auto current_pos = monster->GetPosition();
             
-            float dx = next_point.x - current_pos.x;
-            float dz = next_point.z - current_pos.z;
-            float distance = std::sqrt(dx * dx + dz * dz);
+    //         float dx = next_point.x - current_pos.x;
+    //         float dz = next_point.z - current_pos.z;
+    //         float distance = std::sqrt(dx * dx + dz * dz);
             
-            if (distance < 1.0f) {
-                monster->SetPosition(next_point.x, next_point.y, next_point.z, next_point.rotation);
-                return NodeStatus::SUCCESS;
-            }
+    //         if (distance < 1.0f) {
+    //             monster->SetPosition(next_point.x, next_point.y, next_point.z, next_point.rotation);
+    //             return NodeStatus::SUCCESS;
+    //         }
             
-            float move_speed = 35.0f; // Guard는 빠름 (속도 증가)
-            float move_distance = move_speed * 0.016f;
+    //         float move_speed = 35.0f; // Guard는 빠름 (속도 증가)
+    //         float move_distance = move_speed * 0.016f;
             
-            if (distance > 0.0f) {
-                float dir_x = dx / distance;
-                float dir_z = dz / distance;
-                float new_x = current_pos.x + dir_x * move_distance;
-                float new_z = current_pos.z + dir_z * move_distance;
-                monster->SetPosition(new_x, current_pos.y, new_z, current_pos.rotation);
-            }
+    //         if (distance > 0.0f) {
+    //             float dir_x = dx / distance;
+    //             float dir_z = dz / distance;
+    //             float new_x = current_pos.x + dir_x * move_distance;
+    //             float new_z = current_pos.z + dir_z * move_distance;
+    //             monster->SetPosition(new_x, current_pos.y, new_z, current_pos.rotation);
+    //         }
             
-            return NodeStatus::RUNNING;
-        });
+    //         return NodeStatus::RUNNING;
+    //     });
         
-        guard_root->AddChild(guard_patrol_action);
-        guard_tree->SetRoot(guard_root);
-        bt_engine_->RegisterTree("guard_bt", guard_tree);
+    //     guard_root->AddChild(guard_patrol_action);
+    //     guard_tree->SetRoot(guard_root);
+    //     bt_engine_->RegisterTree("guard_bt", guard_tree);
         
-        // Default Behavior Tree 생성
-        auto default_tree = std::make_shared<Tree>("default_bt");
-        auto default_root = std::make_shared<Selector>("default_root");
+    //     // Default Behavior Tree 생성
+    //     auto default_tree = std::make_shared<Tree>("default_bt");
+    //     auto default_root = std::make_shared<Selector>("default_root");
         
-        auto default_idle_action = std::make_shared<Action>("idle", [](Context& context) -> NodeStatus {
-            std::cout << "Default idle action executed" << std::endl;
-            return NodeStatus::SUCCESS;
-        });
+    //     auto default_idle_action = std::make_shared<Action>("idle", [](Context& context) -> NodeStatus {
+    //         std::cout << "Default idle action executed" << std::endl;
+    //         return NodeStatus::SUCCESS;
+    //     });
         
-        default_root->AddChild(default_idle_action);
-        default_tree->SetRoot(default_root);
-        bt_engine_->RegisterTree("default_bt", default_tree);
+    //     default_root->AddChild(default_idle_action);
+    //     default_tree->SetRoot(default_root);
+    //     bt_engine_->RegisterTree("default_bt", default_tree);
         
-        std::cout << "Behavior Tree 초기화 완료 - " << bt_engine_->GetRegisteredTrees() << "개 등록됨" << std::endl;
-    }
+    //     std::cout << "Behavior Tree 초기화 완료 - " << bt_engine_->GetRegisteredTrees() << "개 등록됨" << std::endl;
+    // }
 
 
 } // namespace bt

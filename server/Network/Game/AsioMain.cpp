@@ -12,6 +12,7 @@
 #include "../shared/Logger.h"
 #include "BT/Monster/MonsterTypes.h"
 #include "BT/Monster/MonsterManager.h"
+#include "BT/Monster/MonsterBTs.h"
 #include "Player.h"
 #include "PlayerManager.h"
 
@@ -126,14 +127,14 @@ int main(int argc, char* argv[])
 
     if (bt_engine && monster_manager && player_manager)
     {
-        // 몬스터별 Behavior Tree 등록 (TODO: MonsterBTs 구현 필요)
-        // bt_engine->register_tree("goblin_bt", MonsterBTs::create_goblin_bt());
-        // bt_engine->register_tree("orc_bt", MonsterBTs::create_orc_bt());
-        // bt_engine->register_tree("dragon_bt", MonsterBTs::create_dragon_bt());
-        // bt_engine->register_tree("skeleton_bt", MonsterBTs::create_skeleton_bt());
-        // bt_engine->register_tree("zombie_bt", MonsterBTs::create_zombie_bt());
-        // bt_engine->register_tree("merchant_bt", MonsterBTs::create_merchant_bt());
-        // bt_engine->register_tree("guard_bt", MonsterBTs::create_guard_bt());
+        // 몬스터별 Behavior Tree 등록
+        bt_engine->RegisterTree("goblin_bt", MonsterBTs::CreateGoblinBT());
+        bt_engine->RegisterTree("orc_bt", MonsterBTs::CreateOrcBT());
+        bt_engine->RegisterTree("dragon_bt", MonsterBTs::CreateDragonBT());
+        bt_engine->RegisterTree("skeleton_bt", MonsterBTs::CreateSkeletonBT());
+        bt_engine->RegisterTree("zombie_bt", MonsterBTs::CreateZombieBT());
+        bt_engine->RegisterTree("merchant_bt", MonsterBTs::CreateMerchantBT());
+        bt_engine->RegisterTree("guard_bt", MonsterBTs::CreateGuardBT());
 
         LOG_INFO("Behavior Tree 엔진 초기화 완료");
         LOG_INFO("등록된 BT: " + std::to_string(bt_engine->GetRegisteredTrees()) + "개");

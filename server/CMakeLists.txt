@@ -45,3 +45,6 @@ target_link_options(BT_MMORPG_Server PRIVATE
     $<$<CONFIG:Debug>:-g>
     $<$<CONFIG:Release>:-s>
 )
+
+# 설정 파일을 빌드 디렉토리로 복사
+file(COPY ${CMAKE_SOURCE_DIR}/config/ DESTINATION ${CMAKE_BINARY_DIR}/config/)
