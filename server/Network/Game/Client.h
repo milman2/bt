@@ -59,6 +59,7 @@ namespace bt
         // 패킷 처리
         void HandlePacketSize(const boost::system::error_code& error, size_t bytes_transferred);
         void HandlePacketData(const boost::system::error_code& error, size_t bytes_transferred);
+        void StartSending();
         void HandleSend(const boost::system::error_code& error, size_t bytes_transferred);
 
         // 연결 관리
@@ -80,7 +81,7 @@ namespace bt
         // 패킷 전송 큐
         std::queue<Packet> send_queue_;
         boost::mutex       send_queue_mutex_;
-        bool               sending_;
+        std::atomic<bool>  sending_;
     };
 
 } // namespace bt

@@ -54,7 +54,7 @@ namespace bt
         std::cout << "연결 요청 수신: 소켓 " << socket_fd << std::endl;
 
         // 연결 응답 전송
-        Packet response = PacketUtils::create_connect_response(true, "연결 성공");
+        Packet response = PacketUtils::CreateConnectRes(true, "연결 성공");
         // 실제로는 서버 인스턴스에 접근해서 전송해야 함
     }
 

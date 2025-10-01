@@ -12,7 +12,7 @@ namespace bt
     {
 
         // CONNECT_REQUEST 패킷 생성 (protobuf 기반)
-        Packet create_connect_request(const std::string& client_name, uint32_t version)
+        Packet CreateConnectReq(const std::string& client_name, uint32_t version)
         {
             bt::ConnectReq request;
             request.set_client_name(client_name);
@@ -22,7 +22,7 @@ namespace bt
         }
 
         // CONNECT_RESPONSE 패킷 생성 (protobuf 기반)
-        Packet create_connect_response(bool success, const std::string& message, uint32_t client_id)
+        Packet CreateConnectRes(bool success, const std::string& message, uint32_t client_id)
         {
             bt::ConnectRes response;
             response.set_success(success);
@@ -32,8 +32,31 @@ namespace bt
             return Packet::FromProtobuf(static_cast<uint16_t>(PacketType::CONNECT_RES), response);
         }
 
+        // PLAYER_JOIN_REQUEST 패킷 생성 (protobuf 기반)
+        Packet CreatePlayerJoinReq(const std::string& player_name, float x, float y, float z)
+        {
+            bt::PlayerJoinReq request;
+            request.set_player_name(player_name);
+            request.set_x(x);
+            request.set_y(y);
+            request.set_z(z);
+
+            return Packet::FromProtobuf(static_cast<uint16_t>(PacketType::PLAYER_JOIN_REQ), request);
+        }
+
+        // PLAYER_JOIN_RESPONSE 패킷 생성 (protobuf 기반)
+        Packet CreatePlayerJoinRes(bool success, uint32_t player_id, const std::string& message)
+        {
+            bt::PlayerJoinRes response;
+            response.set_success(success);
+            response.set_player_id(player_id);
+            response.set_message(message);
+
+            return Packet::FromProtobuf(static_cast<uint16_t>(PacketType::PLAYER_JOIN_RES), response);
+        }
+
         // ERROR_MESSAGE 패킷 생성 (protobuf 기반)
-        Packet create_error_message(const std::string& error, uint32_t error_code)
+        Packet CreateErrorMessageEvt(const std::string& error, uint32_t error_code)
         {
             bt::ErrorMessageEvt error_msg;
             error_msg.set_error(error);
@@ -42,8 +65,18 @@ namespace bt
             return Packet::FromProtobuf(static_cast<uint16_t>(PacketType::ERROR_MESSAGE_EVT), error_msg);
         }
 
+        // DISCONNECT_EVENT 패킷 생성 (protobuf 기반)
+        Packet CreateDisconnectEvt(uint32_t client_id, const std::string& reason)
+        {
+            bt::DisconnectEvt disconnect;
+            disconnect.set_client_id(client_id);
+            disconnect.set_reason(reason);
+
+            return Packet::FromProtobuf(static_cast<uint16_t>(PacketType::DISCONNECT_EVT), disconnect);
+        }
+
         // PLAYER_MOVE 패킷 생성 (protobuf 기반)
-        Packet create_player_move(uint32_t player_id, float x, float y, float z, float rotation)
+        Packet CreatePlayerMoveReq(uint32_t player_id, float x, float y, float z, float rotation)
         {
             bt::PlayerMoveReq move;
             move.set_player_id(player_id);
@@ -56,7 +89,7 @@ namespace bt
         }
 
         // PLAYER_ATTACK 패킷 생성 (protobuf 기반)
-        Packet create_player_attack(uint32_t attacker_id, uint32_t target_id, uint32_t damage)
+        Packet CreatePlayerAttackReq(uint32_t attacker_id, uint32_t target_id, uint32_t damage)
         {
             bt::PlayerAttackReq attack;
             attack.set_attacker_id(attacker_id);
@@ -67,16 +100,16 @@ namespace bt
         }
 
         // MONSTER_UPDATE 패킷 생성 (protobuf 기반)
-        Packet create_monster_update(uint32_t           monster_id,
-                                     const std::string& name,
-                                     float              x,
-                                     float              y,
-                                     float              z,
-                                     float              rotation,
-                                     uint32_t           health,
-                                     uint32_t           max_health,
-                                     uint32_t           level,
-                                     uint32_t           type)
+        Packet CreateMonsterUpdateEvt(uint32_t           monster_id,
+                                      const std::string& name,
+                                      float              x,
+                                      float              y,
+                                      float              z,
+                                      float              rotation,
+                                      uint32_t           health,
+                                      uint32_t           max_health,
+                                      uint32_t           level,
+                                      uint32_t           type)
         {
             bt::MonsterUpdateEvt update;
             update.set_monster_id(monster_id);
@@ -94,9 +127,9 @@ namespace bt
         }
 
         // BT_EXECUTE 패킷 생성 (protobuf 기반)
-        Packet create_bt_execute(uint32_t                                  monster_id,
-                                 const std::string&                        bt_name,
-                                 const std::map<std::string, std::string>& parameters)
+        Packet CreateBTExecuteReq(uint32_t                                  monster_id,
+                                  const std::string&                        bt_name,
+                                  const std::map<std::string, std::string>& parameters)
         {
             bt::BTExecuteReq execute;
             execute.set_monster_id(monster_id);
@@ -112,11 +145,11 @@ namespace bt
         }
 
         // BT_RESULT 패킷 생성 (protobuf 기반)
-        Packet create_bt_result(uint32_t                                  monster_id,
-                                const std::string&                        bt_name,
-                                bool                                      success,
-                                const std::string&                        result_message,
-                                const std::map<std::string, std::string>& state_changes)
+        Packet CreateBTResultEvt(uint32_t                                  monster_id,
+                                 const std::string&                        bt_name,
+                                 bool                                      success,
+                                 const std::string&                        result_message,
+                                 const std::map<std::string, std::string>& state_changes)
         {
             bt::BTResultEvt result;
             result.set_monster_id(monster_id);
@@ -134,7 +167,7 @@ namespace bt
         }
 
         // WORLD_STATE_BROADCAST 패킷 생성 (protobuf 기반)
-        Packet create_world_state_broadcast(uint64_t                             timestamp,
+        Packet CreateWorldStateBroadcastEvt(uint64_t                             timestamp,
                                             uint32_t                             player_count,
                                             uint32_t                             monster_count,
                                             const std::vector<bt::PlayerState>&  players,

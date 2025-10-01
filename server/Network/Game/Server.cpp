@@ -15,6 +15,7 @@
 #include "Player.h"
 #include "Player/MessageBasedPlayerManager.h"
 #include "Server.h"
+#include "../../shared/Game/PacketProtocol.h"
 
 namespace bt
 {
@@ -482,17 +483,9 @@ namespace bt
 
     void Server::SendConnectResponse(boost::shared_ptr<Client> client)
     {
-        Packet response;
-        response.type = static_cast<uint32_t>(PacketType::CONNECT_RES);
-        response.size = sizeof(uint32_t) * 2; // type + success
-        response.data.resize(response.size);
-
-        uint32_t success = 1; // 성공
-        memcpy(response.data.data(), &response.type, sizeof(uint32_t));
-        memcpy(response.data.data() + sizeof(uint32_t), &success, sizeof(uint32_t));
-
-        client->SendPacket(response);
-        total_packets_sent_.fetch_add(1);
+        // protobuf 기반 패킷 생성
+        Packet response = PacketUtils::CreateConnectRes(true, "연결 성공", static_cast<uint32_t>(std::hash<void*>{}(client.get())));
+        SendPacket(client, response);
         LogMessage("연결 응답 전송 완료");
     }
 
@@ -546,16 +539,9 @@ namespace bt
 
     void Server::SendErrorResponse(boost::shared_ptr<Client> client, const std::string& error_message)
     {
-        Packet response;
-        response.type = static_cast<uint32_t>(PacketType::ERROR_MESSAGE_EVT);
-        response.size = sizeof(uint32_t) + error_message.length(); // type + message
-        response.data.resize(response.size);
-
-        memcpy(response.data.data(), &response.type, sizeof(uint32_t));
-        memcpy(response.data.data() + sizeof(uint32_t), error_message.c_str(), error_message.length());
-
-        client->SendPacket(response);
-        total_packets_sent_.fetch_add(1);
+        // protobuf 기반 패킷 생성
+        Packet response = PacketUtils::CreateErrorMessageEvt(error_message, 0);
+        SendPacket(client, response);
         LogMessage("에러 응답 전송 완료: " + error_message);
     }
 
@@ -641,30 +627,19 @@ namespace bt
             LogMessage("HandlePlayerJoin 시작: 클라이언트=" + client->GetIPAddress() +
                        ", 패킷 데이터 크기=" + std::to_string(packet.data.size()));
 
-            // 패킷 데이터 파싱
-            const uint8_t* data   = packet.data.data();
-            size_t         offset = 0;
+            // protobuf 메시지로 파싱
+            bt::PlayerJoinReq request;
+            if (!packet.ToProtobuf(request))
+            {
+                LogMessage("PlayerJoinReq 패킷 파싱 실패", true);
+                SendPlayerJoinResponse(client, false, 0);
+                return;
+            }
 
-            // 이름 길이 읽기
-            uint32_t name_len = *reinterpret_cast<const uint32_t*>(data + offset);
-            offset += sizeof(uint32_t);
-
-            LogMessage("이름 길이: " + std::to_string(name_len));
-
-            // 이름 읽기
-            std::string player_name(data + offset, data + offset + name_len);
-            offset += name_len;
-
-            LogMessage("플레이어 이름: " + player_name);
-
-            // 위치 읽기
-            float x = *reinterpret_cast<const float*>(data + offset);
-            offset += sizeof(float);
-            float y = *reinterpret_cast<const float*>(data + offset);
-            offset += sizeof(float);
-            float z = *reinterpret_cast<const float*>(data + offset);
-            offset += sizeof(float);
-            float rotation = *reinterpret_cast<const float*>(data + offset);
+            std::string player_name = request.player_name();
+            float x = request.x();
+            float y = request.y();
+            float z = request.z();
 
             LogMessage("플레이어 참여 요청: " + player_name + " 위치(" + std::to_string(x) + ", " + std::to_string(y) +
                        ", " + std::to_string(z) + ")");
@@ -677,7 +652,7 @@ namespace bt
                 position.x        = x;
                 position.y        = y;
                 position.z        = z;
-                position.rotation = rotation;
+                position.rotation = 0.0f; // 기본 회전값
 
                 auto player = message_based_player_manager_->CreatePlayer(player_name, position);
                 if (player)
@@ -715,22 +690,19 @@ namespace bt
             LogMessage("HandlePlayerMove 시작: 클라이언트=" + client->GetIPAddress() +
                        ", 패킷 데이터 크기=" + std::to_string(packet.data.size()));
 
-            // 패킷 데이터 파싱
-            const uint8_t* data   = packet.data.data();
-            size_t         offset = 0;
+            // protobuf 메시지로 파싱
+            bt::PlayerMoveReq request;
+            if (!packet.ToProtobuf(request))
+            {
+                LogMessage("PlayerMoveReq 패킷 파싱 실패", true);
+                return;
+            }
 
-            // 플레이어 ID 읽기
-            uint32_t player_id = *reinterpret_cast<const uint32_t*>(data + offset);
-            offset += sizeof(uint32_t);
-
-            // 위치 읽기
-            float x = *reinterpret_cast<const float*>(data + offset);
-            offset += sizeof(float);
-            float y = *reinterpret_cast<const float*>(data + offset);
-            offset += sizeof(float);
-            float z = *reinterpret_cast<const float*>(data + offset);
-            offset += sizeof(float);
-            float rotation = *reinterpret_cast<const float*>(data + offset);
+            uint32_t player_id = request.player_id();
+            float x = request.x();
+            float y = request.y();
+            float z = request.z();
+            float rotation = request.rotation();
 
             LogMessage("플레이어 이동 요청: ID=" + std::to_string(player_id) + " 위치(" + std::to_string(x) + ", " +
                        std::to_string(y) + ", " + std::to_string(z) + ")");
@@ -763,24 +735,15 @@ namespace bt
 
     void Server::SendPlayerJoinResponse(boost::shared_ptr<Client> client, bool success, uint32_t player_id)
     {
-        LogMessage("PLAYER_JOIN_RESPONSE 전송 시작: success=" + std::to_string(success) +
+        LogMessage("PLAYER_JOIN_RES 전송 시작: success=" + std::to_string(success) +
                    ", player_id=" + std::to_string(player_id));
 
-        std::vector<uint8_t> data;
-
-        // 성공 여부
-        data.insert(
-            data.end(), reinterpret_cast<uint8_t*>(&success), reinterpret_cast<uint8_t*>(&success) + sizeof(bool));
-
-        // 플레이어 ID
-        data.insert(data.end(),
-                    reinterpret_cast<uint8_t*>(&player_id),
-                    reinterpret_cast<uint8_t*>(&player_id) + sizeof(uint32_t));
-
-        Packet response(static_cast<uint16_t>(PacketType::PLAYER_JOIN_RES), data);
+        // protobuf 기반 패킷 생성
+        Packet response = PacketUtils::CreatePlayerJoinRes(success, player_id, 
+                                                           success ? "플레이어 참여 성공" : "플레이어 참여 실패");
         SendPacket(client, response);
 
-        LogMessage("PLAYER_JOIN_RESPONSE 전송 완료");
+        LogMessage("PLAYER_JOIN_RES 전송 완료");
     }
 
     void Server::RegisterHttpHandlers()

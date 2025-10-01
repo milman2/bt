@@ -50,27 +50,16 @@ namespace bt
             return;
         }
 
-        try
+        // 전송 큐에 패킷 추가
         {
-            // 패킷 크기 + 타입 + 데이터 전송
-            uint32_t             total_size = sizeof(uint32_t) + sizeof(uint16_t) + packet.data.size();
-            std::vector<uint8_t> send_buffer(total_size);
-
-            // 패킷 크기
-            *reinterpret_cast<uint32_t*>(send_buffer.data()) = total_size;
-            // 패킷 타입
-            *reinterpret_cast<uint16_t*>(send_buffer.data() + sizeof(uint32_t)) = packet.type;
-            // 패킷 데이터
-            std::copy(
-                packet.data.begin(), packet.data.end(), send_buffer.begin() + sizeof(uint32_t) + sizeof(uint16_t));
-
-            // 동기 전송
-            boost::asio::write(socket_, boost::asio::buffer(send_buffer));
+            boost::lock_guard<boost::mutex> lock(send_queue_mutex_);
+            send_queue_.push(packet);
         }
-        catch (const std::exception& e)
+
+        // 현재 전송 중이 아니면 전송 시작
+        if (!sending_.load())
         {
-            // 전송 실패 시 연결 종료
-            HandleDisconnect();
+            StartSending();
         }
     }
 
@@ -141,6 +130,52 @@ namespace bt
         }
     }
 
+    void Client::StartSending()
+    {
+        if (!connected_.load())
+        {
+            return;
+        }
+
+        boost::lock_guard<boost::mutex> lock(send_queue_mutex_);
+        if (send_queue_.empty())
+        {
+            sending_ = false;
+            return;
+        }
+
+        sending_ = true;
+        const Packet& packet = send_queue_.front();
+
+        try
+        {
+            // 패킷 크기 + 타입 + 데이터 전송
+            uint32_t             total_size = sizeof(uint32_t) + sizeof(uint16_t) + packet.data.size();
+            std::vector<uint8_t> send_buffer(total_size);
+
+            // 패킷 크기
+            *reinterpret_cast<uint32_t*>(send_buffer.data()) = total_size;
+            // 패킷 타입
+            *reinterpret_cast<uint16_t*>(send_buffer.data() + sizeof(uint32_t)) = packet.type;
+            // 패킷 데이터
+            std::copy(
+                packet.data.begin(), packet.data.end(), send_buffer.begin() + sizeof(uint32_t) + sizeof(uint16_t));
+
+            // 비동기 전송
+            boost::asio::async_write(socket_,
+                                    boost::asio::buffer(send_buffer),
+                                    [this](const boost::system::error_code& error, size_t bytes_transferred)
+                                    {
+                                        HandleSend(error, bytes_transferred);
+                                    });
+        }
+        catch (const std::exception& e)
+        {
+            // 전송 실패 시 연결 종료
+            HandleDisconnect();
+        }
+    }
+
     void Client::HandleSend(const boost::system::error_code& error, size_t /* bytes_transferred */)
     {
         if (!error)
@@ -151,7 +186,7 @@ namespace bt
             if (!send_queue_.empty())
             {
                 // 다음 패킷 전송
-                // 실제 구현에서는 여기서 비동기 전송 처리
+                StartSending();
             }
             else
             {
