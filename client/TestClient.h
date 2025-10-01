@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <chrono>
+#include <fstream>
 #include <functional>
 #include <iostream>
 #include <memory>
@@ -240,6 +241,14 @@ namespace bt
 
         // 로깅
         boost::mutex log_mutex_;
+        std::ofstream packet_log_file_;
+        
+        /**
+         * @brief 패킷 로그 기록
+         * @param packet_type 패킷 타입
+         * @param is_sent true면 송신, false면 수신
+         */
+        void LogPacket(uint16_t packet_type, bool is_sent = false);
     };
 
 } // namespace bt

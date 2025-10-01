@@ -37,6 +37,13 @@ namespace bt
         // 비동기 네트워크 버퍼 초기화
         read_buffer_.resize(4096);
         write_buffer_.resize(4096);
+        
+        // 패킷 로그 파일 초기화
+        packet_log_file_.open("packet.log", std::ios::out | std::ios::app);
+        if (packet_log_file_.is_open()) {
+            packet_log_file_ << "\n=== Client Started: " << config.player_name << " ===" << std::endl;
+            packet_log_file_.flush();
+        }
 
         // 순찰점 생성 (스폰 위치 주변)
         CreatePatrolPoints();
@@ -67,6 +74,13 @@ namespace bt
         StopAsyncNetwork();
         Disconnect();
         ShutdownMessageQueue();
+        
+        // 패킷 로그 파일 닫기
+        if (packet_log_file_.is_open()) {
+            packet_log_file_ << "=== Client Stopped ===" << std::endl;
+            packet_log_file_.close();
+        }
+        
         LogMessage("AI 플레이어 클라이언트 소멸됨");
     }
 
@@ -641,6 +655,9 @@ namespace bt
     {
         if (!connected_.load() || !socket_ || !socket_->is_open())
             return false;
+
+        // 패킷 로그 기록
+        LogPacket(packet.type, true); // true = 송신
 
         // 비동기 네트워크가 활성화된 경우 비동기 전송 사용
         if (network_running_.load())
@@ -1339,6 +1356,9 @@ namespace bt
                     uint16_t packet_type;
                     receive_buffer_.ExtractData(&packet_type, 2);
 
+                    // 패킷 로그 기록
+                    LogPacket(packet_type, false); // false = 수신
+
                     // 패킷 데이터 읽기
                     size_t               data_size = packet_size - 2; // 패킷 타입 제외
                     std::vector<uint8_t> packet_data(data_size);
@@ -1640,6 +1660,42 @@ namespace bt
         }
 
         return false;
+    }
+
+    void TestClient::LogPacket(uint16_t packet_type, bool is_sent)
+    {
+        if (!packet_log_file_.is_open()) {
+            return;
+        }
+        
+        // 현재 시간 가져오기
+        auto now = std::chrono::system_clock::now();
+        auto time_t = std::chrono::system_clock::to_time_t(now);
+        auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+            now.time_since_epoch()) % 1000;
+        
+        // 패킷 타입 이름 가져오기
+        std::string packet_name = "UNKNOWN";
+        PacketType ptype = static_cast<PacketType>(packet_type);
+        switch (ptype) {
+            case PacketType::PLAYER_JOIN: packet_name = "PLAYER_JOIN"; break;
+            case PacketType::PLAYER_JOIN_RESPONSE: packet_name = "PLAYER_JOIN_RESPONSE"; break;
+            case PacketType::PLAYER_MOVE: packet_name = "PLAYER_MOVE"; break;
+            case PacketType::PLAYER_ATTACK: packet_name = "PLAYER_ATTACK"; break;
+            case PacketType::PLAYER_STATS: packet_name = "PLAYER_STATS"; break;
+            case PacketType::MONSTER_UPDATE: packet_name = "MONSTER_UPDATE"; break;
+            case PacketType::WORLD_STATE_BROADCAST: packet_name = "WORLD_STATE_BROADCAST"; break;
+            case PacketType::DISCONNECT: packet_name = "DISCONNECT"; break;
+            default: packet_name = "UNKNOWN(" + std::to_string(packet_type) + ")"; break;
+        }
+        
+        // 로그 기록
+        std::lock_guard<boost::mutex> lock(log_mutex_);
+        packet_log_file_ << std::put_time(std::localtime(&time_t), "%Y-%m-%d %H:%M:%S");
+        packet_log_file_ << "." << std::setfill('0') << std::setw(3) << ms.count();
+        packet_log_file_ << " [" << (is_sent ? "SEND" : "RECV") << "] ";
+        packet_log_file_ << packet_name << " (type=" << packet_type << ")" << std::endl;
+        packet_log_file_.flush();
     }
 
 } // namespace bt
