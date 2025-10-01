@@ -146,6 +146,11 @@ namespace bt
         
         // 환경 인지 (메시지 핸들러에서 접근 가능하도록 public)
         void UpdateEnvironmentInfo();
+        
+        // BT에서 사용할 텔레포트 관련 메서드들
+        float GetTeleportTimer() const { return teleport_timer_; }
+        void ResetTeleportTimer() { teleport_timer_ = 0.0f; }
+        bool ExecuteTeleportToNearest();
 
     private:
         // 네트워킹
@@ -167,6 +172,10 @@ namespace bt
         void UpdateCombat(float delta_time);
         void FindNearestMonster();
         bool IsInRange(float x, float z, float range) const;
+        
+        // 텔레포트 기능
+        void TeleportToNearestMonster();
+        void UpdateTeleportTimer(float delta_time);
         
         // 환경 인지
         const EnvironmentInfo& GetEnvironmentInfo() const { return environment_info_; }
@@ -197,6 +206,10 @@ namespace bt
         uint32_t                                        player_id_;
         uint32_t                                        target_id_;
         int                                             health_;
+        
+        // 텔레포트 상태
+        float                                           teleport_timer_;
+        static constexpr float                          TELEPORT_TIMEOUT = 3.0f;  // 3초
         int                                             max_health_;
         float                                           last_attack_time_;
         float                                           attack_cooldown_;

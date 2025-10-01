@@ -17,7 +17,7 @@ namespace bt
           spawn_position_(config.spawn_x, 0, config.spawn_z), current_patrol_index_(0), 
           player_id_(0), target_id_(0), health_(config.health), 
           max_health_(config.health), last_attack_time_(0.0f), attack_cooldown_(2.0f),
-          last_monster_update_(0.0f), network_running_(false)
+          teleport_timer_(0.0f), last_monster_update_(0.0f), network_running_(false)
     {
         socket_ = boost::make_shared<boost::asio::ip::tcp::socket>(io_context_);
         
@@ -483,6 +483,9 @@ namespace bt
             return;
         }
 
+        // 텔레포트 타이머 업데이트 (BT에서 사용)
+        UpdateTeleportTimer(delta_time);
+
         // 가장 가까운 몬스터 찾기 (BT에서 사용할 수 있도록 타겟 설정)
         FindNearestMonster();
     }
@@ -520,6 +523,7 @@ namespace bt
         if (nearest_id != 0)
         {
             target_id_ = nearest_id;
+            teleport_timer_ = 0.0f;  // 타겟을 찾았으면 텔레포트 타이머 리셋
             std::cout << "FindNearestMonster: 타겟 설정됨 ID=" << nearest_id 
                       << ", 거리=" << nearest_distance << std::endl;
         }
@@ -1332,6 +1336,187 @@ namespace bt
             std::cout << "월드 상태 업데이트: 타임스탬프 " << timestamp 
                       << ", 플레이어 " << players.size() << "명, 몬스터 " << monsters.size() << "마리" << std::endl;
         }
+    }
+
+    void AsioTestClient::UpdateTeleportTimer(float delta_time)
+    {
+        // 타겟이 없거나 탐지 범위 밖에 있을 때만 타이머 증가
+        if (!HasTarget() || GetDistanceToTarget() > config_.detection_range)
+        {
+            teleport_timer_ += delta_time;
+            
+            if (verbose_ && static_cast<int>(teleport_timer_ * 10) % 10 == 0) // 1초마다 로그
+            {
+                LogMessage("텔레포트 타이머: " + std::to_string(teleport_timer_) + "초 / " + std::to_string(TELEPORT_TIMEOUT) + "초");
+            }
+            
+            // BT에서 텔레포트를 처리하므로 여기서는 자동 실행하지 않음
+        }
+        else
+        {
+            // 타겟이 탐지 범위 내에 있으면 타이머 리셋
+            if (teleport_timer_ > 0.0f)
+            {
+                LogMessage("타겟 발견으로 텔레포트 타이머 리셋");
+                teleport_timer_ = 0.0f;
+            }
+        }
+    }
+
+    void AsioTestClient::TeleportToNearestMonster()
+    {
+        if (monsters_.empty())
+        {
+            if (verbose_)
+            {
+                LogMessage("텔레포트 실패: 몬스터가 없음");
+            }
+            return;
+        }
+
+        // 가장 가까운 몬스터 찾기 (탐지 범위 무시)
+        uint32_t nearest_id = 0;
+        float nearest_distance = std::numeric_limits<float>::max();
+        PlayerPosition nearest_position;
+
+        for (const auto& [id, pos] : monsters_)
+        {
+            float dx = pos.x - position_.x;
+            float dz = pos.z - position_.z;
+            float distance = std::sqrt(dx * dx + dz * dz);
+
+            if (distance < nearest_distance)
+            {
+                nearest_distance = distance;
+                nearest_id = id;
+                nearest_position = pos;
+            }
+        }
+
+        if (nearest_id != 0)
+        {
+            // 몬스터 근처로 텔레포트 (공격 범위 내로)
+            float teleport_distance = config_.attack_range * 0.8f;  // 공격 범위의 80% 거리로
+            float dx = nearest_position.x - position_.x;
+            float dz = nearest_position.z - position_.z;
+            float current_distance = std::sqrt(dx * dx + dz * dz);
+
+            if (current_distance > teleport_distance)
+            {
+                // 몬스터 방향으로 텔레포트
+                float normalized_dx = dx / current_distance;
+                float normalized_dz = dz / current_distance;
+                
+                float new_x = nearest_position.x - normalized_dx * teleport_distance;
+                float new_z = nearest_position.z - normalized_dz * teleport_distance;
+                
+                // 텔레포트 실행
+                MoveTo(new_x, position_.y, new_z);
+                
+                // 타겟 설정
+                target_id_ = nearest_id;
+                
+                if (verbose_)
+                {
+                    LogMessage("텔레포트 완료: 몬스터 ID=" + std::to_string(nearest_id) + 
+                              " 근처로 이동 (거리: " + std::to_string(teleport_distance) + ")");
+                }
+            }
+            else
+            {
+                // 이미 가까이 있으면 타겟만 설정
+                target_id_ = nearest_id;
+                
+                if (verbose_)
+                {
+                    LogMessage("텔레포트 불필요: 이미 몬스터 ID=" + std::to_string(nearest_id) + 
+                              " 근처에 있음 (거리: " + std::to_string(current_distance) + ")");
+                }
+            }
+        }
+    }
+
+    bool AsioTestClient::ExecuteTeleportToNearest()
+    {
+        if (monsters_.empty())
+        {
+            if (verbose_)
+            {
+                LogMessage("BT 텔레포트 실패: 몬스터가 없음");
+            }
+            return false;
+        }
+
+        // 가장 가까운 몬스터 찾기 (탐지 범위 무시)
+        uint32_t nearest_id = 0;
+        float nearest_distance = std::numeric_limits<float>::max();
+        PlayerPosition nearest_position;
+
+        for (const auto& [id, pos] : monsters_)
+        {
+            float dx = pos.x - position_.x;
+            float dz = pos.z - position_.z;
+            float distance = std::sqrt(dx * dx + dz * dz);
+
+            if (distance < nearest_distance)
+            {
+                nearest_distance = distance;
+                nearest_id = id;
+                nearest_position = pos;
+            }
+        }
+
+        if (nearest_id != 0)
+        {
+            // 몬스터 근처로 텔레포트 (공격 범위 내로)
+            float teleport_distance = config_.attack_range * 0.8f;  // 공격 범위의 80% 거리로
+            float dx = nearest_position.x - position_.x;
+            float dz = nearest_position.z - position_.z;
+            float current_distance = std::sqrt(dx * dx + dz * dz);
+
+            if (current_distance > teleport_distance)
+            {
+                // 몬스터 방향으로 텔레포트
+                float normalized_dx = dx / current_distance;
+                float normalized_dz = dz / current_distance;
+                
+                float new_x = nearest_position.x - normalized_dx * teleport_distance;
+                float new_z = nearest_position.z - normalized_dz * teleport_distance;
+                
+                // 텔레포트 실행
+                bool move_success = MoveTo(new_x, position_.y, new_z);
+                
+                // 타겟 설정
+                target_id_ = nearest_id;
+                
+                // 텔레포트 타이머 리셋
+                teleport_timer_ = 0.0f;
+                
+                if (verbose_)
+                {
+                    LogMessage("BT 텔레포트 완료: 몬스터 ID=" + std::to_string(nearest_id) + 
+                              " 근처로 이동 (거리: " + std::to_string(teleport_distance) + ")");
+                }
+                
+                return move_success;
+            }
+            else
+            {
+                // 이미 가까이 있으면 타겟만 설정
+                target_id_ = nearest_id;
+                teleport_timer_ = 0.0f;
+                
+                if (verbose_)
+                {
+                    LogMessage("BT 텔레포트 불필요: 이미 몬스터 ID=" + std::to_string(nearest_id) + 
+                              " 근처에 있음 (거리: " + std::to_string(current_distance) + ")");
+                }
+                
+                return true;
+            }
+        }
+        
+        return false;
     }
 
 } // namespace bt

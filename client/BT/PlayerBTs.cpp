@@ -5,9 +5,11 @@
 #include "Action/Patrol.h"
 #include "Action/Attack.h"
 #include "Action/Chase.h"
+#include "Action/TeleportToNearest.h"
 #include "Condition/HasTarget.h"
 #include "Condition/InAttackRange.h"
 #include "Condition/InDetectionRange.h"
+#include "Condition/TeleportTimer.h"
 
 #include <iostream>
 
@@ -30,17 +32,23 @@ namespace bt
         chase_sequence->AddChild(std::make_shared<bt::condition::InDetectionRange>("in_detection_range"));
         chase_sequence->AddChild(std::make_shared<bt::action::Chase>("chase"));
         
+        // 텔레포트 시퀀스 (3초 동안 몬스터를 찾지 못하면 텔레포트)
+        auto teleport_sequence = std::make_shared<bt::Sequence>("teleport_sequence");
+        teleport_sequence->AddChild(std::make_shared<bt::condition::TeleportTimer>("teleport_timer"));
+        teleport_sequence->AddChild(std::make_shared<bt::action::TeleportToNearest>("teleport_to_nearest"));
+        
         // 순찰 액션
         auto patrol_action = std::make_shared<bt::action::Patrol>("patrol");
         
         root->AddChild(attack_sequence);
         root->AddChild(chase_sequence);
+        root->AddChild(teleport_sequence);
         root->AddChild(patrol_action);
         
         auto tree = std::make_shared<Tree>("player_bt");
         tree->SetRoot(root);
         
-        std::cout << "기본 플레이어 Behavior Tree 생성 완료" << std::endl;
+        std::cout << "기본 플레이어 Behavior Tree 생성 완료 (텔레포트 기능 포함)" << std::endl;
         return tree;
     }
 
@@ -60,17 +68,23 @@ namespace bt
         chase_sequence->AddChild(std::make_shared<bt::condition::InDetectionRange>("in_detection_range"));
         chase_sequence->AddChild(std::make_shared<bt::action::Chase>("warrior_chase"));
         
+        // 텔레포트 시퀀스 (3초 동안 몬스터를 찾지 못하면 텔레포트)
+        auto teleport_sequence = std::make_shared<bt::Sequence>("warrior_teleport_sequence");
+        teleport_sequence->AddChild(std::make_shared<bt::condition::TeleportTimer>("warrior_teleport_timer"));
+        teleport_sequence->AddChild(std::make_shared<bt::action::TeleportToNearest>("warrior_teleport_to_nearest"));
+        
         // 순찰 액션
         auto patrol_action = std::make_shared<bt::action::Patrol>("warrior_patrol");
         
         root->AddChild(attack_sequence);
         root->AddChild(chase_sequence);
+        root->AddChild(teleport_sequence);
         root->AddChild(patrol_action);
         
         auto tree = std::make_shared<Tree>("warrior_bt");
         tree->SetRoot(root);
         
-        std::cout << "전사 플레이어 Behavior Tree 생성 완료" << std::endl;
+        std::cout << "전사 플레이어 Behavior Tree 생성 완료 (텔레포트 기능 포함)" << std::endl;
         return tree;
     }
 
@@ -90,17 +104,23 @@ namespace bt
         chase_sequence->AddChild(std::make_shared<bt::condition::InDetectionRange>("in_detection_range"));
         chase_sequence->AddChild(std::make_shared<bt::action::Chase>("archer_chase"));
         
+        // 텔레포트 시퀀스 (3초 동안 몬스터를 찾지 못하면 텔레포트)
+        auto teleport_sequence = std::make_shared<bt::Sequence>("archer_teleport_sequence");
+        teleport_sequence->AddChild(std::make_shared<bt::condition::TeleportTimer>("archer_teleport_timer"));
+        teleport_sequence->AddChild(std::make_shared<bt::action::TeleportToNearest>("archer_teleport_to_nearest"));
+        
         // 순찰 액션
         auto patrol_action = std::make_shared<bt::action::Patrol>("archer_patrol");
         
         root->AddChild(attack_sequence);
         root->AddChild(chase_sequence);
+        root->AddChild(teleport_sequence);
         root->AddChild(patrol_action);
         
         auto tree = std::make_shared<Tree>("archer_bt");
         tree->SetRoot(root);
         
-        std::cout << "궁수 플레이어 Behavior Tree 생성 완료" << std::endl;
+        std::cout << "궁수 플레이어 Behavior Tree 생성 완료 (텔레포트 기능 포함)" << std::endl;
         return tree;
     }
 
@@ -120,17 +140,23 @@ namespace bt
         chase_sequence->AddChild(std::make_shared<bt::condition::InDetectionRange>("in_detection_range"));
         chase_sequence->AddChild(std::make_shared<bt::action::Chase>("mage_chase"));
         
+        // 텔레포트 시퀀스 (3초 동안 몬스터를 찾지 못하면 텔레포트)
+        auto teleport_sequence = std::make_shared<bt::Sequence>("mage_teleport_sequence");
+        teleport_sequence->AddChild(std::make_shared<bt::condition::TeleportTimer>("mage_teleport_timer"));
+        teleport_sequence->AddChild(std::make_shared<bt::action::TeleportToNearest>("mage_teleport_to_nearest"));
+        
         // 순찰 액션
         auto patrol_action = std::make_shared<bt::action::Patrol>("mage_patrol");
         
         root->AddChild(attack_sequence);
         root->AddChild(chase_sequence);
+        root->AddChild(teleport_sequence);
         root->AddChild(patrol_action);
         
         auto tree = std::make_shared<Tree>("mage_bt");
         tree->SetRoot(root);
         
-        std::cout << "마법사 플레이어 Behavior Tree 생성 완료" << std::endl;
+        std::cout << "마법사 플레이어 Behavior Tree 생성 완료 (텔레포트 기능 포함)" << std::endl;
         return tree;
     }
 

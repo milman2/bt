@@ -11,7 +11,14 @@ set(CLIENT_MESSAGE_QUEUE_SOURCES
 # BT 노드 관련 파일들 명시적 추가
 set(CLIENT_BT_SOURCES
     "BT/Action/Chase.cpp"
+    "BT/Action/Attack.cpp"
+    "BT/Action/Patrol.cpp"
+    "BT/Action/TeleportToNearest.cpp"
+    "BT/Condition/HasTarget.cpp"
+    "BT/Condition/InAttackRange.cpp"
     "BT/Condition/InDetectionRange.cpp"
+    "BT/Condition/TeleportTimer.cpp"
+    "BT/PlayerBTs.cpp"
 )
 
 # 소스 파일 목록에 추가

@@ -44,6 +44,7 @@ namespace bt
     {
         std::string                 host            = "0.0.0.0";
         uint16_t                    port            = 7000;
+        uint16_t                    http_websocket_port = 8080;  // HTTP/WebSocket 서버 포트 (고정)
         size_t                      max_clients     = 1000;
         size_t                      worker_threads  = 4;
         bool                        debug_mode      = false;

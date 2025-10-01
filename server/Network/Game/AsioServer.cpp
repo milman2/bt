@@ -36,8 +36,8 @@ namespace bt
         message_based_monster_manager_ = std::make_shared<MessageBasedMonsterManager>();
         message_based_player_manager_ = std::make_shared<MessageBasedPlayerManager>();
 
-        // 통합 HTTP+WebSocket 서버 초기화 (포트 8080 사용)
-        http_websocket_server_ = std::make_shared<BeastHttpWebSocketServer>(8080, io_context_);
+        // 통합 HTTP+WebSocket 서버 초기화 (설정에서 포트 가져오기)
+        http_websocket_server_ = std::make_shared<BeastHttpWebSocketServer>(config_.http_websocket_port, io_context_);
         
         // HTTP 핸들러 등록
         RegisterHttpHandlers();
@@ -146,7 +146,7 @@ namespace bt
             StartBroadcastLoop();
 
             LogMessage("서버가 성공적으로 시작되었습니다. 포트: " + std::to_string(config_.port));
-            LogMessage("통합 HTTP+WebSocket 서버: http://localhost:8080 (대시보드 + API + WebSocket)");
+            LogMessage("통합 HTTP+WebSocket 서버: http://localhost:" + std::to_string(config_.http_websocket_port) + " (대시보드 + API + WebSocket)");
 
             return true;
         }
@@ -834,7 +834,7 @@ namespace bt
         let reconnectInterval = null;
 
         function connect() {
-            ws = new WebSocket('ws://localhost:8080/');
+            ws = new WebSocket('ws://localhost:' + config_.http_websocket_port + '/');
             
             ws.onopen = function() {
                 console.log('WebSocket 연결됨');
