@@ -22,14 +22,14 @@ export const WebSocketProvider = ({ children, onConnectionChange, onServerStatsU
       return;
     }
 
-    const wsUrl = 'ws://localhost:8082';
+    const wsUrl = 'ws://localhost:8080';
     console.log('WebSocket 연결 시도:', wsUrl);
-    console.log('연결 대상 IP: localhost, 포트: 8082');
+    console.log('연결 대상 IP: localhost, 포트: 8080');
     
     const ws = new WebSocket(wsUrl);
     
     ws.onopen = () => {
-      console.log('WebSocket 연결 성공 - IP: localhost, 포트: 8082');
+      console.log('WebSocket 연결 성공 - IP: localhost, 포트: 8080');
       setConnectionStatus('connected');
       setSocket(ws);
       onConnectionChange?.('connected');
@@ -132,7 +132,7 @@ export const WebSocketProvider = ({ children, onConnectionChange, onServerStatsU
     };
 
     ws.onclose = (event) => {
-      console.log('WebSocket 연결 종료 - IP: localhost, 포트: 8082');
+      console.log('WebSocket 연결 종료 - IP: localhost, 포트: 8080');
       console.log('연결 종료 코드:', event.code, '이유:', event.reason);
       setConnectionStatus('disconnected');
       setSocket(null);
@@ -148,7 +148,7 @@ export const WebSocketProvider = ({ children, onConnectionChange, onServerStatsU
     };
 
     ws.onerror = (error) => {
-      console.error('WebSocket 연결 오류 - IP: localhost, 포트: 8082');
+      console.error('WebSocket 연결 오류 - IP: localhost, 포트: 8080');
       console.error('오류 상세:', error);
       setConnectionStatus('error');
       onConnectionChange?.('error');

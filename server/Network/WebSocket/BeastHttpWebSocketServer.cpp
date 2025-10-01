@@ -142,7 +142,10 @@ namespace bt
             return false;
 
         running_.store(true);
-        server_thread_ = std::thread([this]() { do_accept(); });
+        server_thread_ = std::thread([this]() { 
+            do_accept();
+            ioc_.run();
+        });
 
         std::cout << "Beast HTTP+WebSocket 서버가 포트 " << port_ << "에서 시작되었습니다." << std::endl;
         return true;
@@ -199,9 +202,25 @@ namespace bt
             return;
         }
 
+        // 소켓이 유효한지 확인
+        if (!socket.is_open())
+        {
+            std::cerr << "Socket is not open after accept" << std::endl;
+            // 다음 연결을 받기 위해 계속 대기
+            if (running_.load())
+            {
+                do_accept();
+            }
+            return;
+        }
+
+        std::cout << "새로운 연결 수락됨" << std::endl;
+
         // HTTP 요청 읽기
         auto req = std::make_shared<http_request>();
         auto buffer = std::make_shared<boost::beast::flat_buffer>();
+        
+        std::cout << "HTTP 요청 읽기 시작..." << std::endl;
         
         boost::beast::http::async_read(
             socket,
@@ -211,17 +230,33 @@ namespace bt
             {
                 if (ec)
                 {
-                    std::cerr << "HTTP read error: " << ec.message() << std::endl;
+                    // 연결이 끊어진 경우는 정상적인 상황이므로 로그 레벨을 낮춤
+                    if (ec == boost::beast::http::error::end_of_stream || 
+                        ec == boost::asio::error::connection_reset ||
+                        ec == boost::asio::error::connection_aborted ||
+                        ec == boost::asio::error::bad_descriptor)
+                    {
+                        // 정상적인 연결 종료
+                        std::cout << "정상적인 연결 종료: " << ec.message() << std::endl;
+                        return;
+                    }
+                    std::cerr << "HTTP read error: " << ec.message() << " (code: " << ec.value() << ")" << std::endl;
                     return;
                 }
+
+                std::cout << "HTTP 요청 읽기 완료: " << bytes_transferred << " bytes" << std::endl;
+                std::cout << "요청 메서드: " << req->method_string() << std::endl;
+                std::cout << "요청 경로: " << req->target() << std::endl;
 
                 // WebSocket 업그레이드 요청인지 확인
                 if (boost::beast::websocket::is_upgrade(*req))
                 {
+                    std::cout << "WebSocket 업그레이드 요청 감지" << std::endl;
                     handle_websocket_upgrade(std::move(socket), *req);
                 }
                 else
                 {
+                    std::cout << "일반 HTTP 요청 처리" << std::endl;
                     handle_http_request(std::move(socket), *req);
                 }
             });
@@ -241,17 +276,25 @@ namespace bt
         std::string path = std::string(req.target());
         std::string method = std::string(req.method_string());
 
+        std::cout << "HTTP 요청 처리: " << method << " " << path << std::endl;
+
         // 핸들러 찾기
         std::string handler_key = method + ":" + path;
         std::lock_guard<std::mutex> lock(handlers_mutex_);
         
+        std::cout << "핸들러 키: " << handler_key << std::endl;
+        std::cout << "등록된 핸들러 수: " << http_handlers_.size() << std::endl;
+        
         auto it = http_handlers_.find(handler_key);
         if (it != http_handlers_.end())
         {
+            std::cout << "핸들러 찾음, 실행 중..." << std::endl;
             it->second(req, res);
+            std::cout << "핸들러 실행 완료" << std::endl;
         }
         else
         {
+            std::cout << "핸들러를 찾을 수 없음, 404 응답 생성" << std::endl;
             // 기본 404 응답
             res = create_error_response(boost::beast::http::status::not_found, "Not Found");
         }
