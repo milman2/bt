@@ -28,7 +28,7 @@ namespace bt
             // 새 노드가 필요하면 추가
             if (!tail_ || tail_->GetFreeSize() == 0)
             {
-                AddNewNode();
+                _AddNewNode();
             }
 
             // 현재 노드에 데이터 추가
@@ -92,7 +92,7 @@ namespace bt
             total_data_size_ -= total_extracted;
 
             // 빈 노드들 정리
-            CleanupEmptyNodes();
+            _CleanupEmptyNodes();
         }
 
         return total_extracted;
@@ -195,7 +195,7 @@ namespace bt
         std::cout << "  Has enough data for 4 bytes: " << (HasEnoughData(4) ? "yes" : "no") << std::endl;
     }
 
-    void ReceiveBuffer::AddNewNode()
+    void ReceiveBuffer::_AddNewNode()
     {
         auto new_node = ReceiveBufferPool::Instance().Alloc();
 
@@ -214,7 +214,7 @@ namespace bt
         }
     }
 
-    void ReceiveBuffer::CleanupEmptyNodes()
+    void ReceiveBuffer::_CleanupEmptyNodes()
     {
         // 읽기 위치가 첫 번째 노드를 넘어서면 빈 노드들 제거
         while (head_ && read_offset_ >= head_->used_size)
@@ -235,7 +235,7 @@ namespace bt
         }
     }
 
-    size_t ReceiveBuffer::ReadFromNode(std::shared_ptr<BufferNode> node, size_t offset, void* dest, size_t size) const
+    size_t ReceiveBuffer::_ReadFromNode(std::shared_ptr<BufferNode> node, size_t offset, void* dest, size_t size) const
     {
         if (!node || offset >= node->used_size || size == 0)
         {

@@ -1,11 +1,11 @@
 #pragma once
 
 #include <array>
+#include <cstdint>
+#include <cstring>
 #include <memory>
 #include <mutex>
 #include <vector>
-
-#include <cstdint>
 
 namespace bt
 {
@@ -66,8 +66,14 @@ namespace bt
     public:
         static ReceiveBufferPool& Instance()
         {
-            static ReceiveBufferPool instance;
-            return instance;
+            static ReceiveBufferPool* instance = nullptr;
+            if (instance == nullptr) {
+                std::lock_guard<std::mutex> lock(instance_mutex_);
+                if (instance == nullptr) {
+                    instance = new ReceiveBufferPool();
+                }
+            }
+            return *instance;
         }
 
         /**
@@ -130,6 +136,7 @@ namespace bt
 
         static constexpr size_t MAX_POOL_SIZE = 100; // 최대 풀 크기
 
+        static std::mutex                        instance_mutex_; // 인스턴스 생성용 뮤텍스
         mutable std::mutex                       mutex_;
         std::vector<std::shared_ptr<BufferNode>> free_nodes_;
     };

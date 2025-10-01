@@ -111,12 +111,12 @@ namespace bt
         /**
          * @brief 새 노드 추가
          */
-        void AddNewNode();
+        void _AddNewNode();
 
         /**
          * @brief 빈 노드들 정리
          */
-        void CleanupEmptyNodes();
+        void _CleanupEmptyNodes();
 
         /**
          * @brief 노드에서 데이터 읽기
@@ -126,7 +126,7 @@ namespace bt
          * @param size 읽을 크기
          * @return 실제로 읽은 크기
          */
-        size_t ReadFromNode(std::shared_ptr<BufferNode> node, size_t offset, void* dest, size_t size) const;
+        size_t _ReadFromNode(std::shared_ptr<BufferNode> node, size_t offset, void* dest, size_t size) const;
     };
 
 } // namespace bt
