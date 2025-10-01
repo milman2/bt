@@ -99,6 +99,18 @@ namespace bt
             return Packet::FromProtobuf(static_cast<uint16_t>(PacketType::PLAYER_ATTACK_REQ), attack);
         }
 
+        // COMBAT_RESULT 패킷 생성 (protobuf 기반)
+        Packet CreateCombatResultEvt(uint32_t attacker_id, uint32_t target_id, uint32_t damage, uint32_t remaining_health)
+        {
+            bt::CombatResultEvt result;
+            result.set_attacker_id(attacker_id);
+            result.set_target_id(target_id);
+            result.set_damage(damage);
+            result.set_remaining_health(remaining_health);
+
+            return Packet::FromProtobuf(static_cast<uint16_t>(PacketType::COMBAT_RESULT_EVT), result);
+        }
+
         // MONSTER_UPDATE 패킷 생성 (protobuf 기반)
         Packet CreateMonsterUpdateEvt(uint32_t           monster_id,
                                       const std::string& name,

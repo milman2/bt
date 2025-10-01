@@ -58,6 +58,7 @@ namespace bt
         PLAYER_MOVE_REQ = 0x2000, // 클라이언트 → 서버: 플레이어 이동 요청
         PLAYER_ATTACK_REQ = 0x2001, // 클라이언트 → 서버: 플레이어 공격 요청
         PLAYER_STATS_EVT = 0x0203, // 서버 → 클라이언트: 플레이어 상태 업데이트
+        COMBAT_RESULT_EVT = 0x2002, // 서버 → 클라이언트: 전투 결과
 
         // 몬스터 관련
         MONSTER_UPDATE_EVT = 0x3000, // 서버 → 클라이언트: 몬스터 상태 업데이트
@@ -99,6 +100,9 @@ namespace bt
 
         // 플레이어 공격 패킷 생성 (protobuf 기반)
         Packet CreatePlayerAttackReq(uint32_t attacker_id, uint32_t target_id, uint32_t damage);
+
+        // 전투 결과 패킷 생성 (protobuf 기반)
+        Packet CreateCombatResultEvt(uint32_t attacker_id, uint32_t target_id, uint32_t damage, uint32_t remaining_health);
 
         // 몬스터 업데이트 패킷 생성 (protobuf 기반)
         Packet CreateMonsterUpdateEvt(uint32_t           monster_id,

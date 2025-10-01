@@ -47,6 +47,13 @@ message PlayerAttackReq {
     uint32 damage = 3;
 }
 
+message CombatResultEvt {
+    uint32 attacker_id = 1;
+    uint32 target_id = 2;
+    uint32 damage = 3;
+    uint32 remaining_health = 4;
+}
+
 message PlayerStatsEvt {
     uint32 player_id = 1;
     uint32 health = 2;

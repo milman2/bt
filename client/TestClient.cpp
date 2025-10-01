@@ -802,80 +802,32 @@ namespace bt
 
     Packet TestClient::CreateConnectRequest()
     {
-        std::vector<uint8_t> data;
-        data.insert(data.end(), config_.player_name.begin(), config_.player_name.end());
-        return Packet(static_cast<uint16_t>(PacketType::CONNECT_REQ), data);
+        // protobuf 기반 패킷 생성
+        return PacketUtils::CreateConnectReq(config_.player_name, 1);
     }
 
     Packet TestClient::CreatePlayerJoinPacket(const std::string& name)
     {
-        std::vector<uint8_t> data;
-
-        // 이름 길이 + 이름
-        uint32_t name_len = name.length();
-        data.insert(data.end(),
-                    reinterpret_cast<uint8_t*>(&name_len),
-                    reinterpret_cast<uint8_t*>(&name_len) + sizeof(uint32_t));
-        data.insert(data.end(), name.begin(), name.end());
-
-        // 위치
-        data.insert(data.end(),
-                    reinterpret_cast<uint8_t*>(&position_.x),
-                    reinterpret_cast<uint8_t*>(&position_.x) + sizeof(float));
-        data.insert(data.end(),
-                    reinterpret_cast<uint8_t*>(&position_.y),
-                    reinterpret_cast<uint8_t*>(&position_.y) + sizeof(float));
-        data.insert(data.end(),
-                    reinterpret_cast<uint8_t*>(&position_.z),
-                    reinterpret_cast<uint8_t*>(&position_.z) + sizeof(float));
-        data.insert(data.end(),
-                    reinterpret_cast<uint8_t*>(&position_.rotation),
-                    reinterpret_cast<uint8_t*>(&position_.rotation) + sizeof(float));
-
-        return Packet(static_cast<uint16_t>(PacketType::PLAYER_JOIN_REQ), data);
+        // protobuf 기반 패킷 생성
+        return PacketUtils::CreatePlayerJoinReq(name, position_.x, position_.y, position_.z);
     }
 
     Packet TestClient::CreatePlayerMovePacket(float x, float y, float z)
     {
-        std::vector<uint8_t> data;
-
-        data.insert(data.end(),
-                    reinterpret_cast<uint8_t*>(&player_id_),
-                    reinterpret_cast<uint8_t*>(&player_id_) + sizeof(uint32_t));
-        data.insert(data.end(), reinterpret_cast<uint8_t*>(&x), reinterpret_cast<uint8_t*>(&x) + sizeof(float));
-        data.insert(data.end(), reinterpret_cast<uint8_t*>(&y), reinterpret_cast<uint8_t*>(&y) + sizeof(float));
-        data.insert(data.end(), reinterpret_cast<uint8_t*>(&z), reinterpret_cast<uint8_t*>(&z) + sizeof(float));
-        data.insert(data.end(),
-                    reinterpret_cast<uint8_t*>(&position_.rotation),
-                    reinterpret_cast<uint8_t*>(&position_.rotation) + sizeof(float));
-
-        return Packet(static_cast<uint16_t>(PacketType::PLAYER_MOVE_REQ), data);
+        // protobuf 기반 패킷 생성
+        return PacketUtils::CreatePlayerMoveReq(player_id_, x, y, z, position_.rotation);
     }
 
     Packet TestClient::CreatePlayerAttackPacket(uint32_t target_id)
     {
-        std::vector<uint8_t> data;
-
-        data.insert(data.end(),
-                    reinterpret_cast<uint8_t*>(&player_id_),
-                    reinterpret_cast<uint8_t*>(&player_id_) + sizeof(uint32_t));
-        data.insert(data.end(),
-                    reinterpret_cast<uint8_t*>(&target_id),
-                    reinterpret_cast<uint8_t*>(&target_id) + sizeof(uint32_t));
-        data.insert(data.end(),
-                    reinterpret_cast<uint8_t*>(&config_.damage),
-                    reinterpret_cast<uint8_t*>(&config_.damage) + sizeof(uint32_t));
-
-        return Packet(static_cast<uint16_t>(PacketType::PLAYER_ATTACK_REQ), data);
+        // protobuf 기반 패킷 생성
+        return PacketUtils::CreatePlayerAttackReq(player_id_, target_id, config_.damage);
     }
 
     Packet TestClient::CreateDisconnectPacket()
     {
-        std::vector<uint8_t> data;
-        data.insert(data.end(),
-                    reinterpret_cast<uint8_t*>(&player_id_),
-                    reinterpret_cast<uint8_t*>(&player_id_) + sizeof(uint32_t));
-        return Packet(static_cast<uint16_t>(PacketType::DISCONNECT_EVT), data);
+        // protobuf 기반 패킷 생성
+        return PacketUtils::CreateDisconnectEvt(player_id_, "Client disconnect");
     }
 
     bool TestClient::ParsePacketResponse(const Packet& packet)
@@ -887,40 +839,50 @@ namespace bt
         {
             case PacketType::CONNECT_RES:
             {
-                if (packet.data.size() >= sizeof(uint8_t) + sizeof(uint32_t))
+                bt::ConnectRes response;
+                if (packet.ToProtobuf(response))
                 {
-                    uint8_t success = packet.data[0];
-                    if (success)
+                    if (response.success())
                     {
-                        player_id_ = *reinterpret_cast<const uint32_t*>(packet.data.data() + 1);
+                        player_id_ = response.client_id();
                         LogMessage("서버 연결 응답 성공, 플레이어 ID: " + std::to_string(player_id_));
                         return true;
                     }
                     else
                     {
-                        LogMessage("서버 연결 응답 실패", true);
+                        LogMessage("서버 연결 응답 실패: " + response.message(), true);
                         return false;
                     }
+                }
+                else
+                {
+                    LogMessage("CONNECT_RES 패킷 파싱 실패", true);
+                    return false;
                 }
             }
             break;
 
             case PacketType::PLAYER_JOIN_RES:
             {
-                if (packet.data.size() >= sizeof(bool) + sizeof(uint32_t))
+                bt::PlayerJoinRes response;
+                if (packet.ToProtobuf(response))
                 {
-                    bool success = *reinterpret_cast<const bool*>(packet.data.data());
-                    if (success)
+                    if (response.success())
                     {
-                        player_id_ = *reinterpret_cast<const uint32_t*>(packet.data.data() + sizeof(bool));
+                        player_id_ = response.player_id();
                         LogMessage("게임 참여 성공, 플레이어 ID: " + std::to_string(player_id_));
                         return true;
                     }
                     else
                     {
-                        LogMessage("게임 참여 실패", true);
+                        LogMessage("게임 참여 실패: " + response.message(), true);
                         return false;
                     }
+                }
+                else
+                {
+                    LogMessage("PLAYER_JOIN_RES 패킷 파싱 실패", true);
+                    return false;
                 }
             }
             break;
@@ -933,7 +895,7 @@ namespace bt
                 HandlePlayerUpdate(packet);
                 break;
 
-            case PacketType::BT_RESULT_EVT:
+            case PacketType::COMBAT_RESULT_EVT:
                 HandleCombatResult(packet);
                 break;
 
@@ -966,35 +928,15 @@ namespace bt
 
     void TestClient::HandleMonsterUpdate(const Packet& packet)
     {
-        if (packet.data.size() < sizeof(uint32_t))
-            return;
-
-        uint32_t monster_count = *reinterpret_cast<const uint32_t*>(packet.data.data());
-        monsters_.clear();
-
-        size_t offset = sizeof(uint32_t);
-        for (uint32_t i = 0; i < monster_count && offset < packet.data.size(); ++i)
+        bt::MonsterUpdateEvt update;
+        if (!packet.ToProtobuf(update))
         {
-            if (offset + sizeof(uint32_t) > packet.data.size())
-                break;
-
-            uint32_t id = *reinterpret_cast<const uint32_t*>(packet.data.data() + offset);
-            offset += sizeof(uint32_t);
-
-            if (offset + sizeof(float) * 4 > packet.data.size())
-                break;
-
-            float x = *reinterpret_cast<const float*>(packet.data.data() + offset);
-            offset += sizeof(float);
-            float y = *reinterpret_cast<const float*>(packet.data.data() + offset);
-            offset += sizeof(float);
-            float z = *reinterpret_cast<const float*>(packet.data.data() + offset);
-            offset += sizeof(float);
-            float rotation = *reinterpret_cast<const float*>(packet.data.data() + offset);
-            offset += sizeof(float);
-
-            monsters_[id] = PlayerPosition(x, y, z, rotation);
+            LogMessage("MONSTER_UPDATE_EVT 패킷 파싱 실패", true);
+            return;
         }
+
+        // 단일 몬스터 업데이트
+        monsters_[update.monster_id()] = PlayerPosition(update.x(), update.y(), update.z(), update.rotation());
 
         last_monster_update_ =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch())
@@ -1009,25 +951,24 @@ namespace bt
 
     void TestClient::HandleCombatResult(const Packet& packet)
     {
-        if (packet.data.size() < sizeof(uint32_t) * 4)
+        bt::CombatResultEvt result;
+        if (!packet.ToProtobuf(result))
+        {
+            LogMessage("COMBAT_RESULT_EVT 패킷 파싱 실패", true);
             return;
+        }
 
-        uint32_t attacker_id      = *reinterpret_cast<const uint32_t*>(packet.data.data());
-        uint32_t target_id        = *reinterpret_cast<const uint32_t*>(packet.data.data() + sizeof(uint32_t));
-        uint32_t damage           = *reinterpret_cast<const uint32_t*>(packet.data.data() + sizeof(uint32_t) * 2);
-        uint32_t remaining_health = *reinterpret_cast<const uint32_t*>(packet.data.data() + sizeof(uint32_t) * 3);
-
-        if (attacker_id == player_id_)
+        if (result.attacker_id() == player_id_)
         {
             if (verbose_)
             {
-                LogMessage("공격 결과: 타겟 " + std::to_string(target_id) + ", 데미지 " + std::to_string(damage) +
-                           ", 남은 체력 " + std::to_string(remaining_health));
+                LogMessage("공격 결과: 타겟 " + std::to_string(result.target_id()) + ", 데미지 " + std::to_string(result.damage()) +
+                           ", 남은 체력 " + std::to_string(result.remaining_health()));
             }
         }
-        else if (target_id == player_id_)
+        else if (result.target_id() == player_id_)
         {
-            health_ = remaining_health;
+            health_ = result.remaining_health();
             if (health_ <= 0)
             {
                 LogMessage("플레이어 사망!", true);
@@ -1216,54 +1157,18 @@ namespace bt
 
     void TestClient::HandleWorldStateBroadcast(const Packet& packet)
     {
-        if (packet.data.size() < sizeof(uint64_t) + sizeof(uint32_t) * 2)
-            return;
-
-        size_t offset = 0;
-
-        // 타임스탬프 읽기
-        uint64_t timestamp = *reinterpret_cast<const uint64_t*>(packet.data.data() + offset);
-        offset += sizeof(uint64_t);
-
-        // 플레이어 수 읽기
-        uint32_t player_count = *reinterpret_cast<const uint32_t*>(packet.data.data() + offset);
-        offset += sizeof(uint32_t);
-
-        // 몬스터 수 읽기
-        uint32_t monster_count = *reinterpret_cast<const uint32_t*>(packet.data.data() + offset);
-        offset += sizeof(uint32_t);
-
-        // 플레이어 데이터 읽기 (현재는 사용하지 않음)
-        for (uint32_t i = 0; i < player_count && offset < packet.data.size(); ++i)
+        bt::WorldStateBroadcastEvt broadcast;
+        if (!packet.ToProtobuf(broadcast))
         {
-            if (offset + sizeof(uint32_t) + sizeof(float) * 4 > packet.data.size())
-                break;
-
-            offset += sizeof(uint32_t);  // id
-            offset += sizeof(float) * 3; // x, y, z
-            offset += sizeof(uint32_t);  // health
+            LogMessage("WORLD_STATE_BROADCAST_EVT 패킷 파싱 실패", true);
+            return;
         }
 
         // 몬스터 데이터 읽기
         monsters_.clear();
-        for (uint32_t i = 0; i < monster_count && offset < packet.data.size(); ++i)
+        for (const auto& monster : broadcast.monsters())
         {
-            if (offset + sizeof(uint32_t) + sizeof(float) * 4 > packet.data.size())
-                break;
-
-            uint32_t id = *reinterpret_cast<const uint32_t*>(packet.data.data() + offset);
-            offset += sizeof(uint32_t);
-
-            float x = *reinterpret_cast<const float*>(packet.data.data() + offset);
-            offset += sizeof(float);
-            float y = *reinterpret_cast<const float*>(packet.data.data() + offset);
-            offset += sizeof(float);
-            float z = *reinterpret_cast<const float*>(packet.data.data() + offset);
-            offset += sizeof(float);
-            uint32_t health = *reinterpret_cast<const uint32_t*>(packet.data.data() + offset);
-            offset += sizeof(uint32_t);
-
-            monsters_[id] = PlayerPosition(x, y, z, 0.0f);
+            monsters_[monster.id()] = PlayerPosition(monster.x(), monster.y(), monster.z(), monster.rotation());
         }
 
         last_monster_update_ =
@@ -1278,8 +1183,8 @@ namespace bt
         {
             if (verbose_)
             {
-                LogMessage("월드 상태 업데이트: 플레이어 " + std::to_string(player_count) + "명, 몬스터 " +
-                           std::to_string(monster_count) + "마리");
+                LogMessage("월드 상태 업데이트: 플레이어 " + std::to_string(broadcast.player_count()) + "명, 몬스터 " +
+                           std::to_string(broadcast.monster_count()) + "마리");
             }
             last_log_time = now;
         }
@@ -1287,26 +1192,45 @@ namespace bt
 
     void TestClient::HandleDisconnectEvent(const Packet& packet)
     {
-        LogMessage("서버에서 연결 종료 알림 수신", true);
+        bt::DisconnectEvt disconnect;
+        if (packet.ToProtobuf(disconnect))
+        {
+            LogMessage("서버에서 연결 종료 알림 수신: " + disconnect.reason(), true);
+        }
+        else
+        {
+            LogMessage("서버에서 연결 종료 알림 수신", true);
+        }
         connected_.store(false);
         // 연결 종료 처리 로직 추가 가능
     }
 
     void TestClient::HandleBTExecuteRequest(const Packet& packet)
     {
-        LogMessage("서버에서 BT 실행 요청 수신");
-        // BT 실행 요청 처리 로직 추가 가능
-        // 예: 특정 BT 노드 실행, AI 상태 변경 등
+        bt::BTExecuteReq request;
+        if (packet.ToProtobuf(request))
+        {
+            LogMessage("서버에서 BT 실행 요청 수신: " + request.bt_name());
+            // BT 실행 요청 처리 로직 추가 가능
+            // 예: 특정 BT 노드 실행, AI 상태 변경 등
+        }
+        else
+        {
+            LogMessage("서버에서 BT 실행 요청 수신 (파싱 실패)", true);
+        }
     }
 
     void TestClient::HandleErrorMessage(const Packet& packet)
     {
-        if (packet.data.empty())
-            return;
-
-        // 오류 메시지 파싱 (간단한 문자열로 가정)
-        std::string error_message(packet.data.begin(), packet.data.end());
-        LogMessage("서버 오류 메시지: " + error_message, true);
+        bt::ErrorMessageEvt error;
+        if (packet.ToProtobuf(error))
+        {
+            LogMessage("서버 오류 메시지: " + error.error() + " (코드: " + std::to_string(error.error_code()) + ")", true);
+        }
+        else
+        {
+            LogMessage("서버 오류 메시지 (파싱 실패)", true);
+        }
     }
 
     // 비동기 네트워크 메서드들
@@ -1727,6 +1651,7 @@ namespace bt
                case PacketType::MONSTER_UPDATE_EVT: packet_name = "MONSTER_UPDATE_EVT"; break;
                case PacketType::BT_EXECUTE_REQ: packet_name = "BT_EXECUTE_REQ"; break;
                case PacketType::BT_RESULT_EVT: packet_name = "BT_RESULT_EVT"; break;
+               case PacketType::COMBAT_RESULT_EVT: packet_name = "COMBAT_RESULT_EVT"; break;
                case PacketType::WORLD_STATE_BROADCAST_EVT: packet_name = "WORLD_STATE_BROADCAST_EVT"; break;
                case PacketType::ERROR_MESSAGE_EVT: packet_name = "ERROR_MESSAGE_EVT"; break;
                default: packet_name = "UNKNOWN(" + std::to_string(packet_type) + ")"; break;
