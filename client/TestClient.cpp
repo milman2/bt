@@ -680,74 +680,106 @@ namespace bt
             // 소켓을 논블로킹 모드로 설정
             socket_->non_blocking(true);
             
-            // 패킷 크기 읽기
-            uint32_t packet_size;
-            boost::system::error_code ec;
-            size_t bytes_read = socket_->read_some(boost::asio::buffer(&packet_size, sizeof(packet_size)), ec);
-            
-            if (ec == boost::asio::error::would_block || ec == boost::asio::error::try_again)
+            // 수신 버퍼에 데이터가 있는지 확인
+            if (receive_buffer_.size() < sizeof(uint32_t))
             {
-                // 데이터가 없으면 false 반환
-                return false;
-            }
-            
-            if (bytes_read != sizeof(packet_size))
-            {
-                // 완전한 패킷 크기를 읽지 못한 경우
-                return false;
-            }
-
-            if (ec)
-            {
-                LogMessage("패킷 크기 수신 오류: " + ec.message(), true);
+                // 패킷 크기를 읽기 위해 버퍼 확장
+                size_t needed = sizeof(uint32_t) - receive_buffer_.size();
+                receive_buffer_.resize(sizeof(uint32_t));
                 
-                // 서버 연결이 끊어진 경우 클라이언트 종료
-                if (ec == boost::asio::error::eof || 
-                    ec == boost::asio::error::connection_reset ||
-                    ec == boost::asio::error::broken_pipe)
-                {
-                    LogMessage("서버 연결이 끊어졌습니다. 클라이언트를 종료합니다.", true);
-                    connected_.store(false);
-                    ai_running_.store(false);
-                }
-                return false;
-            }
-            
-            if (packet_size > sizeof(uint32_t))
-            {
-                // 패킷 데이터 읽기 (크기 - 헤더 크기)
-                size_t data_size = packet_size - sizeof(uint32_t);
-                std::vector<uint8_t> buffer(data_size);
-                
-                bytes_read = socket_->read_some(boost::asio::buffer(buffer), ec);
+                boost::system::error_code ec;
+                size_t bytes_read = socket_->read_some(
+                    boost::asio::buffer(receive_buffer_.data() + receive_buffer_.size() - needed, needed), ec);
                 
                 if (ec == boost::asio::error::would_block || ec == boost::asio::error::try_again)
                 {
                     // 데이터가 없으면 false 반환
+                    receive_buffer_.resize(receive_buffer_.size() - needed);
                     return false;
                 }
                 
                 if (ec)
                 {
-                    LogMessage("패킷 데이터 수신 오류: " + ec.message(), true);
-                    return false;
-                }
-                
-                if (bytes_read != data_size)
-                {
-                    // 완전한 패킷 데이터를 읽지 못한 경우
-                    return false;
-                }
-                
-                if (bytes_read == data_size && data_size >= sizeof(uint16_t))
-                {
-                    // 타입 읽기
-                    uint16_t type = *reinterpret_cast<uint16_t*>(buffer.data());
+                    LogMessage("패킷 크기 수신 오류: " + ec.message(), true);
                     
-                    // 데이터 읽기
-                    std::vector<uint8_t> data(buffer.begin() + sizeof(uint16_t), buffer.end());
+                    // 서버 연결이 끊어진 경우 클라이언트 종료
+                    if (ec == boost::asio::error::eof || 
+                        ec == boost::asio::error::connection_reset ||
+                        ec == boost::asio::error::broken_pipe)
+                    {
+                        LogMessage("서버 연결이 끊어졌습니다. 클라이언트를 종료합니다.", true);
+                        connected_.store(false);
+                        ai_running_.store(false);
+                    }
+                    return false;
+                }
+                
+                if (bytes_read != needed)
+                {
+                    // 완전한 패킷 크기를 읽지 못한 경우, 읽은 만큼만 유지
+                    receive_buffer_.resize(receive_buffer_.size() - needed + bytes_read);
+                    return false;
+                }
+            }
+            
+            // 패킷 크기 파싱
+            uint32_t packet_size = *reinterpret_cast<uint32_t*>(receive_buffer_.data());
+
+            if (packet_size > sizeof(uint32_t))
+            {
+                // 전체 패킷 크기 계산
+                size_t total_packet_size = packet_size;
+                size_t data_size = packet_size - sizeof(uint32_t);
+                
+                // 수신 버퍼에 전체 패킷이 있는지 확인
+                if (receive_buffer_.size() < total_packet_size)
+                {
+                    // 부족한 데이터 읽기
+                    size_t needed = total_packet_size - receive_buffer_.size();
+                    size_t old_size = receive_buffer_.size();
+                    receive_buffer_.resize(total_packet_size);
+                    
+                    boost::system::error_code ec;
+                    size_t bytes_read = socket_->read_some(
+                        boost::asio::buffer(receive_buffer_.data() + old_size, needed), ec);
+                    
+                    if (ec == boost::asio::error::would_block || ec == boost::asio::error::try_again)
+                    {
+                        // 데이터가 없으면 false 반환
+                        receive_buffer_.resize(old_size);
+                        return false;
+                    }
+                    
+                    if (ec)
+                    {
+                        LogMessage("패킷 데이터 수신 오류: " + ec.message(), true);
+                        receive_buffer_.resize(old_size);
+                        return false;
+                    }
+                    
+                    if (bytes_read != needed)
+                    {
+                        // 완전한 패킷 데이터를 읽지 못한 경우, 읽은 만큼만 유지
+                        receive_buffer_.resize(old_size + bytes_read);
+                        return false;
+                    }
+                }
+                
+                // 전체 패킷이 수신되었으므로 파싱
+                if (data_size >= sizeof(uint16_t))
+                {
+                    // 타입 읽기 (패킷 크기 다음 위치)
+                    uint16_t type = *reinterpret_cast<uint16_t*>(receive_buffer_.data() + sizeof(uint32_t));
+                    
+                    // 데이터 읽기 (타입 다음 위치)
+                    std::vector<uint8_t> data(receive_buffer_.begin() + sizeof(uint32_t) + sizeof(uint16_t), 
+                                             receive_buffer_.begin() + total_packet_size);
                     
                     packet = Packet(type, data);
+                    
+                    // 처리된 패킷을 버퍼에서 제거
+                    receive_buffer_.erase(receive_buffer_.begin(), receive_buffer_.begin() + total_packet_size);
+                    
                     return true;
                 }
             }
