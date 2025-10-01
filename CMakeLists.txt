@@ -126,7 +126,7 @@ if(BUILD_TESTS)
 endif()
 
 # 설치 설정
-install(TARGETS BT_MMORPG_Server AsioTestClient
+install(TARGETS BT_MMORPG_Server TestClient
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib

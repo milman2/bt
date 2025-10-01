@@ -1,6 +1,6 @@
 #include "Attack.h"
 #include "../../../BT/Context.h"
-#include "../../AsioTestClient.h"
+#include "../../TestClient.h"
 
 #include <iostream>
 
@@ -18,7 +18,7 @@ namespace action
             return NodeStatus::FAILURE;
         }
 
-        auto client_executor = std::dynamic_pointer_cast<AsioTestClient>(ai);
+        auto client_executor = std::dynamic_pointer_cast<TestClient>(ai);
         if (!client_executor)
         {
             return NodeStatus::FAILURE;

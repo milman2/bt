@@ -6,12 +6,12 @@
 #include <cmath>
 #include <random>
 
-#include "AsioTestClient.h"
+#include "TestClient.h"
 
 namespace bt
 {
 
-    AsioTestClient::AsioTestClient(const PlayerAIConfig& config)
+    TestClient::TestClient(const PlayerAIConfig& config)
         : config_(config), connected_(false), verbose_(false), ai_running_(false),
           bt_name_("player_bt"), position_(config.spawn_x, 0, config.spawn_z), 
           spawn_position_(config.spawn_x, 0, config.spawn_z), current_patrol_index_(0), 
@@ -39,7 +39,7 @@ namespace bt
         LogMessage("AI 플레이어 클라이언트 생성됨: " + config_.player_name);
     }
     
-    void AsioTestClient::SetContextAI()
+    void TestClient::SetContextAI()
     {
         // shared_from_this() 사용을 위해 context에 AI 설정
         context_.SetAI(shared_from_this());
@@ -48,7 +48,7 @@ namespace bt
         InitializeMessageQueue();
     }
 
-    AsioTestClient::~AsioTestClient()
+    TestClient::~TestClient()
     {
         StopAI();
         StopAsyncNetwork();
@@ -57,7 +57,7 @@ namespace bt
         LogMessage("AI 플레이어 클라이언트 소멸됨");
     }
 
-    void AsioTestClient::CreatePatrolPoints()
+    void TestClient::CreatePatrolPoints()
     {
         patrol_points_.clear();
         
@@ -75,7 +75,7 @@ namespace bt
         LogMessage("순찰점 " + std::to_string(patrol_points_.size()) + "개 생성 완료");
     }
 
-    bool AsioTestClient::Connect()
+    bool TestClient::Connect()
     {
         if (connected_.load())
         {
@@ -107,7 +107,7 @@ namespace bt
         return true;
     }
 
-    void AsioTestClient::Disconnect()
+    void TestClient::Disconnect()
     {
         if (!connected_.load())
             return;
@@ -133,7 +133,7 @@ namespace bt
         LogMessage("서버 연결 종료");
     }
 
-    bool AsioTestClient::CreateConnection()
+    bool TestClient::CreateConnection()
     {
         try
         {
@@ -167,7 +167,7 @@ namespace bt
         }
     }
 
-    void AsioTestClient::CloseConnection()
+    void TestClient::CloseConnection()
     {
         if (socket_ && socket_->is_open())
         {
@@ -182,7 +182,7 @@ namespace bt
         }
     }
 
-    bool AsioTestClient::JoinGame()
+    bool TestClient::JoinGame()
     {
         Packet join_packet = CreatePlayerJoinPacket(config_.player_name);
         LogMessage("PLAYER_JOIN 패킷 생성 완료, 타입: " + std::to_string(join_packet.type) + ", 크기: " + std::to_string(join_packet.size));
@@ -220,7 +220,7 @@ namespace bt
             return false;
     }
 
-    bool AsioTestClient::MoveTo(float x, float y, float z)
+    bool TestClient::MoveTo(float x, float y, float z)
     {
         // 위치 업데이트 (연결 상태와 관계없이)
         position_.x = x;
@@ -258,7 +258,7 @@ namespace bt
         return true; // 로컬 위치 업데이트는 항상 성공
     }
 
-    bool AsioTestClient::AttackTarget(uint32_t target_id)
+    bool TestClient::AttackTarget(uint32_t target_id)
     {
         if (!IsAlive())
             return false;
@@ -303,7 +303,7 @@ namespace bt
         return true; // 로컬 공격은 항상 성공
     }
 
-    bool AsioTestClient::Respawn()
+    bool TestClient::Respawn()
     {
         // 부활 처리 (연결 상태와 관계없이)
         position_ = spawn_position_;
@@ -319,7 +319,7 @@ namespace bt
         return false;
     }
 
-    void AsioTestClient::StartAI()
+    void TestClient::StartAI()
     {
         if (ai_running_.load())
             return;
@@ -328,7 +328,7 @@ namespace bt
         LogMessage("AI 시작: " + config_.player_name);
     }
 
-    void AsioTestClient::StopAI()
+    void TestClient::StopAI()
     {
         if (!ai_running_.load())
             return;
@@ -337,7 +337,7 @@ namespace bt
         LogMessage("AI 중지: " + config_.player_name);
     }
 
-    void AsioTestClient::UpdateAI(float delta_time)
+    void TestClient::UpdateAI(float delta_time)
     {
         if (!ai_running_.load())
             return;
@@ -389,47 +389,47 @@ namespace bt
     }
 
     // IExecutor 인터페이스 구현
-    void AsioTestClient::Update(float delta_time)
+    void TestClient::Update(float delta_time)
     {
         UpdateAI(delta_time);
     }
 
-    void AsioTestClient::SetBehaviorTree(std::shared_ptr<Tree> tree)
+    void TestClient::SetBehaviorTree(std::shared_ptr<Tree> tree)
     {
         behavior_tree_ = tree;
     }
 
-    std::shared_ptr<Tree> AsioTestClient::GetBehaviorTree() const
+    std::shared_ptr<Tree> TestClient::GetBehaviorTree() const
     {
         return behavior_tree_;
     }
 
-    Context& AsioTestClient::GetContext()
+    Context& TestClient::GetContext()
     {
         return context_;
     }
 
-    const Context& AsioTestClient::GetContext() const
+    const Context& TestClient::GetContext() const
     {
         return context_;
     }
 
-    const std::string& AsioTestClient::GetName() const
+    const std::string& TestClient::GetName() const
     {
         return config_.player_name;
     }
 
-    const std::string& AsioTestClient::GetBTName() const
+    const std::string& TestClient::GetBTName() const
     {
         return bt_name_;
     }
 
-    bool AsioTestClient::IsActive() const
+    bool TestClient::IsActive() const
     {
         return ai_running_.load();
     }
 
-    void AsioTestClient::SetActive(bool active)
+    void TestClient::SetActive(bool active)
     {
         if (active)
         {
@@ -441,7 +441,7 @@ namespace bt
         }
     }
 
-    void AsioTestClient::UpdatePatrol(float delta_time)
+    void TestClient::UpdatePatrol(float delta_time)
     {
         if (HasTarget() || !IsAlive())
             return;
@@ -481,7 +481,7 @@ namespace bt
         }
     }
 
-    void AsioTestClient::UpdateCombat(float delta_time)
+    void TestClient::UpdateCombat(float delta_time)
     {
         if (!IsAlive())
         {
@@ -497,7 +497,7 @@ namespace bt
         FindNearestMonster();
     }
 
-    void AsioTestClient::FindNearestMonster()
+    void TestClient::FindNearestMonster()
     {
         if (monsters_.empty())
         {
@@ -540,7 +540,7 @@ namespace bt
         }
     }
 
-    float AsioTestClient::GetDistanceToTarget() const
+    float TestClient::GetDistanceToTarget() const
     {
         if (!HasTarget())
             return std::numeric_limits<float>::max();
@@ -554,7 +554,7 @@ namespace bt
         return std::sqrt(dx * dx + dz * dz);
     }
 
-    uint32_t AsioTestClient::GetNearestMonster() const
+    uint32_t TestClient::GetNearestMonster() const
     {
         if (monsters_.empty())
             return 0;
@@ -578,7 +578,7 @@ namespace bt
         return nearest_id;
     }
 
-    const PlayerPosition* AsioTestClient::GetMonsterPosition(uint32_t monster_id) const
+    const PlayerPosition* TestClient::GetMonsterPosition(uint32_t monster_id) const
     {
         auto it = monsters_.find(monster_id);
         if (it != monsters_.end())
@@ -588,7 +588,7 @@ namespace bt
         return nullptr;
     }
 
-    bool AsioTestClient::IsInRange(float x, float z, float range) const
+    bool TestClient::IsInRange(float x, float z, float range) const
     {
         float dx = x - position_.x;
         float dz = z - position_.z;
@@ -596,7 +596,7 @@ namespace bt
         return distance <= range;
     }
 
-    PlayerPosition AsioTestClient::GetNextPatrolPoint() const
+    PlayerPosition TestClient::GetNextPatrolPoint() const
     {
         if (patrol_points_.empty())
         {
@@ -607,7 +607,7 @@ namespace bt
         return patrol_points_[current_patrol_index_];
     }
 
-    void AsioTestClient::AdvanceToNextPatrolPoint()
+    void TestClient::AdvanceToNextPatrolPoint()
     {
         if (!patrol_points_.empty())
         {
@@ -615,7 +615,7 @@ namespace bt
         }
     }
 
-    bool AsioTestClient::SendPacket(const Packet& packet)
+    bool TestClient::SendPacket(const Packet& packet)
     {
         if (!connected_.load() || !socket_ || !socket_->is_open())
             return false;
@@ -670,7 +670,7 @@ namespace bt
         }
     }
 
-    bool AsioTestClient::ReceivePacket(Packet& packet)
+    bool TestClient::ReceivePacket(Packet& packet)
     {
         if (!connected_.load() || !socket_ || !socket_->is_open())
             return false;
@@ -767,14 +767,14 @@ namespace bt
         return false;
     }
 
-    Packet AsioTestClient::CreateConnectRequest()
+    Packet TestClient::CreateConnectRequest()
     {
         std::vector<uint8_t> data;
         data.insert(data.end(), config_.player_name.begin(), config_.player_name.end());
         return Packet(static_cast<uint16_t>(PacketType::CONNECT_REQUEST), data);
     }
 
-    Packet AsioTestClient::CreatePlayerJoinPacket(const std::string& name)
+    Packet TestClient::CreatePlayerJoinPacket(const std::string& name)
     {
         std::vector<uint8_t> data;
 
@@ -792,7 +792,7 @@ namespace bt
         return Packet(static_cast<uint16_t>(PacketType::PLAYER_JOIN), data);
     }
 
-    Packet AsioTestClient::CreatePlayerMovePacket(float x, float y, float z)
+    Packet TestClient::CreatePlayerMovePacket(float x, float y, float z)
     {
         std::vector<uint8_t> data;
 
@@ -805,7 +805,7 @@ namespace bt
         return Packet(static_cast<uint16_t>(PacketType::PLAYER_MOVE), data);
     }
 
-    Packet AsioTestClient::CreatePlayerAttackPacket(uint32_t target_id)
+    Packet TestClient::CreatePlayerAttackPacket(uint32_t target_id)
     {
         std::vector<uint8_t> data;
 
@@ -816,14 +816,14 @@ namespace bt
         return Packet(static_cast<uint16_t>(PacketType::PLAYER_ATTACK), data);
     }
 
-    Packet AsioTestClient::CreateDisconnectPacket()
+    Packet TestClient::CreateDisconnectPacket()
     {
         std::vector<uint8_t> data;
         data.insert(data.end(), reinterpret_cast<uint8_t*>(&player_id_), reinterpret_cast<uint8_t*>(&player_id_) + sizeof(uint32_t));
         return Packet(static_cast<uint16_t>(PacketType::DISCONNECT), data);
     }
 
-    bool AsioTestClient::ParsePacketResponse(const Packet& packet)
+    bool TestClient::ParsePacketResponse(const Packet& packet)
     {
         if (packet.data.empty())
             return false;
@@ -897,7 +897,7 @@ namespace bt
         return true;
     }
 
-    void AsioTestClient::HandleMonsterUpdate(const Packet& packet)
+    void TestClient::HandleMonsterUpdate(const Packet& packet)
     {
         if (packet.data.size() < sizeof(uint32_t))
             return;
@@ -933,12 +933,12 @@ namespace bt
             std::chrono::steady_clock::now().time_since_epoch()).count() / 1000.0f;
     }
 
-    void AsioTestClient::HandlePlayerUpdate(const Packet& packet)
+    void TestClient::HandlePlayerUpdate(const Packet& packet)
     {
         // 플레이어 업데이트 처리 (필요시 구현)
     }
 
-    void AsioTestClient::HandleCombatResult(const Packet& packet)
+    void TestClient::HandleCombatResult(const Packet& packet)
     {
         if (packet.data.size() < sizeof(uint32_t) * 4)
             return;
@@ -968,7 +968,7 @@ namespace bt
         }
     }
 
-    void AsioTestClient::LogMessage(const std::string& message, bool is_error)
+    void TestClient::LogMessage(const std::string& message, bool is_error)
     {
         boost::lock_guard<boost::mutex> lock(log_mutex_);
 
@@ -995,7 +995,7 @@ namespace bt
         std::cout << oss.str() << std::endl;
     }
 
-    void AsioTestClient::UpdateEnvironmentInfo()
+    void TestClient::UpdateEnvironmentInfo()
     {
         // 환경 인지 정보 초기화
         environment_info_.Clear();
@@ -1059,7 +1059,7 @@ namespace bt
     }
 
     // 메시지 큐 관련 메서드들
-    void AsioTestClient::InitializeMessageQueue()
+    void TestClient::InitializeMessageQueue()
     {
         // 메시지 프로세서 생성
         message_processor_ = std::make_shared<ClientMessageProcessor>();
@@ -1088,7 +1088,7 @@ namespace bt
         LogMessage("메시지 큐 시스템 초기화 완료");
     }
 
-    void AsioTestClient::ShutdownMessageQueue()
+    void TestClient::ShutdownMessageQueue()
     {
         if (message_processor_)
         {
@@ -1102,7 +1102,7 @@ namespace bt
         LogMessage("메시지 큐 시스템 종료 완료");
     }
 
-    void AsioTestClient::SendNetworkPacket(const std::vector<uint8_t>& data, uint16_t packet_type)
+    void TestClient::SendNetworkPacket(const std::vector<uint8_t>& data, uint16_t packet_type)
     {
         if (!message_processor_)
             return;
@@ -1111,7 +1111,7 @@ namespace bt
         message_processor_->SendMessage(packet_msg);
     }
 
-    void AsioTestClient::UpdateMonsters(const std::unordered_map<uint32_t, std::tuple<float, float, float, float>>& monsters)
+    void TestClient::UpdateMonsters(const std::unordered_map<uint32_t, std::tuple<float, float, float, float>>& monsters)
     {
         monsters_.clear();
         
@@ -1125,7 +1125,7 @@ namespace bt
             std::chrono::steady_clock::now().time_since_epoch()).count() / 1000.0f;
     }
 
-    void AsioTestClient::HandleCombatResult(uint32_t attacker_id, uint32_t target_id, uint32_t damage, uint32_t remaining_health)
+    void TestClient::HandleCombatResult(uint32_t attacker_id, uint32_t target_id, uint32_t damage, uint32_t remaining_health)
     {
         if (attacker_id == player_id_)
         {
@@ -1147,7 +1147,7 @@ namespace bt
         }
     }
 
-    void AsioTestClient::HandleWorldStateBroadcast(const Packet& packet)
+    void TestClient::HandleWorldStateBroadcast(const Packet& packet)
     {
         if (packet.data.size() < sizeof(uint64_t) + sizeof(uint32_t) * 2)
             return;
@@ -1217,18 +1217,18 @@ namespace bt
     }
 
     // 비동기 네트워크 메서드들
-    void AsioTestClient::StartAsyncNetwork()
+    void TestClient::StartAsyncNetwork()
     {
         if (network_running_.load())
             return;
 
         network_running_.store(true);
-        network_thread_ = std::thread(&AsioTestClient::NetworkWorker, this);
+        network_thread_ = std::thread(&TestClient::NetworkWorker, this);
         
         // 비동기 읽기 시작
         socket_->async_read_some(
             boost::asio::buffer(read_buffer_),
-            boost::bind(&AsioTestClient::HandleAsyncRead, this,
+            boost::bind(&TestClient::HandleAsyncRead, this,
                        boost::asio::placeholders::error,
                        boost::asio::placeholders::bytes_transferred)
         );
@@ -1236,7 +1236,7 @@ namespace bt
         LogMessage("비동기 네트워크 시작됨");
     }
 
-    void AsioTestClient::StopAsyncNetwork()
+    void TestClient::StopAsyncNetwork()
     {
         if (!network_running_.load())
             return;
@@ -1252,7 +1252,7 @@ namespace bt
         LogMessage("비동기 네트워크 종료됨");
     }
 
-    void AsioTestClient::AsyncSendPacket(const Packet& packet)
+    void TestClient::AsyncSendPacket(const Packet& packet)
     {
         if (!connected_.load() || !network_running_.load())
             return;
@@ -1264,7 +1264,7 @@ namespace bt
         send_queue_cv_.notify_one();
     }
 
-    void AsioTestClient::HandleAsyncRead(const boost::system::error_code& error, size_t bytes_transferred)
+    void TestClient::HandleAsyncRead(const boost::system::error_code& error, size_t bytes_transferred)
     {
         if (!network_running_.load())
             return;
@@ -1331,14 +1331,14 @@ namespace bt
         {
             socket_->async_read_some(
                 boost::asio::buffer(read_buffer_),
-                boost::bind(&AsioTestClient::HandleAsyncRead, this,
+                boost::bind(&TestClient::HandleAsyncRead, this,
                            boost::asio::placeholders::error,
                            boost::asio::placeholders::bytes_transferred)
             );
         }
     }
 
-    void AsioTestClient::HandleAsyncWrite(const boost::system::error_code& error, size_t bytes_transferred)
+    void TestClient::HandleAsyncWrite(const boost::system::error_code& error, size_t bytes_transferred)
     {
         if (error)
         {
@@ -1346,7 +1346,7 @@ namespace bt
         }
     }
 
-    void AsioTestClient::NetworkWorker()
+    void TestClient::NetworkWorker()
     {
         while (network_running_.load())
         {
@@ -1388,7 +1388,7 @@ namespace bt
                     boost::asio::async_write(
                         *socket_,
                         boost::asio::buffer(write_buffer_),
-                        boost::bind(&AsioTestClient::HandleAsyncWrite, this,
+                        boost::bind(&TestClient::HandleAsyncWrite, this,
                                    boost::asio::placeholders::error,
                                    boost::asio::placeholders::bytes_transferred)
                     );
@@ -1401,7 +1401,7 @@ namespace bt
         }
     }
 
-    void AsioTestClient::UpdateWorldState(uint64_t timestamp, 
+    void TestClient::UpdateWorldState(uint64_t timestamp, 
                                          const std::unordered_map<uint32_t, PlayerPosition>& players,
                                          const std::unordered_map<uint32_t, PlayerPosition>& monsters)
     {
@@ -1418,7 +1418,7 @@ namespace bt
         }
     }
 
-    void AsioTestClient::UpdateTeleportTimer(float delta_time)
+    void TestClient::UpdateTeleportTimer(float delta_time)
     {
         // 타겟이 없거나 탐지 범위 밖에 있을 때만 타이머 증가
         if (!HasTarget() || GetDistanceToTarget() > config_.detection_range)
@@ -1443,7 +1443,7 @@ namespace bt
         }
     }
 
-    void AsioTestClient::TeleportToNearestMonster()
+    void TestClient::TeleportToNearestMonster()
     {
         if (monsters_.empty())
         {
@@ -1516,7 +1516,7 @@ namespace bt
         }
     }
 
-    bool AsioTestClient::ExecuteTeleportToNearest()
+    bool TestClient::ExecuteTeleportToNearest()
     {
         if (monsters_.empty())
         {

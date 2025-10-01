@@ -6,13 +6,13 @@
 namespace bt
 {
     // Forward declaration
-    class AsioTestClient;
+    class TestClient;
 
     // 클라이언트 AI 메시지 핸들러
     class ClientAIMessageHandler : public IClientMessageHandler
     {
     public:
-        ClientAIMessageHandler(std::shared_ptr<AsioTestClient> client);
+        ClientAIMessageHandler(std::shared_ptr<TestClient> client);
         ~ClientAIMessageHandler() = default;
 
         // IClientMessageHandler 구현
@@ -28,7 +28,7 @@ namespace bt
         void HandleMonsterUpdate(std::shared_ptr<MonsterUpdateMessage> message);
         void HandleCombatResult(std::shared_ptr<CombatResultMessage> message);
 
-        std::shared_ptr<AsioTestClient> client_;
+        std::shared_ptr<TestClient> client_;
         std::shared_ptr<ClientMessageProcessor> message_processor_;
     };
 

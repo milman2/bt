@@ -60,11 +60,11 @@ namespace bt
     };
 
     // 플레이어 AI 클라이언트 클래스
-    class AsioTestClient : public IExecutor, public std::enable_shared_from_this<AsioTestClient>
+    class TestClient : public IExecutor, public std::enable_shared_from_this<TestClient>
     {
     public:
-        AsioTestClient(const PlayerAIConfig& config);
-        ~AsioTestClient();
+        TestClient(const PlayerAIConfig& config);
+        ~TestClient();
 
         // 연결 관리
         bool Connect();

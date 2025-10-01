@@ -31,10 +31,10 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/BT)
 
 # 클라이언트 실행 파일 생성
-add_executable(AsioTestClient ${CLIENT_SOURCES})
+add_executable(TestClient ${CLIENT_SOURCES})
 
 # 라이브러리 링크
-target_link_libraries(AsioTestClient 
+target_link_libraries(TestClient 
     SharedProtocol
     Threads::Threads 
     Boost::system
@@ -44,13 +44,13 @@ target_link_libraries(AsioTestClient
 
 # 플랫폼 독립적 네트워킹 라이브러리
 if(WIN32)
-    target_link_libraries(AsioTestClient ws2_32 wsock32)
+    target_link_libraries(TestClient ws2_32 wsock32)
 elseif(UNIX)
-    target_link_libraries(AsioTestClient pthread)
+    target_link_libraries(TestClient pthread)
 endif()
 
 # 컴파일 정의
-target_compile_definitions(AsioTestClient PRIVATE 
+target_compile_definitions(TestClient PRIVATE 
     BT_CLIENT_BUILD
     HAVE_BOOST
     BOOST_BIND_GLOBAL_PLACEHOLDERS
@@ -60,13 +60,13 @@ target_compile_definitions(AsioTestClient PRIVATE
 source_group("Source Files" FILES ${CLIENT_SOURCES})
 
 # 클라이언트 전용 컴파일러 플래그
-target_compile_options(AsioTestClient PRIVATE
+target_compile_options(TestClient PRIVATE
     $<$<CONFIG:Debug>:-g -O0 -DDEBUG>
     $<$<CONFIG:Release>:-O3 -DNDEBUG>
 )
 
 # 클라이언트 전용 링커 플래그
-target_link_options(AsioTestClient PRIVATE
+target_link_options(TestClient PRIVATE
     $<$<CONFIG:Debug>:-g>
     $<$<CONFIG:Release>:-s>
 )

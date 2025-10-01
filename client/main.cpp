@@ -3,7 +3,7 @@
 #include <string>
 #include <thread>
 
-#include "AsioTestClient.h"
+#include "TestClient.h"
 
 namespace bt
 {
@@ -138,7 +138,7 @@ int main(int argc, char* argv[])
     std::cout << "\n";
 
     // AI 플레이어 클라이언트 생성 (shared_ptr로 생성)
-    auto client = std::make_shared<AsioTestClient>(config);
+    auto client = std::make_shared<TestClient>(config);
     client->SetVerbose(verbose);
     
     // shared_from_this() 사용을 위해 context에 AI 설정

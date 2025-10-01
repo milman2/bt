@@ -1,12 +1,12 @@
 #include "ClientAIMessageHandler.h"
 #include "../Common/ClientMessageProcessor.h"
-#include "../AsioTestClient.h"
+#include "../TestClient.h"
 #include <iostream>
 
 namespace bt
 {
 
-    ClientAIMessageHandler::ClientAIMessageHandler(std::shared_ptr<AsioTestClient> client)
+    ClientAIMessageHandler::ClientAIMessageHandler(std::shared_ptr<TestClient> client)
         : client_(client)
     {
     }

@@ -1,12 +1,12 @@
 #include "ClientNetworkMessageHandler.h"
 #include "../Common/ClientMessageProcessor.h"
-#include "../AsioTestClient.h"
+#include "../TestClient.h"
 #include <iostream>
 
 namespace bt
 {
 
-    ClientNetworkMessageHandler::ClientNetworkMessageHandler(std::shared_ptr<AsioTestClient> client)
+    ClientNetworkMessageHandler::ClientNetworkMessageHandler(std::shared_ptr<TestClient> client)
         : client_(client)
     {
     }
