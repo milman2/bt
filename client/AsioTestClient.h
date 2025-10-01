@@ -90,6 +90,14 @@ namespace bt
         // 패킷 송수신
         bool SendPacket(const Packet& packet);
         bool ReceivePacket(Packet& packet);
+        
+        // 비동기 네트워크 메서드
+        void StartAsyncNetwork();
+        void StopAsyncNetwork();
+        void AsyncSendPacket(const Packet& packet);
+        void HandleAsyncRead(const boost::system::error_code& error, size_t bytes_transferred);
+        void HandleAsyncWrite(const boost::system::error_code& error, size_t bytes_transferred);
+        void NetworkWorker();
 
         // 플레이어 액션
         bool JoinGame();
@@ -199,6 +207,15 @@ namespace bt
         std::shared_ptr<ClientMessageProcessor>         message_processor_;
         std::shared_ptr<ClientNetworkMessageHandler>    network_handler_;
         std::shared_ptr<ClientAIMessageHandler>         ai_handler_;
+
+        // 비동기 네트워크 관련
+        std::thread                                     network_thread_;
+        std::atomic<bool>                               network_running_;
+        std::vector<uint8_t>                            read_buffer_;
+        std::vector<uint8_t>                            write_buffer_;
+        std::queue<Packet>                              send_queue_;
+        std::mutex                                      send_queue_mutex_;
+        std::condition_variable                         send_queue_cv_;
 
         // 로깅
         boost::mutex log_mutex_;

@@ -17,9 +17,13 @@ namespace bt
           spawn_position_(config.spawn_x, 0, config.spawn_z), current_patrol_index_(0), 
           player_id_(0), target_id_(0), health_(config.health), 
           max_health_(config.health), last_attack_time_(0.0f), attack_cooldown_(2.0f),
-          last_monster_update_(0.0f)
+          last_monster_update_(0.0f), network_running_(false)
     {
         socket_ = boost::make_shared<boost::asio::ip::tcp::socket>(io_context_);
+        
+        // 비동기 네트워크 버퍼 초기화
+        read_buffer_.resize(4096);
+        write_buffer_.resize(4096);
         
         // 순찰점 생성 (스폰 위치 주변)
         CreatePatrolPoints();
@@ -47,6 +51,7 @@ namespace bt
     AsioTestClient::~AsioTestClient()
     {
         StopAI();
+        StopAsyncNetwork();
         Disconnect();
         ShutdownMessageQueue();
         LogMessage("AI 플레이어 클라이언트 소멸됨");
@@ -89,6 +94,9 @@ namespace bt
         connected_.store(true);
         LogMessage("서버 연결 성공");
 
+        // 비동기 네트워크 시작
+        StartAsyncNetwork();
+
         // 게임 참여 시도 (실패해도 연결 유지)
         if (!JoinGame())
         {
@@ -105,6 +113,7 @@ namespace bt
             return;
 
         StopAI();
+        StopAsyncNetwork();
         
         if (socket_ && socket_->is_open())
         {
@@ -572,6 +581,14 @@ namespace bt
         if (!connected_.load() || !socket_ || !socket_->is_open())
             return false;
 
+        // 비동기 네트워크가 활성화된 경우 비동기 전송 사용
+        if (network_running_.load())
+        {
+            AsyncSendPacket(packet);
+            return true;
+        }
+
+        // 동기 전송 (fallback)
         try
         {
             // 패킷 헤더 생성
@@ -1079,6 +1096,158 @@ namespace bt
             {
                 LogMessage("플레이어 사망!", true);
                 target_id_ = 0;
+            }
+        }
+    }
+
+    // 비동기 네트워크 메서드들
+    void AsioTestClient::StartAsyncNetwork()
+    {
+        if (network_running_.load())
+            return;
+
+        network_running_.store(true);
+        network_thread_ = std::thread(&AsioTestClient::NetworkWorker, this);
+        
+        // 비동기 읽기 시작
+        socket_->async_read_some(
+            boost::asio::buffer(read_buffer_),
+            boost::bind(&AsioTestClient::HandleAsyncRead, this,
+                       boost::asio::placeholders::error,
+                       boost::asio::placeholders::bytes_transferred)
+        );
+        
+        LogMessage("비동기 네트워크 시작됨");
+    }
+
+    void AsioTestClient::StopAsyncNetwork()
+    {
+        if (!network_running_.load())
+            return;
+
+        network_running_.store(false);
+        send_queue_cv_.notify_all();
+        
+        if (network_thread_.joinable())
+        {
+            network_thread_.join();
+        }
+        
+        LogMessage("비동기 네트워크 종료됨");
+    }
+
+    void AsioTestClient::AsyncSendPacket(const Packet& packet)
+    {
+        if (!connected_.load() || !network_running_.load())
+            return;
+
+        {
+            std::lock_guard<std::mutex> lock(send_queue_mutex_);
+            send_queue_.push(packet);
+        }
+        send_queue_cv_.notify_one();
+    }
+
+    void AsioTestClient::HandleAsyncRead(const boost::system::error_code& error, size_t bytes_transferred)
+    {
+        if (!network_running_.load())
+            return;
+
+        if (error)
+        {
+            if (error != boost::asio::error::eof)
+            {
+                LogMessage("비동기 읽기 오류: " + error.message(), true);
+            }
+            return;
+        }
+
+        // 수신된 데이터 처리
+        if (bytes_transferred > 0)
+        {
+            // 패킷 파싱 및 처리 로직
+            // 여기서는 간단히 메시지 큐로 전송
+            if (message_processor_)
+            {
+                auto packet_msg = std::make_shared<NetworkPacketMessage>(
+                    std::vector<uint8_t>(read_buffer_.begin(), read_buffer_.begin() + bytes_transferred),
+                    static_cast<uint16_t>(PacketType::CONNECT_REQUEST)
+                );
+                message_processor_->SendMessage(packet_msg);
+            }
+        }
+
+        // 다음 읽기 시작
+        if (network_running_.load())
+        {
+            socket_->async_read_some(
+                boost::asio::buffer(read_buffer_),
+                boost::bind(&AsioTestClient::HandleAsyncRead, this,
+                           boost::asio::placeholders::error,
+                           boost::asio::placeholders::bytes_transferred)
+            );
+        }
+    }
+
+    void AsioTestClient::HandleAsyncWrite(const boost::system::error_code& error, size_t bytes_transferred)
+    {
+        if (error)
+        {
+            LogMessage("비동기 쓰기 오류: " + error.message(), true);
+        }
+    }
+
+    void AsioTestClient::NetworkWorker()
+    {
+        while (network_running_.load())
+        {
+            std::unique_lock<std::mutex> lock(send_queue_mutex_);
+            send_queue_cv_.wait(lock, [this] { return !send_queue_.empty() || !network_running_.load(); });
+
+            if (!network_running_.load())
+                break;
+
+            if (!send_queue_.empty())
+            {
+                Packet packet = send_queue_.front();
+                send_queue_.pop();
+                lock.unlock();
+
+                // 패킷을 비동기로 전송
+                try
+                {
+                    uint32_t total_size = sizeof(uint32_t) + sizeof(uint16_t) + packet.data.size();
+                    write_buffer_.resize(total_size);
+                    
+                    size_t offset = 0;
+                    
+                    // 크기 (4바이트)
+                    std::memcpy(write_buffer_.data() + offset, &total_size, sizeof(uint32_t));
+                    offset += sizeof(uint32_t);
+                    
+                    // 타입 (2바이트)
+                    uint16_t packet_type = static_cast<uint16_t>(packet.type);
+                    std::memcpy(write_buffer_.data() + offset, &packet_type, sizeof(uint16_t));
+                    offset += sizeof(uint16_t);
+                    
+                    // 데이터
+                    if (!packet.data.empty())
+                    {
+                        std::memcpy(write_buffer_.data() + offset, packet.data.data(), packet.data.size());
+                    }
+
+                    boost::asio::async_write(
+                        *socket_,
+                        boost::asio::buffer(write_buffer_),
+                        boost::bind(&AsioTestClient::HandleAsyncWrite, this,
+                                   boost::asio::placeholders::error,
+                                   boost::asio::placeholders::bytes_transferred)
+                    );
+                }
+                catch (const std::exception& e)
+                {
+                    LogMessage("패킷 전송 중 오류: " + std::string(e.what()), true);
+                }
             }
         }
     }

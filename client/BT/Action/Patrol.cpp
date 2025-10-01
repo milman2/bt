@@ -27,6 +27,21 @@ namespace action
             return NodeStatus::FAILURE;
         }
 
+        // 몬스터가 탐지되면 공격 모드로 전환
+        if (client_executor->HasTarget())
+        {
+            float distance = client_executor->GetDistanceToTarget();
+            float detection_range = client_executor->GetDetectionRange();
+            
+            if (distance <= detection_range)
+            {
+                std::cout << "플레이어 " << client_executor->GetName() << " 순찰 중 몬스터 탐지: 거리 " 
+                          << distance << " <= " << detection_range << " - 공격 모드로 전환" << std::endl;
+                SetLastStatus(NodeStatus::FAILURE);
+                return NodeStatus::FAILURE; // 공격 시퀀스로 전환
+            }
+        }
+
         // 순찰점이 있는지 확인
         if (!client_executor->HasPatrolPoints())
         {
