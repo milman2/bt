@@ -18,7 +18,7 @@ namespace bt
         : id_(0)
         , name_(name)
         , type_(type)
-        , state_(MonsterState::IDLE)
+        , state_(MonsterStateType::IDLE)
         , position_(position)
         , ai_name_("")
         , bt_name_("")
@@ -71,7 +71,7 @@ namespace bt
         if (damage >= stats_.health)
         {
             stats_.health = 0;
-            state_        = MonsterState::DEAD;
+            state_        = MonsterStateType::DEAD;
             death_time_   = std::chrono::duration_cast<std::chrono::milliseconds>(
                               std::chrono::steady_clock::now().time_since_epoch())
                               .count() /
@@ -88,7 +88,7 @@ namespace bt
 
     void Monster::Heal(uint32_t amount)
     {
-        if (state_ == MonsterState::DEAD)
+        if (state_ == MonsterStateType::DEAD)
         {
             return;
         }
@@ -224,7 +224,7 @@ namespace bt
                   << std::endl;
 
         // 공격 상태로 변경
-        SetState(MonsterState::ATTACK);
+        SetState(MonsterStateType::ATTACK);
     }
 
     void Monster::Update(float delta_time)

@@ -4,6 +4,7 @@
 #include "../PlayerManager.h"
 #include "MonsterFactory.h"
 #include "MonsterBTExecutor.h"
+#include "../../../shared/PacketProtocol.h"
 #include <iostream>
 #include <fstream>
 #include <random>
@@ -542,6 +543,35 @@ void MessageBasedMonsterManager::SendMonsterDeathMessage(uint32_t monster_id, co
         monster_id, name, position.x, position.y, position.z);
     
     message_processor_->SendToNetwork(message);
+}
+
+std::vector<MonsterState> MessageBasedMonsterManager::GetMonsterStates() const
+{
+    std::vector<MonsterState> states;
+    
+    for (const auto& [id, monster] : monsters_)
+    {
+        if (!monster) continue;
+        
+        MonsterState state;
+        state.id = id;
+        state.name = monster->GetName();
+        
+        MonsterPosition pos = monster->GetPosition();
+        state.x = pos.x;
+        state.y = pos.y;
+        state.z = pos.z;
+        state.rotation = pos.rotation;
+        
+        state.health = monster->GetStats().health;
+        state.max_health = monster->GetMaxHealth();
+        state.level = monster->GetStats().level;
+        state.type = static_cast<uint32_t>(monster->GetType());
+        
+        states.push_back(state);
+    }
+    
+    return states;
 }
 
 } // namespace bt

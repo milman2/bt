@@ -117,6 +117,11 @@ namespace bt
                 }
                 break;
 
+            case PacketType::WORLD_STATE_BROADCAST:
+                // 월드 상태 브로드캐스트 처리
+                HandleWorldStateBroadcast(data);
+                break;
+
             default:
                 std::cout << "클라이언트 네트워크 핸들러: 알 수 없는 패킷 타입: " << packet_type << std::endl;
                 break;
@@ -140,6 +145,94 @@ namespace bt
         if (client_)
         {
             client_->SetConnected(true);
+        }
+    }
+
+    void ClientNetworkMessageHandler::HandleWorldStateBroadcast(const std::vector<uint8_t>& data)
+    {
+        if (!client_ || data.size() < sizeof(uint64_t) + sizeof(uint32_t) * 2)
+            return;
+
+        size_t offset = 0;
+        
+        // 타임스탬프 읽기
+        uint64_t timestamp = *reinterpret_cast<const uint64_t*>(data.data() + offset);
+        offset += sizeof(uint64_t);
+        
+        // 플레이어 수 읽기
+        uint32_t player_count = *reinterpret_cast<const uint32_t*>(data.data() + offset);
+        offset += sizeof(uint32_t);
+        
+        // 몬스터 수 읽기
+        uint32_t monster_count = *reinterpret_cast<const uint32_t*>(data.data() + offset);
+        offset += sizeof(uint32_t);
+
+        // 플레이어 데이터 읽기
+        std::unordered_map<uint32_t, PlayerPosition> players;
+        for (uint32_t i = 0; i < player_count && offset < data.size(); ++i)
+        {
+            if (offset + sizeof(uint32_t) + sizeof(float) * 4 > data.size())
+                break;
+
+            uint32_t id = *reinterpret_cast<const uint32_t*>(data.data() + offset);
+            offset += sizeof(uint32_t);
+            
+            float x = *reinterpret_cast<const float*>(data.data() + offset);
+            offset += sizeof(float);
+            float y = *reinterpret_cast<const float*>(data.data() + offset);
+            offset += sizeof(float);
+            float z = *reinterpret_cast<const float*>(data.data() + offset);
+            offset += sizeof(float);
+            uint32_t health = *reinterpret_cast<const uint32_t*>(data.data() + offset);
+            offset += sizeof(uint32_t);
+
+            PlayerPosition pos;
+            pos.x = x;
+            pos.y = y;
+            pos.z = z;
+            pos.rotation = 0.0f; // 회전 정보는 현재 전송하지 않음
+            
+            players[id] = pos;
+        }
+
+        // 몬스터 데이터 읽기
+        std::unordered_map<uint32_t, PlayerPosition> monsters;
+        for (uint32_t i = 0; i < monster_count && offset < data.size(); ++i)
+        {
+            if (offset + sizeof(uint32_t) + sizeof(float) * 4 > data.size())
+                break;
+
+            uint32_t id = *reinterpret_cast<const uint32_t*>(data.data() + offset);
+            offset += sizeof(uint32_t);
+            
+            float x = *reinterpret_cast<const float*>(data.data() + offset);
+            offset += sizeof(float);
+            float y = *reinterpret_cast<const float*>(data.data() + offset);
+            offset += sizeof(float);
+            float z = *reinterpret_cast<const float*>(data.data() + offset);
+            offset += sizeof(float);
+            uint32_t health = *reinterpret_cast<const uint32_t*>(data.data() + offset);
+            offset += sizeof(uint32_t);
+
+            PlayerPosition pos;
+            pos.x = x;
+            pos.y = y;
+            pos.z = z;
+            pos.rotation = 0.0f; // 회전 정보는 현재 전송하지 않음
+            
+            monsters[id] = pos;
+        }
+
+        // 클라이언트의 월드 상태 업데이트
+        client_->UpdateWorldState(timestamp, players, monsters);
+        
+        // 디버그 로그 (1초마다)
+        static auto last_log_time = std::chrono::steady_clock::now();
+        auto now = std::chrono::steady_clock::now();
+        if (std::chrono::duration_cast<std::chrono::seconds>(now - last_log_time).count() >= 1)
+        {
+            std::cout << "월드 상태 업데이트: 플레이어 " << player_count << "명, 몬스터 " << monster_count << "마리" << std::endl;
+            last_log_time = now;
         }
     }
 

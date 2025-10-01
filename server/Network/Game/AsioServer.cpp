@@ -20,7 +20,7 @@ namespace bt
 {
 
     AsioServer::AsioServer(const AsioServerConfig& config)
-        : config_(config), running_(false), acceptor_(io_context_), total_packets_sent_(0), total_packets_received_(0), server_start_time_(std::chrono::steady_clock::now())
+        : config_(config), running_(false), acceptor_(io_context_), total_packets_sent_(0), total_packets_received_(0), server_start_time_(std::chrono::steady_clock::now()), broadcast_running_(false)
     {
         // Behavior Tree 엔진 초기화
         bt_engine_ = std::make_shared<Engine>();
@@ -141,6 +141,9 @@ namespace bt
             {
                 http_websocket_server_->start();
             }
+            
+            // 브로드캐스팅 루프 시작
+            StartBroadcastLoop();
 
             LogMessage("서버가 성공적으로 시작되었습니다. 포트: " + std::to_string(config_.port));
             LogMessage("통합 HTTP+WebSocket 서버: http://localhost:8080 (대시보드 + API + WebSocket)");
@@ -184,6 +187,9 @@ namespace bt
 
             // 워커 스레드 종료
             worker_threads_.join_all();
+            
+            // 브로드캐스팅 루프 중지
+            StopBroadcastLoop();
 
             // 메시지 기반 몬스터 매니저 중지
             if (message_based_monster_manager_)
@@ -420,6 +426,13 @@ namespace bt
                 LogMessage("플레이어 참여 요청 수신: " + client->GetIPAddress() + 
                           ", 데이터 크기: " + std::to_string(packet.data.size()));
                 HandlePlayerJoin(client, packet);
+                break;
+
+            case PacketType::PLAYER_MOVE:
+                // 플레이어 이동 요청 처리
+                LogMessage("플레이어 이동 요청 수신: " + client->GetIPAddress() + 
+                          ", 데이터 크기: " + std::to_string(packet.data.size()));
+                HandlePlayerMove(client, packet);
                 break;
 
             case PacketType::MONSTER_SPAWN:
@@ -686,6 +699,59 @@ namespace bt
         }
     }
 
+    void AsioServer::HandlePlayerMove(boost::shared_ptr<AsioClient> client, const Packet& packet)
+    {
+        try
+        {
+            LogMessage("HandlePlayerMove 시작: 클라이언트=" + client->GetIPAddress() + 
+                      ", 패킷 데이터 크기=" + std::to_string(packet.data.size()));
+            
+            // 패킷 데이터 파싱
+            const uint8_t* data = packet.data.data();
+            size_t offset = 0;
+
+            // 플레이어 ID 읽기
+            uint32_t player_id = *reinterpret_cast<const uint32_t*>(data + offset);
+            offset += sizeof(uint32_t);
+            
+            // 위치 읽기
+            float x = *reinterpret_cast<const float*>(data + offset);
+            offset += sizeof(float);
+            float y = *reinterpret_cast<const float*>(data + offset);
+            offset += sizeof(float);
+            float z = *reinterpret_cast<const float*>(data + offset);
+            offset += sizeof(float);
+            float rotation = *reinterpret_cast<const float*>(data + offset);
+
+            LogMessage("플레이어 이동 요청: ID=" + std::to_string(player_id) + 
+                      " 위치(" + std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z) + ")");
+
+            // 플레이어 매니저를 통해 플레이어 위치 업데이트
+            if (message_based_player_manager_)
+            {
+                auto player = message_based_player_manager_->GetPlayer(player_id);
+                if (player)
+                {
+                    // 플레이어 위치 업데이트
+                    player->SetPosition(x, y, z, rotation);
+                    LogMessage("플레이어 위치 업데이트 성공: ID=" + std::to_string(player_id));
+                }
+                else
+                {
+                    LogMessage("플레이어를 찾을 수 없음: ID=" + std::to_string(player_id), true);
+                }
+            }
+            else
+            {
+                LogMessage("플레이어 매니저가 초기화되지 않음", true);
+            }
+        }
+        catch (const std::exception& e)
+        {
+            LogMessage("플레이어 이동 처리 중 오류: " + std::string(e.what()), true);
+        }
+    }
+
     void AsioServer::SendPlayerJoinResponse(boost::shared_ptr<AsioClient> client, bool success, uint32_t player_id)
     {
         LogMessage("PLAYER_JOIN_RESPONSE 전송 시작: success=" + std::to_string(success) + ", player_id=" + std::to_string(player_id));
@@ -931,5 +997,170 @@ namespace bt
         LogMessage("HTTP 핸들러 등록 완료");
     }
 
+    void AsioServer::StartBroadcastLoop()
+    {
+        if (broadcast_running_.load())
+            return;
+
+        broadcast_running_.store(true);
+        last_broadcast_time_ = std::chrono::steady_clock::now();
+        broadcast_thread_ = boost::thread(&AsioServer::BroadcastLoopThread, this);
+        
+        LogMessage("월드 상태 브로드캐스팅 루프 시작됨 (FPS: 10)");
+    }
+
+    void AsioServer::StopBroadcastLoop()
+    {
+        if (!broadcast_running_.load())
+            return;
+
+        broadcast_running_.store(false);
+        
+        if (broadcast_thread_.joinable())
+        {
+            broadcast_thread_.join();
+        }
+        
+        LogMessage("월드 상태 브로드캐스팅 루프 중지됨");
+    }
+
+    void AsioServer::BroadcastLoopThread()
+    {
+        const float target_frame_time = 1.0f / 10.0f; // 10 FPS
+        
+        while (broadcast_running_.load())
+        {
+            auto current_time = std::chrono::steady_clock::now();
+            auto delta_time = std::chrono::duration<float>(current_time - last_broadcast_time_).count();
+            
+            if (delta_time >= target_frame_time)
+            {
+                BroadcastWorldState();
+                last_broadcast_time_ = current_time;
+            }
+            else
+            {
+                // 프레임 시간 조절
+                boost::this_thread::sleep_for(boost::chrono::milliseconds(1));
+            }
+        }
+    }
+
+    void AsioServer::BroadcastWorldState()
+    {
+        // 클라이언트가 없으면 브로드캐스팅하지 않음
+        {
+            boost::lock_guard<boost::mutex> lock(clients_mutex_);
+            if (clients_.empty())
+                return;
+        }
+
+        // 월드 상태 수집
+        WorldState world_state;
+        world_state.timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch()).count();
+
+        // 플레이어 상태 수집
+        std::vector<PlayerState> players;
+        // TODO: 실제 플레이어 데이터 수집 구현
+        world_state.player_count = 0;
+
+        // 몬스터 상태 수집 (MessageBasedMonsterManager에서)
+        std::vector<MonsterState> monsters;
+        if (message_based_monster_manager_)
+        {
+            monsters = message_based_monster_manager_->GetMonsterStates();
+            world_state.monster_count = monsters.size();
+        }
+        else
+        {
+            world_state.monster_count = 0;
+        }
+
+        // 월드 상태 직렬화
+        std::vector<uint8_t> serialized_data;
+        
+        // 타임스탬프
+        uint64_t timestamp = world_state.timestamp;
+        serialized_data.insert(serialized_data.end(), 
+                              reinterpret_cast<uint8_t*>(&timestamp), 
+                              reinterpret_cast<uint8_t*>(&timestamp) + sizeof(timestamp));
+        
+        // 플레이어 수
+        uint32_t player_count = world_state.player_count;
+        serialized_data.insert(serialized_data.end(), 
+                              reinterpret_cast<uint8_t*>(&player_count), 
+                              reinterpret_cast<uint8_t*>(&player_count) + sizeof(player_count));
+        
+        // 몬스터 수
+        uint32_t monster_count = world_state.monster_count;
+        serialized_data.insert(serialized_data.end(), 
+                              reinterpret_cast<uint8_t*>(&monster_count), 
+                              reinterpret_cast<uint8_t*>(&monster_count) + sizeof(monster_count));
+
+        // 플레이어 데이터 추가
+        for (const auto& player : players)
+        {
+            uint32_t id = player.id;
+            serialized_data.insert(serialized_data.end(), 
+                                  reinterpret_cast<const uint8_t*>(&id), 
+                                  reinterpret_cast<const uint8_t*>(&id) + sizeof(id));
+            
+            float x = player.x, y = player.y, z = player.z;
+            serialized_data.insert(serialized_data.end(), 
+                                  reinterpret_cast<const uint8_t*>(&x), 
+                                  reinterpret_cast<const uint8_t*>(&x) + sizeof(x));
+            serialized_data.insert(serialized_data.end(), 
+                                  reinterpret_cast<const uint8_t*>(&y), 
+                                  reinterpret_cast<const uint8_t*>(&y) + sizeof(y));
+            serialized_data.insert(serialized_data.end(), 
+                                  reinterpret_cast<const uint8_t*>(&z), 
+                                  reinterpret_cast<const uint8_t*>(&z) + sizeof(z));
+            
+            uint32_t health = player.health;
+            serialized_data.insert(serialized_data.end(), 
+                                  reinterpret_cast<const uint8_t*>(&health), 
+                                  reinterpret_cast<const uint8_t*>(&health) + sizeof(health));
+        }
+
+        // 몬스터 데이터 추가
+        for (const auto& monster : monsters)
+        {
+            uint32_t id = monster.id;
+            serialized_data.insert(serialized_data.end(), 
+                                  reinterpret_cast<const uint8_t*>(&id), 
+                                  reinterpret_cast<const uint8_t*>(&id) + sizeof(id));
+            
+            float x = monster.x, y = monster.y, z = monster.z;
+            serialized_data.insert(serialized_data.end(), 
+                                  reinterpret_cast<const uint8_t*>(&x), 
+                                  reinterpret_cast<const uint8_t*>(&x) + sizeof(x));
+            serialized_data.insert(serialized_data.end(), 
+                                  reinterpret_cast<const uint8_t*>(&y), 
+                                  reinterpret_cast<const uint8_t*>(&y) + sizeof(y));
+            serialized_data.insert(serialized_data.end(), 
+                                  reinterpret_cast<const uint8_t*>(&z), 
+                                  reinterpret_cast<const uint8_t*>(&z) + sizeof(z));
+            
+            uint32_t health = monster.health;
+            serialized_data.insert(serialized_data.end(), 
+                                  reinterpret_cast<const uint8_t*>(&health), 
+                                  reinterpret_cast<const uint8_t*>(&health) + sizeof(health));
+        }
+
+        // 패킷 생성 및 브로드캐스팅
+        Packet world_packet(static_cast<uint16_t>(PacketType::WORLD_STATE_BROADCAST), serialized_data);
+        BroadcastPacket(world_packet);
+        
+        // 디버그 로그 (1초마다)
+        static auto last_log_time = std::chrono::steady_clock::now();
+        auto now = std::chrono::steady_clock::now();
+        if (std::chrono::duration_cast<std::chrono::seconds>(now - last_log_time).count() >= 1)
+        {
+            LogMessage("월드 상태 브로드캐스팅: 플레이어 " + std::to_string(world_state.player_count) + 
+                      "명, 몬스터 " + std::to_string(world_state.monster_count) + "마리");
+            last_log_time = now;
+        }
+    }
 
 } // namespace bt

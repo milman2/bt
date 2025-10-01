@@ -14,6 +14,7 @@
 #include "Monster.h"
 #include "../../Common/GameMessageProcessor.h"
 #include "../../Common/GameMessages.h"
+#include "../../../shared/PacketProtocol.h"
 
 // 전방 선언
 namespace bt
@@ -75,6 +76,9 @@ public:
     size_t GetMonsterCount() const;
     size_t GetMonsterCountByType(MonsterType type) const;
     size_t GetMonsterCountByName(const std::string& name) const;
+    
+    // 월드 상태 수집
+    std::vector<MonsterState> GetMonsterStates() const;
 
     // 시작/중지
     void Start();

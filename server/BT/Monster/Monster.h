@@ -33,8 +33,8 @@ namespace bt
         void               SetID(uint32_t id) { id_ = id; }
         const std::string& GetName() const { return name_; }
         MonsterType        GetType() const { return type_; }
-        MonsterState       GetState() const { return state_; }
-        void               SetState(MonsterState state) { state_ = state; }
+        MonsterStateType   GetState() const { return state_; }
+        void               SetState(MonsterStateType state) { state_ = state; }
 
         // 위치 관련
         const MonsterPosition& GetPosition() const { return position_; }
@@ -109,7 +109,7 @@ namespace bt
         uint32_t                              id_;
         std::string                           name_;
         MonsterType                           type_;
-        MonsterState                          state_;
+        MonsterStateType                      state_;
         MonsterPosition                       position_;
         MonsterStats                          stats_;
         std::shared_ptr<MonsterBTExecutor>    ai_;

@@ -50,9 +50,10 @@ enum class PacketType : uint16_t {
     
     // 게임 월드 관련
     WORLD_UPDATE = 0x0300,
-    MAP_CHANGE = 0x0301,
-    NPC_SPAWN = 0x0302,
-    NPC_UPDATE = 0x0303,
+    WORLD_STATE_BROADCAST = 0x0301,  // 서버에서 클라이언트로 월드 상태 브로드캐스팅
+    MAP_CHANGE = 0x0302,
+    NPC_SPAWN = 0x0303,
+    NPC_UPDATE = 0x0304,
     
     // 아이템 관련
     ITEM_PICKUP = 0x0400,
@@ -121,6 +122,44 @@ struct ServerConfig {
     bool debug_mode = false;
     uint32_t max_packet_size = 4096;
     uint32_t connection_timeout_ms = 30000; // 30초
+    uint32_t broadcast_fps = 10; // 브로드캐스팅 FPS
+};
+
+// 게임 월드 상태 구조체
+struct WorldState {
+    uint64_t timestamp; // 서버 시간
+    uint32_t player_count;
+    uint32_t monster_count;
+    std::vector<uint8_t> serialized_data; // 직렬화된 월드 데이터
+    
+    WorldState() : timestamp(0), player_count(0), monster_count(0) {}
+};
+
+// 플레이어 상태 구조체
+struct PlayerState {
+    uint32_t id;
+    std::string name;
+    float x, y, z;
+    float rotation;
+    uint32_t health;
+    uint32_t max_health;
+    uint32_t level;
+    
+    PlayerState() : id(0), x(0), y(0), z(0), rotation(0), health(0), max_health(0), level(0) {}
+};
+
+// 몬스터 상태 구조체
+struct MonsterState {
+    uint32_t id;
+    std::string name;
+    float x, y, z;
+    float rotation;
+    uint32_t health;
+    uint32_t max_health;
+    uint32_t level;
+    uint32_t type; // 몬스터 타입
+    
+    MonsterState() : id(0), x(0), y(0), z(0), rotation(0), health(0), max_health(0), level(0), type(0) {}
 };
 
 } // namespace bt

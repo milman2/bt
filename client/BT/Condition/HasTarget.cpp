@@ -25,14 +25,21 @@ namespace condition
         }
 
         // 타겟이 있는지 확인
-        if (client_executor->HasTarget())
+        uint32_t target_id = client_executor->GetTargetID();
+        bool has_target = client_executor->HasTarget();
+        
+        std::cout << "HasTarget 조건 체크: target_id=" << target_id 
+                  << ", has_target=" << (has_target ? "true" : "false") << std::endl;
+        
+        if (has_target)
         {
             std::cout << "플레이어 " << client_executor->GetName() << " 타겟 발견: ID " 
-                      << client_executor->GetTargetID() << std::endl;
+                      << target_id << std::endl;
             return NodeStatus::SUCCESS;
         }
         else
         {
+            std::cout << "플레이어 " << client_executor->GetName() << " 타겟 없음" << std::endl;
             return NodeStatus::FAILURE;
         }
     }

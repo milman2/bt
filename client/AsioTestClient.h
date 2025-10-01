@@ -124,6 +124,11 @@ namespace bt
         float GetAttackRange() const { return config_.attack_range; }
         float GetDetectionRange() const { return config_.detection_range; }
         const PlayerPosition* GetMonsterPosition(uint32_t monster_id) const;
+        
+        // 월드 상태 업데이트
+        void UpdateWorldState(uint64_t timestamp, 
+                             const std::unordered_map<uint32_t, PlayerPosition>& players,
+                             const std::unordered_map<uint32_t, PlayerPosition>& monsters);
 
         // 유틸리티
         void SetVerbose(bool verbose) { verbose_ = verbose; }
@@ -197,7 +202,7 @@ namespace bt
         float                                           attack_cooldown_;
         
         // 몬스터 정보
-        std::map<uint32_t, PlayerPosition>             monsters_;
+        std::unordered_map<uint32_t, PlayerPosition>   monsters_;
         float                                           last_monster_update_;
         
         // 환경 인지 정보
@@ -212,6 +217,7 @@ namespace bt
         std::thread                                     network_thread_;
         std::atomic<bool>                               network_running_;
         std::vector<uint8_t>                            read_buffer_;
+        std::vector<uint8_t>                            receive_buffer_;
         std::vector<uint8_t>                            write_buffer_;
         std::queue<Packet>                              send_queue_;
         std::mutex                                      send_queue_mutex_;

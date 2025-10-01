@@ -9,11 +9,12 @@
 #include "World/GameWorld.h"
 #include "PacketHandler.h"
 #include "Server.h"
+#include "../../BT/Monster/MessageBasedMonsterManager.h"
 
 namespace bt
 {
 
-    Server::Server(const ServerConfig& config) : config_(config), running_(false), server_socket_(-1)
+    Server::Server(const ServerConfig& config) : config_(config), running_(false), server_socket_(-1), broadcast_running_(false)
     {
         // 게임 월드와 패킷 핸들러 초기화
         game_world_     = std::make_unique<GameWorld>();
@@ -57,6 +58,9 @@ namespace bt
         // 연결 수락 스레드 시작
         std::thread accept_thread(&Server::AcceptConnections, this);
         accept_thread.detach();
+        
+        // 브로드캐스팅 루프 시작
+        StartBroadcastLoop();
 
         running_.store(true);
         LogMessage("서버가 성공적으로 시작되었습니다. 포트: " + std::to_string(config_.port));
@@ -91,6 +95,9 @@ namespace bt
             clients_.clear();
         }
 
+        // 브로드캐스팅 루프 중지
+        StopBroadcastLoop();
+        
         // 게임 월드 중지
         if (game_world_)
         {
@@ -413,6 +420,182 @@ namespace bt
             std::cout << "[INFO] ";
         }
         std::cout << message << std::endl;
+    }
+
+    void Server::StartBroadcastLoop()
+    {
+        if (broadcast_running_.load())
+            return;
+
+        broadcast_running_.store(true);
+        last_broadcast_time_ = std::chrono::steady_clock::now();
+        broadcast_thread_ = std::thread(&Server::BroadcastLoopThread, this);
+        
+        LogMessage("월드 상태 브로드캐스팅 루프 시작됨 (FPS: " + std::to_string(config_.broadcast_fps) + ")");
+    }
+
+    void Server::StopBroadcastLoop()
+    {
+        if (!broadcast_running_.load())
+            return;
+
+        broadcast_running_.store(false);
+        
+        if (broadcast_thread_.joinable())
+        {
+            broadcast_thread_.join();
+        }
+        
+        LogMessage("월드 상태 브로드캐스팅 루프 중지됨");
+    }
+
+    void Server::BroadcastLoopThread()
+    {
+        const float target_frame_time = 1.0f / config_.broadcast_fps;
+        
+        while (broadcast_running_.load())
+        {
+            auto current_time = std::chrono::steady_clock::now();
+            auto delta_time = std::chrono::duration<float>(current_time - last_broadcast_time_).count();
+            
+            if (delta_time >= target_frame_time)
+            {
+                BroadcastWorldState();
+                last_broadcast_time_ = current_time;
+            }
+            else
+            {
+                // 프레임 시간 조절
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            }
+        }
+    }
+
+    void Server::BroadcastWorldState()
+    {
+        // 클라이언트가 없으면 브로드캐스팅하지 않음
+        {
+            std::lock_guard<std::mutex> lock(clients_mutex_);
+            if (clients_.empty())
+                return;
+        }
+
+        // 월드 상태 수집
+        WorldState world_state;
+        world_state.timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch()).count();
+
+        // 플레이어 상태 수집
+        std::vector<PlayerState> players;
+        if (game_world_)
+        {
+            // TODO: 실제 플레이어 데이터 수집 구현
+            // 현재는 더미 데이터 사용
+            world_state.player_count = 0;
+        }
+
+        // 몬스터 상태 수집 (MessageBasedMonsterManager에서)
+        std::vector<MonsterState> monsters;
+        if (monster_manager_)
+        {
+            monsters = monster_manager_->GetMonsterStates();
+            world_state.monster_count = monsters.size();
+        }
+        else
+        {
+            world_state.monster_count = 0;
+        }
+
+        // 월드 상태 직렬화
+        std::vector<uint8_t> serialized_data;
+        
+        // 타임스탬프
+        uint64_t timestamp = world_state.timestamp;
+        serialized_data.insert(serialized_data.end(), 
+                              reinterpret_cast<uint8_t*>(&timestamp), 
+                              reinterpret_cast<uint8_t*>(&timestamp) + sizeof(timestamp));
+        
+        // 플레이어 수
+        uint32_t player_count = world_state.player_count;
+        serialized_data.insert(serialized_data.end(), 
+                              reinterpret_cast<uint8_t*>(&player_count), 
+                              reinterpret_cast<uint8_t*>(&player_count) + sizeof(player_count));
+        
+        // 몬스터 수
+        uint32_t monster_count = world_state.monster_count;
+        serialized_data.insert(serialized_data.end(), 
+                              reinterpret_cast<uint8_t*>(&monster_count), 
+                              reinterpret_cast<uint8_t*>(&monster_count) + sizeof(monster_count));
+
+        // 플레이어 데이터 추가
+        for (const auto& player : players)
+        {
+            uint32_t id = player.id;
+            serialized_data.insert(serialized_data.end(), 
+                                  reinterpret_cast<const uint8_t*>(&id), 
+                                  reinterpret_cast<const uint8_t*>(&id) + sizeof(id));
+            
+            float x = player.x, y = player.y, z = player.z;
+            serialized_data.insert(serialized_data.end(), 
+                                  reinterpret_cast<const uint8_t*>(&x), 
+                                  reinterpret_cast<const uint8_t*>(&x) + sizeof(x));
+            serialized_data.insert(serialized_data.end(), 
+                                  reinterpret_cast<const uint8_t*>(&y), 
+                                  reinterpret_cast<const uint8_t*>(&y) + sizeof(y));
+            serialized_data.insert(serialized_data.end(), 
+                                  reinterpret_cast<const uint8_t*>(&z), 
+                                  reinterpret_cast<const uint8_t*>(&z) + sizeof(z));
+            
+            uint32_t health = player.health;
+            serialized_data.insert(serialized_data.end(), 
+                                  reinterpret_cast<const uint8_t*>(&health), 
+                                  reinterpret_cast<const uint8_t*>(&health) + sizeof(health));
+        }
+
+        // 몬스터 데이터 추가
+        for (const auto& monster : monsters)
+        {
+            uint32_t id = monster.id;
+            serialized_data.insert(serialized_data.end(), 
+                                  reinterpret_cast<const uint8_t*>(&id), 
+                                  reinterpret_cast<const uint8_t*>(&id) + sizeof(id));
+            
+            float x = monster.x, y = monster.y, z = monster.z;
+            serialized_data.insert(serialized_data.end(), 
+                                  reinterpret_cast<const uint8_t*>(&x), 
+                                  reinterpret_cast<const uint8_t*>(&x) + sizeof(x));
+            serialized_data.insert(serialized_data.end(), 
+                                  reinterpret_cast<const uint8_t*>(&y), 
+                                  reinterpret_cast<const uint8_t*>(&y) + sizeof(y));
+            serialized_data.insert(serialized_data.end(), 
+                                  reinterpret_cast<const uint8_t*>(&z), 
+                                  reinterpret_cast<const uint8_t*>(&z) + sizeof(z));
+            
+            uint32_t health = monster.health;
+            serialized_data.insert(serialized_data.end(), 
+                                  reinterpret_cast<const uint8_t*>(&health), 
+                                  reinterpret_cast<const uint8_t*>(&health) + sizeof(health));
+        }
+
+        // 패킷 생성 및 브로드캐스팅
+        Packet world_packet(static_cast<uint16_t>(PacketType::WORLD_STATE_BROADCAST), serialized_data);
+        BroadcastPacket(world_packet);
+        
+        // 디버그 로그 (1초마다)
+        static auto last_log_time = std::chrono::steady_clock::now();
+        auto now = std::chrono::steady_clock::now();
+        if (std::chrono::duration_cast<std::chrono::seconds>(now - last_log_time).count() >= 1)
+        {
+            LogMessage("월드 상태 브로드캐스팅: 플레이어 " + std::to_string(world_state.player_count) + 
+                      "명, 몬스터 " + std::to_string(world_state.monster_count) + "마리");
+            last_log_time = now;
+        }
+    }
+
+    void Server::SetMonsterManager(std::shared_ptr<MessageBasedMonsterManager> manager)
+    {
+        monster_manager_ = manager;
+        LogMessage("몬스터 매니저가 설정되었습니다.");
     }
 
 } // namespace bt

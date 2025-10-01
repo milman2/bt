@@ -40,7 +40,7 @@ namespace action
         std::cout << "Goblin " << monster->GetName() << " attacks target!" << std::endl;
         
         // 공격 애니메이션/이펙트 처리
-        monster->SetState(MonsterState::ATTACK);
+        monster->SetState(MonsterStateType::ATTACK);
         
         return NodeStatus::SUCCESS;
     }

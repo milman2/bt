@@ -25,6 +25,7 @@ namespace bt
         void HandleNetworkPacket(std::shared_ptr<NetworkPacketMessage> message);
         void HandleConnectionLost(std::shared_ptr<ClientMessage> message);
         void HandleConnectionEstablished(std::shared_ptr<ClientMessage> message);
+        void HandleWorldStateBroadcast(const std::vector<uint8_t>& data);
 
         std::shared_ptr<AsioTestClient> client_;
         std::shared_ptr<ClientMessageProcessor> message_processor_;

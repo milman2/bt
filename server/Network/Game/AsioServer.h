@@ -92,6 +92,12 @@ namespace bt
         void RemoveClient(boost::shared_ptr<AsioClient> client);
         void BroadcastPacket(const Packet& packet, boost::shared_ptr<AsioClient> exclude_client = nullptr);
         void SendPacket(boost::shared_ptr<AsioClient> client, const Packet& packet);
+        
+        // 월드 상태 브로드캐스팅
+        void BroadcastWorldState();
+        void StartBroadcastLoop();
+        void StopBroadcastLoop();
+        void BroadcastLoopThread();
 
         // Behavior Tree 엔진 접근
         Engine* GetBTEngine() { return bt_engine_.get(); }
@@ -131,6 +137,7 @@ namespace bt
     private:
         // 패킷 처리 함수들
         void HandlePlayerJoin(boost::shared_ptr<AsioClient> client, const Packet& packet);
+        void HandlePlayerMove(boost::shared_ptr<AsioClient> client, const Packet& packet);
         
         // 응답 전송 함수들
         void SendConnectResponse(boost::shared_ptr<AsioClient> client);
@@ -172,6 +179,11 @@ namespace bt
         // 메시지 큐 시스템
         std::shared_ptr<GameMessageProcessor> message_processor_;
         std::shared_ptr<NetworkMessageHandler> network_handler_;
+        
+        // 브로드캐스팅 스레드
+        boost::thread                        broadcast_thread_;
+        std::atomic<bool>                    broadcast_running_;
+        std::chrono::steady_clock::time_point last_broadcast_time_;
 
         // 통계
         std::atomic<size_t> total_packets_sent_;

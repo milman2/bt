@@ -140,8 +140,21 @@ namespace bt
             boost::asio::ip::tcp::resolver resolver(io_context_);
             auto endpoints = resolver.resolve(config_.server_host, std::to_string(config_.server_port));
 
-            boost::asio::connect(*socket_, endpoints);
-            return true;
+        boost::asio::connect(*socket_, endpoints);
+        
+        // 연결 상태 확인
+        if (socket_->is_open())
+        {
+            LogMessage("소켓 연결 확인됨: " + socket_->remote_endpoint().address().to_string() + 
+                      ":" + std::to_string(socket_->remote_endpoint().port()));
+        }
+        else
+        {
+            LogMessage("소켓이 열려있지 않음", true);
+            return false;
+        }
+        
+        return true;
         }
         catch (const std::exception& e)
         {
@@ -477,16 +490,25 @@ namespace bt
     void AsioTestClient::FindNearestMonster()
     {
         if (monsters_.empty())
+        {
+            std::cout << "FindNearestMonster: 몬스터 맵이 비어있음" << std::endl;
             return;
+        }
 
         uint32_t nearest_id = 0;
         float nearest_distance = std::numeric_limits<float>::max();
+
+        std::cout << "FindNearestMonster: 탐지 범위=" << config_.detection_range 
+                  << ", 몬스터 수=" << monsters_.size() << std::endl;
 
         for (const auto& [id, pos] : monsters_)
         {
             float dx = pos.x - position_.x;
             float dz = pos.z - position_.z;
             float distance = std::sqrt(dx * dx + dz * dz);
+
+            std::cout << "  몬스터 ID=" << id << ", 거리=" << distance 
+                      << ", 탐지범위 내=" << (distance <= config_.detection_range ? "YES" : "NO") << std::endl;
 
             if (distance < nearest_distance && distance <= config_.detection_range)
             {
@@ -498,6 +520,12 @@ namespace bt
         if (nearest_id != 0)
         {
             target_id_ = nearest_id;
+            std::cout << "FindNearestMonster: 타겟 설정됨 ID=" << nearest_id 
+                      << ", 거리=" << nearest_distance << std::endl;
+        }
+        else
+        {
+            std::cout << "FindNearestMonster: 탐지 범위 내 몬스터 없음" << std::endl;
         }
     }
 
@@ -958,7 +986,8 @@ namespace bt
         environment_info_.Clear();
         
         // 테스트용 가상 몬스터 추가 (서버에서 몬스터 정보를 받지 못하는 경우)
-        if (monsters_.empty())
+        // 서버 연결이 안 되어 있거나 몬스터 데이터가 없을 때만 테스트 몬스터 사용
+        if (!connected_.load() && monsters_.empty())
         {
             // 플레이어 위치 근처에 가상 몬스터 생성
             static bool test_monster_added = false;
@@ -969,7 +998,7 @@ namespace bt
                 monster_pos.x += 10.0f; // X축으로 10유닛 이동
                 monsters_[999] = monster_pos; // 테스트 몬스터 ID: 999
                 test_monster_added = true;
-                LogMessage("테스트용 몬스터 추가: ID 999, 위치 (" + 
+                LogMessage("오프라인 모드: 테스트용 몬스터 추가: ID 999, 위치 (" + 
                           std::to_string(monster_pos.x) + ", " + 
                           std::to_string(monster_pos.y) + ", " + 
                           std::to_string(monster_pos.z) + ")");
@@ -1001,6 +1030,9 @@ namespace bt
         
         // 시야 확보 여부 (간단한 구현 - 장애물이 없으면 시야 확보)
         environment_info_.has_line_of_sight = true; // TODO: 실제 장애물 검사 구현
+        
+        // 가장 가까운 몬스터 찾기 (BT에서 사용할 수 있도록 타겟 설정)
+        FindNearestMonster();
         
         // 디버그 로깅
         if (verbose_ && !environment_info_.nearby_monsters.empty())
@@ -1165,15 +1197,48 @@ namespace bt
         // 수신된 데이터 처리
         if (bytes_transferred > 0)
         {
-            // 패킷 파싱 및 처리 로직
-            // 여기서는 간단히 메시지 큐로 전송
-            if (message_processor_)
+            // 수신된 데이터를 버퍼에 추가
+            receive_buffer_.insert(receive_buffer_.end(), 
+                                 read_buffer_.begin(), 
+                                 read_buffer_.begin() + bytes_transferred);
+
+            // 완전한 패킷들을 파싱
+            while (receive_buffer_.size() >= sizeof(uint32_t) + sizeof(uint16_t))
             {
-                auto packet_msg = std::make_shared<NetworkPacketMessage>(
-                    std::vector<uint8_t>(read_buffer_.begin(), read_buffer_.begin() + bytes_transferred),
-                    static_cast<uint16_t>(PacketType::CONNECT_REQUEST)
+                // 패킷 크기 읽기 (total_size)
+                uint32_t total_size = *reinterpret_cast<const uint32_t*>(receive_buffer_.data());
+                
+                // 패킷이 완전히 수신되었는지 확인
+                if (receive_buffer_.size() < total_size)
+                    break;
+
+                // 패킷 타입 읽기
+                uint16_t packet_type = *reinterpret_cast<const uint16_t*>(receive_buffer_.data() + sizeof(uint32_t));
+                
+                // 패킷 데이터 추출 (total_size에서 헤더 크기 제외)
+                size_t data_size = total_size - sizeof(uint32_t) - sizeof(uint16_t);
+                std::vector<uint8_t> packet_data(
+                    receive_buffer_.begin() + sizeof(uint32_t) + sizeof(uint16_t),
+                    receive_buffer_.begin() + sizeof(uint32_t) + sizeof(uint16_t) + data_size
                 );
-                message_processor_->SendMessage(packet_msg);
+
+                // 디버그 로그
+                if (verbose_)
+                {
+                    LogMessage("패킷 파싱: total_size=" + std::to_string(total_size) + 
+                              ", type=" + std::to_string(packet_type) + 
+                              ", data_size=" + std::to_string(data_size));
+                }
+
+                // 메시지 큐로 전송
+                if (message_processor_)
+                {
+                    auto packet_msg = std::make_shared<NetworkPacketMessage>(packet_data, packet_type);
+                    message_processor_->SendMessage(packet_msg);
+                }
+
+                // 처리된 패킷 제거
+                receive_buffer_.erase(receive_buffer_.begin(), receive_buffer_.begin() + total_size);
             }
         }
 
@@ -1249,6 +1314,23 @@ namespace bt
                     LogMessage("패킷 전송 중 오류: " + std::string(e.what()), true);
                 }
             }
+        }
+    }
+
+    void AsioTestClient::UpdateWorldState(uint64_t timestamp, 
+                                         const std::unordered_map<uint32_t, PlayerPosition>& players,
+                                         const std::unordered_map<uint32_t, PlayerPosition>& monsters)
+    {
+        // 서버에서 받은 실제 몬스터 데이터로 업데이트
+        monsters_ = monsters;
+        
+        // 플레이어 데이터도 저장 (필요시 사용)
+        // players_ = players; // 현재는 사용하지 않음
+        
+        if (verbose_)
+        {
+            std::cout << "월드 상태 업데이트: 타임스탬프 " << timestamp 
+                      << ", 플레이어 " << players.size() << "명, 몬스터 " << monsters.size() << "마리" << std::endl;
         }
     }
 

@@ -7,7 +7,7 @@ namespace bt
 {
 
     Player::Player(uint32_t id, const std::string& name)
-        : id_(id), name_(name), state_(PlayerState::ONLINE), current_map_id_(1), socket_fd_(-1)
+        : id_(id), name_(name), state_(PlayerStateType::ONLINE), current_map_id_(1), socket_fd_(-1)
     {
         // 기본 위치 설정
         position_.x        = 0.0f;
@@ -94,7 +94,7 @@ namespace bt
         if (damage >= stats_.health)
         {
             stats_.health = 0;
-            state_        = PlayerState::DEAD;
+            state_        = PlayerStateType::DEAD;
             std::cout << "플레이어 " << name_ << " 사망!" << std::endl;
         }
         else
@@ -108,7 +108,7 @@ namespace bt
 
     void Player::Heal(uint32_t amount)
     {
-        if (state_ == PlayerState::DEAD)
+        if (state_ == PlayerStateType::DEAD)
         {
             return; // 죽은 플레이어는 치료할 수 없음
         }
@@ -146,7 +146,7 @@ namespace bt
         }
 
         // 체력 자동 회복 (초당 0.5, 전투 중이 아닐 때만)
-        if (state_ != PlayerState::IN_COMBAT && stats_.health < stats_.max_health)
+        if (state_ != PlayerStateType::IN_COMBAT && stats_.health < stats_.max_health)
         {
             stats_.health += static_cast<uint32_t>(delta_time * 0.5f);
             if (stats_.health > stats_.max_health)
@@ -160,7 +160,7 @@ namespace bt
 
     void Player::Respawn()
     {
-        if (state_ != PlayerState::DEAD)
+        if (state_ != PlayerStateType::DEAD)
         {
             return;
         }
@@ -168,7 +168,7 @@ namespace bt
         // 부활 처리
         stats_.health = stats_.max_health;
         stats_.mana   = stats_.max_mana;
-        state_        = PlayerState::ONLINE;
+        state_        = PlayerStateType::ONLINE;
 
         // 기본 위치로 이동
         SetPosition(0.0f, 0.0f, 0.0f, 0.0f);

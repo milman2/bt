@@ -19,7 +19,7 @@ namespace bt
     };
 
     // 몬스터 상태
-    enum class MonsterState
+    enum class MonsterStateType
     {
         IDLE,
         PATROL,

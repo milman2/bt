@@ -9,7 +9,7 @@ namespace bt
 {
 
     // 플레이어 상태 열거형
-    enum class PlayerState
+    enum class PlayerStateType
     {
         OFFLINE,
         ONLINE,
@@ -52,8 +52,8 @@ namespace bt
         // 기본 정보
         uint32_t           GetID() const { return id_; }
         const std::string& GetName() const { return name_; }
-        PlayerState        GetState() const { return state_; }
-        void               SetState(PlayerState state) { state_ = state; }
+        PlayerStateType    GetState() const { return state_; }
+        void               SetState(PlayerStateType state) { state_ = state; }
 
         // 위치 관련
         const Position& GetPosition() const { return position_; }
@@ -89,7 +89,7 @@ namespace bt
     private:
         uint32_t                              id_;
         std::string                           name_;
-        PlayerState                           state_;
+        PlayerStateType                       state_;
         Position                              position_;
         PlayerStats                           stats_;
         uint32_t                              current_map_id_;

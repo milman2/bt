@@ -27,6 +27,7 @@ namespace bt
     class Client;
     class GameWorld;
     class PacketHandler;
+    class MessageBasedMonsterManager;
 
     // 클라이언트 정보 구조체
     struct ClientInfo
@@ -56,9 +57,17 @@ namespace bt
         void RemoveClient(int socket_fd);
         void BroadcastPacket(const Packet& packet, int exclude_socket = -1);
         void SendPacket(int socket_fd, const Packet& packet);
+        
+        // 월드 상태 브로드캐스팅
+        void BroadcastWorldState();
+        void StartBroadcastLoop();
+        void StopBroadcastLoop();
 
         // 게임 월드 접근
         GameWorld* GetGameWorld() { return game_world_.get(); }
+        
+        // 몬스터 매니저 설정
+        void SetMonsterManager(std::shared_ptr<MessageBasedMonsterManager> manager);
 
         // 설정 접근
         const ServerConfig& get_config() const { return config_; }
@@ -76,6 +85,9 @@ namespace bt
 
         // 워커 스레드
         void WorkerThreadFunction();
+        
+        // 브로드캐스팅 스레드
+        void BroadcastLoopThread();
 
         // 유틸리티 함수
         bool SetSocketNonBlocking(int socket_fd);
@@ -98,10 +110,16 @@ namespace bt
         std::queue<std::function<void()>> task_queue_;
         std::mutex                        task_queue_mutex_;
         std::condition_variable           task_queue_cv_;
+        
+        // 브로드캐스팅 스레드
+        std::thread                        broadcast_thread_;
+        std::atomic<bool>                  broadcast_running_;
+        std::chrono::steady_clock::time_point last_broadcast_time_;
 
         // 게임 컴포넌트
         std::unique_ptr<GameWorld>     game_world_;
         std::unique_ptr<PacketHandler> packet_handler_;
+        std::shared_ptr<MessageBasedMonsterManager> monster_manager_;
 
         // 로깅
         std::mutex log_mutex_;

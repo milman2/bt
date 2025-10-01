@@ -214,7 +214,7 @@ void MessageBasedPlayerManager::ProcessPlayerCombat(float delta_time) {
     auto read_view = players_.get_read_only_view();
     for (const auto& pair : read_view) {
         const auto& player = pair.second;
-        if (player && player->IsAlive() && player->GetState() == PlayerState::IN_COMBAT) {
+        if (player && player->IsAlive() && player->GetState() == PlayerStateType::IN_COMBAT) {
             // 전투 처리 (Player 클래스에는 UpdateCombat가 없으므로 Update 사용)
             // 실제 전투 로직은 Player::Update에서 처리됨
             
@@ -310,7 +310,7 @@ void MessageBasedPlayerManager::BroadcastPlayerUpdate(const std::shared_ptr<Play
     event["max_health"] = player->GetStats().max_health;
     event["is_alive"] = player->IsAlive();
     event["is_moving"] = false; // Player 클래스에는 IsMoving이 없음
-    event["is_in_combat"] = (player->GetState() == PlayerState::IN_COMBAT);
+    event["is_in_combat"] = (player->GetState() == PlayerStateType::IN_COMBAT);
 
     std::string event_data = event.dump();
     websocket_server_->broadcast(event_data);
