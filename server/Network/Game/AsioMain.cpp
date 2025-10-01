@@ -109,11 +109,19 @@ int main(int argc, char* argv[])
     }
 
     // 서버 생성 및 시작
-    g_server = std::make_unique<AsioServer>(config);
-
-    if (!g_server->Start())
+    try
     {
-        LOG_ERROR("서버 시작 실패!");
+        g_server = std::make_unique<AsioServer>(config);
+
+        if (!g_server->Start())
+        {
+            LOG_ERROR("서버 시작 실패!");
+            return 1;
+        }
+    }
+    catch (const std::exception& e)
+    {
+        LOG_ERROR("서버 시작 중 예외 발생: " + std::string(e.what()));
         return 1;
     }
 

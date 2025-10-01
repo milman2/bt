@@ -86,13 +86,37 @@ namespace bt
         try
         {
             // 엔드포인트 설정
-            boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::make_address(config_.host), config_.port);
+            boost::asio::ip::tcp::endpoint endpoint;
+            try
+            {
+                endpoint = boost::asio::ip::tcp::endpoint(boost::asio::ip::make_address(config_.host), config_.port);
+            }
+            catch (const boost::system::system_error& e)
+            {
+                LogMessage("호스트 주소 설정 실패: " + std::string(e.what()), true);
+                LogMessage("서버를 종료합니다.", true);
+                return false;
+            }
 
             // 어셉터 설정
-            acceptor_.open(endpoint.protocol());
-            acceptor_.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
-            acceptor_.bind(endpoint);
-            acceptor_.listen();
+            try
+            {
+                acceptor_.open(endpoint.protocol());
+                acceptor_.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
+                
+                // 바인딩 시도
+                acceptor_.bind(endpoint);
+                LogMessage("포트 " + std::to_string(config_.port) + "에 바인딩 성공");
+                
+                acceptor_.listen();
+                LogMessage("포트 " + std::to_string(config_.port) + "에서 리스닝 시작");
+            }
+            catch (const boost::system::system_error& e)
+            {
+                LogMessage("포트 " + std::to_string(config_.port) + " 설정 실패: " + e.what(), true);
+                LogMessage("서버를 종료합니다.", true);
+                return false;
+            }
 
             // running_ 플래그를 먼저 설정
             running_.store(true);
@@ -101,7 +125,16 @@ namespace bt
             server_start_time_ = std::chrono::steady_clock::now();
 
             // 연결 수락 시작 (워커 스레드 시작 전에)
-            StartAccept();
+            try
+            {
+                StartAccept();
+            }
+            catch (const std::exception& e)
+            {
+                LogMessage("연결 수락 시작 실패: " + std::string(e.what()), true);
+                LogMessage("서버를 종료합니다.", true);
+                return false;
+            }
 
             // 워커 스레드 시작 (async_accept 후에)
             for (size_t i = 0; i < config_.worker_threads; ++i)
@@ -322,28 +355,8 @@ namespace bt
         boost::lock_guard<boost::mutex> lock(clients_mutex_);
         clients_[client] = info;
 
-        // 클라이언트 연결 시 플레이어 생성
-        if (message_based_player_manager_)
-        {
-            // 클라이언트 ID 생성 (포인터 주소의 해시를 사용)
-            uint32_t client_id = static_cast<uint32_t>(std::hash<void*>{}(client.get()));
-
-            // 플레이어 이름 생성 (클라이언트 IP 기반)
-            std::string player_name = "Player_" + info.ip_address.substr(info.ip_address.find_last_of('.') + 1);
-
-            // 기본 위치 설정 (스폰 지점)
-            MonsterPosition spawn_position = {0.0f, 0.0f, 0.0f, 0.0f};
-
-            // 플레이어 생성
-            auto player = message_based_player_manager_->CreatePlayerForClient(client_id, player_name, spawn_position);
-            if (player)
-            {
-                info.player_id          = player->GetID();
-                std::string client_info = info.ip_address + ":" + std::to_string(info.port);
-                LogMessage("클라이언트 연결: " + client_info + " -> 플레이어 생성: " + player_name +
-                            " (ID: " + std::to_string(player->GetID()) + ")");
-            }
-        }
+        // 클라이언트 연결 시 플레이어는 생성하지 않음
+        // PLAYER_JOIN 패킷에서 플레이어 생성
 
         // 클라이언트 패킷 수신 시작
         LogMessage("클라이언트 연결 완료: " + info.ip_address + ":" + std::to_string(info.port));

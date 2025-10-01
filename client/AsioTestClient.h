@@ -184,6 +184,7 @@ namespace bt
         void HandleMonsterUpdate(const Packet& packet);
         void HandlePlayerUpdate(const Packet& packet);
         void HandleCombatResult(const Packet& packet);
+        void HandleWorldStateBroadcast(const Packet& packet);
 
     private:
         PlayerAIConfig                                  config_;

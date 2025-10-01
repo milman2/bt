@@ -137,10 +137,14 @@ namespace bt
     {
         try
         {
+            LogMessage("DNS 해석 시작: " + config_.server_host + ":" + std::to_string(config_.server_port));
             boost::asio::ip::tcp::resolver resolver(io_context_);
             auto endpoints = resolver.resolve(config_.server_host, std::to_string(config_.server_port));
+            LogMessage("DNS 해석 완료, 엔드포인트 수: " + std::to_string(std::distance(endpoints.begin(), endpoints.end())));
 
-        boost::asio::connect(*socket_, endpoints);
+            LogMessage("소켓 연결 시도 중...");
+            boost::asio::connect(*socket_, endpoints);
+            LogMessage("소켓 연결 완료");
         
         // 연결 상태 확인
         if (socket_->is_open())
@@ -181,6 +185,8 @@ namespace bt
     bool AsioTestClient::JoinGame()
     {
         Packet join_packet = CreatePlayerJoinPacket(config_.player_name);
+        LogMessage("PLAYER_JOIN 패킷 생성 완료, 타입: " + std::to_string(join_packet.type) + ", 크기: " + std::to_string(join_packet.size));
+        
         if (!SendPacket(join_packet))
         {
             LogMessage("게임 참여 패킷 전송 실패", true);
@@ -198,6 +204,7 @@ namespace bt
             Packet response;
             if (ReceivePacket(response))
             {
+                LogMessage("응답 패킷 수신: 타입=" + std::to_string(response.type) + ", 크기=" + std::to_string(response.size));
                 if (ParsePacketResponse(response))
                 {
                     LogMessage("게임 참여 성공: " + config_.player_name);
@@ -875,6 +882,10 @@ namespace bt
                 HandleCombatResult(packet);
                 break;
 
+            case PacketType::WORLD_STATE_BROADCAST:
+                HandleWorldStateBroadcast(packet);
+                break;
+
             default:
                 if (verbose_)
                 {
@@ -1133,6 +1144,75 @@ namespace bt
                 LogMessage("플레이어 사망!", true);
                 target_id_ = 0;
             }
+        }
+    }
+
+    void AsioTestClient::HandleWorldStateBroadcast(const Packet& packet)
+    {
+        if (packet.data.size() < sizeof(uint64_t) + sizeof(uint32_t) * 2)
+            return;
+
+        size_t offset = 0;
+        
+        // 타임스탬프 읽기
+        uint64_t timestamp = *reinterpret_cast<const uint64_t*>(packet.data.data() + offset);
+        offset += sizeof(uint64_t);
+        
+        // 플레이어 수 읽기
+        uint32_t player_count = *reinterpret_cast<const uint32_t*>(packet.data.data() + offset);
+        offset += sizeof(uint32_t);
+        
+        // 몬스터 수 읽기
+        uint32_t monster_count = *reinterpret_cast<const uint32_t*>(packet.data.data() + offset);
+        offset += sizeof(uint32_t);
+
+        // 플레이어 데이터 읽기 (현재는 사용하지 않음)
+        for (uint32_t i = 0; i < player_count && offset < packet.data.size(); ++i)
+        {
+            if (offset + sizeof(uint32_t) + sizeof(float) * 4 > packet.data.size())
+                break;
+
+            offset += sizeof(uint32_t); // id
+            offset += sizeof(float) * 3; // x, y, z
+            offset += sizeof(uint32_t); // health
+        }
+
+        // 몬스터 데이터 읽기
+        monsters_.clear();
+        for (uint32_t i = 0; i < monster_count && offset < packet.data.size(); ++i)
+        {
+            if (offset + sizeof(uint32_t) + sizeof(float) * 4 > packet.data.size())
+                break;
+
+            uint32_t id = *reinterpret_cast<const uint32_t*>(packet.data.data() + offset);
+            offset += sizeof(uint32_t);
+            
+            float x = *reinterpret_cast<const float*>(packet.data.data() + offset);
+            offset += sizeof(float);
+            float y = *reinterpret_cast<const float*>(packet.data.data() + offset);
+            offset += sizeof(float);
+            float z = *reinterpret_cast<const float*>(packet.data.data() + offset);
+            offset += sizeof(float);
+            uint32_t health = *reinterpret_cast<const uint32_t*>(packet.data.data() + offset);
+            offset += sizeof(uint32_t);
+
+            monsters_[id] = PlayerPosition(x, y, z, 0.0f);
+        }
+
+        last_monster_update_ = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::steady_clock::now().time_since_epoch()).count() / 1000.0f;
+
+        // 디버그 로그 (1초마다)
+        static auto last_log_time = std::chrono::steady_clock::now();
+        auto now = std::chrono::steady_clock::now();
+        if (std::chrono::duration_cast<std::chrono::seconds>(now - last_log_time).count() >= 1)
+        {
+            if (verbose_)
+            {
+                LogMessage("월드 상태 업데이트: 플레이어 " + std::to_string(player_count) + 
+                          "명, 몬스터 " + std::to_string(monster_count) + "마리");
+            }
+            last_log_time = now;
         }
     }
 
