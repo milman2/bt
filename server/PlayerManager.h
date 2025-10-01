@@ -13,7 +13,7 @@ namespace bt
 {
 
     // 전방 선언
-    class SimpleWebSocketServer;
+    class BeastHttpWebSocketServer;
 
     // 플레이어 매니저
     class PlayerManager
@@ -58,8 +58,8 @@ namespace bt
         // 업데이트
         void Update(float delta_time);
 
-        // WebSocket 서버 설정
-        void SetWebSocketServer(std::shared_ptr<bt::SimpleWebSocketServer> server);
+        // 통합 HTTP+WebSocket 서버 설정
+        void SetHttpWebSocketServer(std::shared_ptr<bt::BeastHttpWebSocketServer> server);
 
         // 통계
         size_t GetPlayerCount() const { return players_.size(); }
@@ -69,7 +69,7 @@ namespace bt
         std::unordered_map<uint32_t, uint32_t>                client_to_player_id_; // 클라이언트 ID -> 플레이어 ID
         std::unordered_map<uint32_t, uint32_t>                player_to_client_id_; // 플레이어 ID -> 클라이언트 ID
         std::atomic<uint32_t>                                 next_player_id_;
-        std::shared_ptr<bt::SimpleWebSocketServer>            websocket_server_;
+        std::shared_ptr<bt::BeastHttpWebSocketServer>        http_websocket_server_;
         mutable std::mutex                                    players_mutex_;
 
         // 플레이어 리스폰 포인트

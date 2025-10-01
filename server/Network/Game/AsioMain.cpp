@@ -15,6 +15,7 @@
 #include "BT/Monster/MonsterBTs.h"
 #include "Player.h"
 #include "PlayerManager.h"
+#include "../WebSocket/BeastWebSocketServer.h"
 
 namespace bt
 {

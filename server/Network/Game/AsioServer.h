@@ -34,8 +34,7 @@ namespace bt
     class MonsterBTExecutor;
     class MonsterManager;
     class PlayerManager;
-    class RestApiServer;
-    class SimpleWebSocketServer;
+    class BeastHttpWebSocketServer;
 
     // Asio 서버 전용 설정 구조체 (공통 ServerConfig 확장)
     struct AsioServerConfig
@@ -98,11 +97,8 @@ namespace bt
         std::shared_ptr<MonsterManager> GetMonsterManager() const { return monster_manager_; }
         std::shared_ptr<PlayerManager>  GetPlayerManager() const { return player_manager_; }
 
-        // 웹 서버 접근
-        std::shared_ptr<RestApiServer> GetRestApiServer() const { return rest_api_server_; }
-
-        // WebSocket 서버 접근
-        std::shared_ptr<SimpleWebSocketServer> GetWebSocketServer() const { return websocket_server_; }
+        // 통합 HTTP+WebSocket 서버 접근
+        std::shared_ptr<BeastHttpWebSocketServer> GetHttpWebSocketServer() const { return http_websocket_server_; }
 
         // 설정 접근
         const AsioServerConfig& GetConfig() const { return config_; }
@@ -144,6 +140,9 @@ namespace bt
         // 로깅
         void LogMessage(const std::string& message, bool is_error = false);
 
+        // HTTP 핸들러 등록
+        void RegisterHttpHandlers();
+
     private:
         AsioServerConfig  config_;
         std::atomic<bool> running_;
@@ -164,11 +163,8 @@ namespace bt
         std::shared_ptr<MonsterManager> monster_manager_;
         std::shared_ptr<PlayerManager>  player_manager_;
 
-        // 웹 서버
-        std::shared_ptr<RestApiServer> rest_api_server_;
-
-        // WebSocket 서버
-        std::shared_ptr<SimpleWebSocketServer> websocket_server_;
+        // 통합 HTTP+WebSocket 서버
+        std::shared_ptr<BeastHttpWebSocketServer> http_websocket_server_;
 
         // 통계
         std::atomic<size_t> total_packets_sent_;
@@ -179,9 +175,6 @@ namespace bt
 
         // 로깅
         mutable boost::mutex log_mutex_;
-
-        // Behavior Tree 초기화
-        //void InitializeBehaviorTrees();
     };
 
 

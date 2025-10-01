@@ -13,7 +13,7 @@
 // 전방 선언
 namespace bt
 {
-    class SimpleWebSocketServer;
+    class BeastHttpWebSocketServer;
     class PlayerManager;
     class Engine;
 } // namespace bt
@@ -56,8 +56,8 @@ namespace bt
         // Behavior Tree 엔진 설정
         void SetBTEngine(std::shared_ptr<Engine> engine);
 
-        // WebSocket 서버 설정
-        void SetWebSocketServer(std::shared_ptr<bt::SimpleWebSocketServer> server);
+        // 통합 HTTP+WebSocket 서버 설정
+        void SetHttpWebSocketServer(std::shared_ptr<bt::BeastHttpWebSocketServer> server);
 
         // PlayerManager 설정
         void SetPlayerManager(std::shared_ptr<PlayerManager> manager);
@@ -74,7 +74,7 @@ namespace bt
         std::atomic<uint32_t>                                                  next_monster_id_;
         std::atomic<bool>                                                      auto_spawn_enabled_;
         std::shared_ptr<Engine>                                    bt_engine_;
-        std::shared_ptr<bt::SimpleWebSocketServer>                             websocket_server_;
+        std::shared_ptr<bt::BeastHttpWebSocketServer>                          http_websocket_server_;
         std::shared_ptr<PlayerManager>                                         player_manager_;
         mutable std::mutex                                                     monsters_mutex_;
         mutable std::mutex                                                     spawn_mutex_;

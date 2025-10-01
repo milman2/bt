@@ -12,8 +12,8 @@
 #include "BT/Monster/MonsterBTExecutor.h"
 #include "Player.h"
 #include "PlayerManager.h"
-#include "Network/RestAPI/RestApiServer.h"
-#include "Network/WebSocket/SimpleWebSocketServer.h"
+#include "BT/Monster/MonsterManager.h"
+#include "Network/WebSocket/BeastHttpWebSocketServer.h"
 
 namespace bt
 {
@@ -31,25 +31,20 @@ namespace bt
         monster_manager_ = std::make_shared<MonsterManager>();
         player_manager_  = std::make_shared<PlayerManager>();
 
-        // 웹 서버 초기화
-        rest_api_server_ = std::make_shared<RestApiServer>(8081); // REST API 서버는 8081 포트 사용
-        rest_api_server_->SetMonsterManager(monster_manager_);
-        rest_api_server_->SetPlayerManager(player_manager_);
+        // 통합 HTTP+WebSocket 서버 초기화 (포트 8080 사용)
+        http_websocket_server_ = std::make_shared<BeastHttpWebSocketServer>(8080, io_context_);
+        
+        // HTTP 핸들러 등록
+        RegisterHttpHandlers();
+
         // bt_engine_을 shared_ptr로 변환 (원본은 유지)
         std::shared_ptr<Engine> shared_bt_engine(bt_engine_.get(),
                                                              [](Engine*)
                                                              {
                                                              });
-        rest_api_server_->SetBTEngine(shared_bt_engine);
 
-        // WebSocket 서버 초기화
-        websocket_server_ = std::make_shared<SimpleWebSocketServer>(8082); // WebSocket 서버는 8082 포트 사용
-
-        // RestApiServer에 WebSocket 서버 참조 설정
-        rest_api_server_->SetWebSocketServer(websocket_server_);
-
-        // MonsterManager에 WebSocket 서버 설정
-        monster_manager_->SetWebSocketServer(websocket_server_);
+        // MonsterManager에 통합 서버 설정
+        monster_manager_->SetHttpWebSocketServer(http_websocket_server_);
 
         // MonsterManager에 PlayerManager 설정
         monster_manager_->SetPlayerManager(player_manager_);
@@ -57,8 +52,8 @@ namespace bt
         // MonsterManager에 BT 엔진 설정
         monster_manager_->SetBTEngine(shared_bt_engine);
 
-        // PlayerManager에 WebSocket 서버 설정
-        player_manager_->SetWebSocketServer(websocket_server_);
+        // PlayerManager에 통합 서버 설정
+        player_manager_->SetHttpWebSocketServer(http_websocket_server_);
 
         LogMessage("AsioServer 인스턴스가 생성되었습니다.");
     }
@@ -111,21 +106,14 @@ namespace bt
                     });
             }
 
-            // REST API 서버 시작
-            if (rest_api_server_)
+            // 통합 HTTP+WebSocket 서버 시작
+            if (http_websocket_server_)
             {
-                rest_api_server_->Start();
-            }
-
-            // WebSocket 서버 시작
-            if (websocket_server_)
-            {
-                websocket_server_->start();
+                http_websocket_server_->start();
             }
 
             LogMessage("서버가 성공적으로 시작되었습니다. 포트: " + std::to_string(config_.port));
-            LogMessage("REST API 서버: http://localhost:8081");
-            LogMessage("WebSocket 실시간 연결: ws://localhost:8082");
+            LogMessage("통합 HTTP+WebSocket 서버: http://localhost:8080 (대시보드 + API + WebSocket)");
 
             return true;
         }
@@ -167,16 +155,10 @@ namespace bt
             // 워커 스레드 종료
             worker_threads_.join_all();
 
-            // REST API 서버 중지
-            if (rest_api_server_)
+            // 통합 HTTP+WebSocket 서버 중지
+            if (http_websocket_server_)
             {
-                rest_api_server_->Stop();
-            }
-
-            // WebSocket 서버 중지
-            if (websocket_server_)
-            {
-                websocket_server_->stop();
+                http_websocket_server_->stop();
             }
 
             LogMessage("서버가 종료되었습니다.");
@@ -568,330 +550,6 @@ namespace bt
         return info;
     }
 
-    // void AsioServer::InitializeBehaviorTrees()
-    // {
-    //     // Goblin Behavior Tree 생성
-    //     auto goblin_tree = std::make_shared<Tree>("goblin_bt");
-    //     auto goblin_root = std::make_shared<Selector>("goblin_root");
-        
-    //     // Patrol Action
-    //     auto patrol_action = std::make_shared<Action>("patrol", [](Context& context) -> NodeStatus {
-    //         std::cout << "Goblin patrol action executed" << std::endl;
-            
-    //         // AI를 통해 몬스터 정보 가져오기
-    //         auto ai = context.GetAI();
-    //         if (!ai) {
-    //             std::cout << "Patrol action: AI가 없음" << std::endl;
-    //             return NodeStatus::FAILURE;
-    //         }
-            
-    //         // MonsterBTExecutor로 캐스팅
-    //         auto monster_ai = std::dynamic_pointer_cast<MonsterBTExecutor>(ai);
-    //         if (!monster_ai) {
-    //             std::cout << "Patrol action: MonsterBTExecutor 캐스팅 실패" << std::endl;
-    //             return NodeStatus::FAILURE;
-    //         }
-            
-    //         auto monster = monster_ai->GetMonster();
-    //         if (!monster) {
-    //             std::cout << "Patrol action: 몬스터 참조가 없음" << std::endl;
-    //             return NodeStatus::FAILURE;
-    //         }
-            
-    //         // 다음 순찰점 가져오기
-    //         auto next_point = monster->GetNextPatrolPoint();
-    //         auto current_pos = monster->GetPosition();
-            
-    //         // 현재 위치와 목표 위치의 거리 계산
-    //         float dx = next_point.x - current_pos.x;
-    //         float dz = next_point.z - current_pos.z;
-    //         float distance = std::sqrt(dx * dx + dz * dz);
-            
-    //         // 목표 지점에 도달했는지 확인 (1.0f 이내)
-    //         if (distance < 1.0f) {
-    //             // 다음 순찰점으로 이동 완료
-    //             monster->SetPosition(next_point.x, next_point.y, next_point.z, next_point.rotation);
-    //             std::cout << "Goblin " << monster->GetName() << " reached patrol point: (" 
-    //                      << next_point.x << ", " << next_point.y << ", " << next_point.z << ")" << std::endl;
-    //             return NodeStatus::SUCCESS;
-    //         }
-            
-    //         // 목표 지점으로 이동
-    //         float move_speed = 50.0f; // 이동 속도 (크게 증가)
-    //         float move_distance = move_speed * 0.016f; // 60fps 기준
-            
-    //         if (distance > 0.0f) {
-    //             // 정규화된 방향 벡터
-    //             float dir_x = dx / distance;
-    //             float dir_z = dz / distance;
-                
-    //             // 새로운 위치 계산
-    //             float new_x = current_pos.x + dir_x * move_distance;
-    //             float new_z = current_pos.z + dir_z * move_distance;
-                
-    //             // 몬스터 위치 업데이트
-    //             monster->SetPosition(new_x, current_pos.y, new_z, current_pos.rotation);
-                
-    //             std::cout << "Goblin " << monster->GetName() << " moving to patrol point: (" 
-    //                      << new_x << ", " << current_pos.y << ", " << new_z << ")" << std::endl;
-    //         }
-            
-    //         return NodeStatus::RUNNING;
-    //     });
-        
-    //     goblin_root->AddChild(patrol_action);
-    //     goblin_tree->SetRoot(goblin_root);
-    //     bt_engine_->RegisterTree("goblin_bt", goblin_tree);
-        
-    //     // Orc Behavior Tree 생성
-    //     auto orc_tree = std::make_shared<Tree>("orc_bt");
-    //     auto orc_root = std::make_shared<Selector>("orc_root");
-        
-    //     auto orc_patrol_action = std::make_shared<Action>("patrol", [](Context& context) -> NodeStatus {
-    //         auto ai = context.GetAI();
-    //         if (!ai) return NodeStatus::FAILURE;
-            
-    //         auto monster_ai = std::dynamic_pointer_cast<MonsterBTExecutor>(ai);
-    //         if (!monster_ai) return NodeStatus::FAILURE;
-            
-    //         auto monster = monster_ai->GetMonster();
-    //         if (!monster) return NodeStatus::FAILURE;
-            
-    //         auto next_point = monster->GetNextPatrolPoint();
-    //         auto current_pos = monster->GetPosition();
-            
-    //         float dx = next_point.x - current_pos.x;
-    //         float dz = next_point.z - current_pos.z;
-    //         float distance = std::sqrt(dx * dx + dz * dz);
-            
-    //         if (distance < 1.0f) {
-    //             monster->SetPosition(next_point.x, next_point.y, next_point.z, next_point.rotation);
-    //             return NodeStatus::SUCCESS;
-    //         }
-            
-    //         float move_speed = 40.0f; // Orc는 조금 느림 (속도 증가)
-    //         float move_distance = move_speed * 0.016f;
-            
-    //         if (distance > 0.0f) {
-    //             float dir_x = dx / distance;
-    //             float dir_z = dz / distance;
-    //             float new_x = current_pos.x + dir_x * move_distance;
-    //             float new_z = current_pos.z + dir_z * move_distance;
-    //             monster->SetPosition(new_x, current_pos.y, new_z, current_pos.rotation);
-    //         }
-            
-    //         return NodeStatus::RUNNING;
-    //     });
-        
-    //     orc_root->AddChild(orc_patrol_action);
-    //     orc_tree->SetRoot(orc_root);
-    //     bt_engine_->RegisterTree("orc_bt", orc_tree);
-        
-    //     // Dragon Behavior Tree 생성
-    //     auto dragon_tree = std::make_shared<Tree>("dragon_bt");
-    //     auto dragon_root = std::make_shared<Selector>("dragon_root");
-        
-    //     auto dragon_patrol_action = std::make_shared<Action>("patrol", [](Context& context) -> NodeStatus {
-    //         auto ai = context.GetAI();
-    //         if (!ai) return NodeStatus::FAILURE;
-            
-    //         auto monster_ai = std::dynamic_pointer_cast<MonsterBTExecutor>(ai);
-    //         if (!monster_ai) return NodeStatus::FAILURE;
-            
-    //         auto monster = monster_ai->GetMonster();
-    //         if (!monster) return NodeStatus::FAILURE;
-            
-    //         auto next_point = monster->GetNextPatrolPoint();
-    //         auto current_pos = monster->GetPosition();
-            
-    //         float dx = next_point.x - current_pos.x;
-    //         float dz = next_point.z - current_pos.z;
-    //         float distance = std::sqrt(dx * dx + dz * dz);
-            
-    //         if (distance < 1.0f) {
-    //             monster->SetPosition(next_point.x, next_point.y, next_point.z, next_point.rotation);
-    //             return NodeStatus::SUCCESS;
-    //         }
-            
-    //         float move_speed = 60.0f; // Dragon은 빠름 (속도 증가)
-    //         float move_distance = move_speed * 0.016f;
-            
-    //         if (distance > 0.0f) {
-    //             float dir_x = dx / distance;
-    //             float dir_z = dz / distance;
-    //             float new_x = current_pos.x + dir_x * move_distance;
-    //             float new_z = current_pos.z + dir_z * move_distance;
-    //             monster->SetPosition(new_x, current_pos.y, new_z, current_pos.rotation);
-    //         }
-            
-    //         return NodeStatus::RUNNING;
-    //     });
-        
-    //     dragon_root->AddChild(dragon_patrol_action);
-    //     dragon_tree->SetRoot(dragon_root);
-    //     bt_engine_->RegisterTree("dragon_bt", dragon_tree);
-        
-    //     // Skeleton Behavior Tree 생성
-    //     auto skeleton_tree = std::make_shared<Tree>("skeleton_bt");
-    //     auto skeleton_root = std::make_shared<Selector>("skeleton_root");
-        
-    //     auto skeleton_patrol_action = std::make_shared<Action>("patrol", [](Context& context) -> NodeStatus {
-    //         auto ai = context.GetAI();
-    //         if (!ai) return NodeStatus::FAILURE;
-            
-    //         auto monster_ai = std::dynamic_pointer_cast<MonsterBTExecutor>(ai);
-    //         if (!monster_ai) return NodeStatus::FAILURE;
-            
-    //         auto monster = monster_ai->GetMonster();
-    //         if (!monster) return NodeStatus::FAILURE;
-            
-    //         auto next_point = monster->GetNextPatrolPoint();
-    //         auto current_pos = monster->GetPosition();
-            
-    //         float dx = next_point.x - current_pos.x;
-    //         float dz = next_point.z - current_pos.z;
-    //         float distance = std::sqrt(dx * dx + dz * dz);
-            
-    //         if (distance < 1.0f) {
-    //             monster->SetPosition(next_point.x, next_point.y, next_point.z, next_point.rotation);
-    //             return NodeStatus::SUCCESS;
-    //         }
-            
-    //         float move_speed = 45.0f; // Skeleton은 보통 속도 (속도 증가)
-    //         float move_distance = move_speed * 0.016f;
-            
-    //         if (distance > 0.0f) {
-    //             float dir_x = dx / distance;
-    //             float dir_z = dz / distance;
-    //             float new_x = current_pos.x + dir_x * move_distance;
-    //             float new_z = current_pos.z + dir_z * move_distance;
-    //             monster->SetPosition(new_x, current_pos.y, new_z, current_pos.rotation);
-    //         }
-            
-    //         return NodeStatus::RUNNING;
-    //     });
-        
-    //     skeleton_root->AddChild(skeleton_patrol_action);
-    //     skeleton_tree->SetRoot(skeleton_root);
-    //     bt_engine_->RegisterTree("skeleton_bt", skeleton_tree);
-        
-    //     // Zombie Behavior Tree 생성
-    //     auto zombie_tree = std::make_shared<Tree>("zombie_bt");
-    //     auto zombie_root = std::make_shared<Selector>("zombie_root");
-        
-    //     auto zombie_patrol_action = std::make_shared<Action>("patrol", [](Context& context) -> NodeStatus {
-    //         auto ai = context.GetAI();
-    //         if (!ai) return NodeStatus::FAILURE;
-            
-    //         auto monster_ai = std::dynamic_pointer_cast<MonsterBTExecutor>(ai);
-    //         if (!monster_ai) return NodeStatus::FAILURE;
-            
-    //         auto monster = monster_ai->GetMonster();
-    //         if (!monster) return NodeStatus::FAILURE;
-            
-    //         auto next_point = monster->GetNextPatrolPoint();
-    //         auto current_pos = monster->GetPosition();
-            
-    //         float dx = next_point.x - current_pos.x;
-    //         float dz = next_point.z - current_pos.z;
-    //         float distance = std::sqrt(dx * dx + dz * dz);
-            
-    //         if (distance < 1.0f) {
-    //             monster->SetPosition(next_point.x, next_point.y, next_point.z, next_point.rotation);
-    //             return NodeStatus::SUCCESS;
-    //         }
-            
-    //         float move_speed = 30.0f; // Zombie는 느림 (속도 증가)
-    //         float move_distance = move_speed * 0.016f;
-            
-    //         if (distance > 0.0f) {
-    //             float dir_x = dx / distance;
-    //             float dir_z = dz / distance;
-    //             float new_x = current_pos.x + dir_x * move_distance;
-    //             float new_z = current_pos.z + dir_z * move_distance;
-    //             monster->SetPosition(new_x, current_pos.y, new_z, current_pos.rotation);
-    //         }
-            
-    //         return NodeStatus::RUNNING;
-    //     });
-        
-    //     zombie_root->AddChild(zombie_patrol_action);
-    //     zombie_tree->SetRoot(zombie_root);
-    //     bt_engine_->RegisterTree("zombie_bt", zombie_tree);
-        
-    //     // Merchant Behavior Tree 생성
-    //     auto merchant_tree = std::make_shared<Tree>("merchant_bt");
-    //     auto merchant_root = std::make_shared<Selector>("merchant_root");
-        
-    //     auto merchant_idle_action = std::make_shared<Action>("idle", [](Context& context) -> NodeStatus {
-    //         std::cout << "Merchant idle action executed" << std::endl;
-    //         return NodeStatus::SUCCESS;
-    //     });
-        
-    //     merchant_root->AddChild(merchant_idle_action);
-    //     merchant_tree->SetRoot(merchant_root);
-    //     bt_engine_->RegisterTree("merchant_bt", merchant_tree);
-        
-    //     // Guard Behavior Tree 생성
-    //     auto guard_tree = std::make_shared<Tree>("guard_bt");
-    //     auto guard_root = std::make_shared<Selector>("guard_root");
-        
-    //     auto guard_patrol_action = std::make_shared<Action>("patrol", [](Context& context) -> NodeStatus {
-    //         auto ai = context.GetAI();
-    //         if (!ai) return NodeStatus::FAILURE;
-            
-    //         auto monster_ai = std::dynamic_pointer_cast<MonsterBTExecutor>(ai);
-    //         if (!monster_ai) return NodeStatus::FAILURE;
-            
-    //         auto monster = monster_ai->GetMonster();
-    //         if (!monster) return NodeStatus::FAILURE;
-            
-    //         auto next_point = monster->GetNextPatrolPoint();
-    //         auto current_pos = monster->GetPosition();
-            
-    //         float dx = next_point.x - current_pos.x;
-    //         float dz = next_point.z - current_pos.z;
-    //         float distance = std::sqrt(dx * dx + dz * dz);
-            
-    //         if (distance < 1.0f) {
-    //             monster->SetPosition(next_point.x, next_point.y, next_point.z, next_point.rotation);
-    //             return NodeStatus::SUCCESS;
-    //         }
-            
-    //         float move_speed = 35.0f; // Guard는 빠름 (속도 증가)
-    //         float move_distance = move_speed * 0.016f;
-            
-    //         if (distance > 0.0f) {
-    //             float dir_x = dx / distance;
-    //             float dir_z = dz / distance;
-    //             float new_x = current_pos.x + dir_x * move_distance;
-    //             float new_z = current_pos.z + dir_z * move_distance;
-    //             monster->SetPosition(new_x, current_pos.y, new_z, current_pos.rotation);
-    //         }
-            
-    //         return NodeStatus::RUNNING;
-    //     });
-        
-    //     guard_root->AddChild(guard_patrol_action);
-    //     guard_tree->SetRoot(guard_root);
-    //     bt_engine_->RegisterTree("guard_bt", guard_tree);
-        
-    //     // Default Behavior Tree 생성
-    //     auto default_tree = std::make_shared<Tree>("default_bt");
-    //     auto default_root = std::make_shared<Selector>("default_root");
-        
-    //     auto default_idle_action = std::make_shared<Action>("idle", [](Context& context) -> NodeStatus {
-    //         std::cout << "Default idle action executed" << std::endl;
-    //         return NodeStatus::SUCCESS;
-    //     });
-        
-    //     default_root->AddChild(default_idle_action);
-    //     default_tree->SetRoot(default_root);
-    //     bt_engine_->RegisterTree("default_bt", default_tree);
-        
-    //     std::cout << "Behavior Tree 초기화 완료 - " << bt_engine_->GetRegisteredTrees() << "개 등록됨" << std::endl;
-    // }
-
     void AsioServer::HandlePlayerJoin(boost::shared_ptr<AsioClient> client, const Packet& packet)
     {
         try
@@ -975,6 +633,176 @@ namespace bt
         SendPacket(client, response);
         
         LogMessage("PLAYER_JOIN_RESPONSE 전송 완료");
+    }
+
+    void AsioServer::RegisterHttpHandlers()
+    {
+        if (!http_websocket_server_)
+            return;
+
+        // 루트 경로 - 대시보드 HTML
+        http_websocket_server_->register_get_handler("/", [this](const http_request& req, http_response& res) {
+            std::string html = R"(
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BT MMORPG 서버 대시보드</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f0f0f0; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header { text-align: center; color: #333; margin-bottom: 30px; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: #f8f9fa; padding: 20px; border-radius: 8px; text-align: center; border-left: 4px solid #007bff; }
+        .stat-value { font-size: 2em; font-weight: bold; color: #007bff; }
+        .stat-label { color: #666; margin-top: 5px; }
+        .monster-list { background: #f8f9fa; padding: 20px; border-radius: 8px; }
+        .monster-item { background: white; padding: 15px; margin: 10px 0; border-radius: 5px; border-left: 4px solid #28a745; }
+        .status { padding: 4px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold; }
+        .status.active { background: #d4edda; color: #155724; }
+        .status.inactive { background: #f8d7da; color: #721c24; }
+        .connection-status { position: fixed; top: 20px; right: 20px; padding: 10px 20px; border-radius: 20px; font-weight: bold; }
+        .connected { background: #d4edda; color: #155724; }
+        .disconnected { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="connection-status disconnected" id="connectionStatus">연결 끊김</div>
+    <div class="container">
+        <div class="header">
+            <h1>🐉 BT MMORPG 서버 대시보드</h1>
+            <p>실시간 몬스터 AI 및 서버 상태 모니터링</p>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="totalMonsters">0</div>
+                <div class="stat-label">총 몬스터</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="activeMonsters">0</div>
+                <div class="stat-label">활성 몬스터</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalPlayers">0</div>
+                <div class="stat-label">총 플레이어</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="activePlayers">0</div>
+                <div class="stat-label">활성 플레이어</div>
+            </div>
+        </div>
+        
+        <div class="monster-list">
+            <h2>몬스터 상태</h2>
+            <div id="monsterList">로딩 중...</div>
+        </div>
+    </div>
+
+    <script>
+        let ws = null;
+        let reconnectInterval = null;
+
+        function connect() {
+            ws = new WebSocket('ws://localhost:8080/');
+            
+            ws.onopen = function() {
+                console.log('WebSocket 연결됨');
+                document.getElementById('connectionStatus').textContent = '연결됨';
+                document.getElementById('connectionStatus').className = 'connection-status connected';
+                if (reconnectInterval) {
+                    clearInterval(reconnectInterval);
+                    reconnectInterval = null;
+                }
+            };
+            
+            ws.onmessage = function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.type === 'monster_update') {
+                        updateMonsterList(data.monsters);
+                    } else if (data.type === 'system_message') {
+                        console.log('시스템 메시지:', data.data.message);
+                    }
+                } catch (e) {
+                    console.error('메시지 파싱 오류:', e);
+                }
+            };
+            
+            ws.onclose = function() {
+                console.log('WebSocket 연결 끊김');
+                document.getElementById('connectionStatus').textContent = '연결 끊김';
+                document.getElementById('connectionStatus').className = 'connection-status disconnected';
+                if (!reconnectInterval) {
+                    reconnectInterval = setInterval(connect, 3000);
+                }
+            };
+            
+            ws.onerror = function(error) {
+                console.error('WebSocket 오류:', error);
+            };
+        }
+
+        function updateMonsterList(monsters) {
+            const container = document.getElementById('monsterList');
+            const totalMonsters = monsters.length;
+            const activeMonsters = monsters.filter(m => m.is_active).length;
+            
+            document.getElementById('totalMonsters').textContent = totalMonsters;
+            document.getElementById('activeMonsters').textContent = activeMonsters;
+            
+            if (monsters.length === 0) {
+                container.innerHTML = '<p>활성 몬스터가 없습니다.</p>';
+                return;
+            }
+            
+            container.innerHTML = monsters.map(monster => `
+                <div class="monster-item">
+                    <h3>${monster.name} (${monster.type})</h3>
+                    <p><strong>위치:</strong> (${monster.position.x.toFixed(2)}, ${monster.position.z.toFixed(2)})</p>
+                    <p><strong>체력:</strong> ${monster.health}/${monster.max_health}</p>
+                    <p><strong>AI:</strong> ${monster.ai_name} (${monster.bt_name})</p>
+                    <p><strong>상태:</strong> <span class="status ${monster.is_active ? 'active' : 'inactive'}">${monster.is_active ? '활성' : '비활성'}</span></p>
+                </div>
+            `).join('');
+        }
+
+        // 페이지 로드 시 연결 시작
+        connect();
+    </script>
+</body>
+</html>
+            )";
+            res = http_websocket_server_->create_http_response(boost::beast::http::status::ok, html, "text/html");
+        });
+
+        // API 엔드포인트들
+        http_websocket_server_->register_get_handler("/api/monsters", [this](const http_request& req, http_response& res) {
+            if (!monster_manager_) {
+                res = http_websocket_server_->create_error_response(boost::beast::http::status::internal_server_error, "MonsterManager not available");
+                return;
+            }
+            
+            // 몬스터 정보를 JSON으로 반환
+            std::string json = "{\"monsters\":[],\"total\":0}"; // 기본값
+            // TODO: 실제 몬스터 정보를 JSON으로 변환
+            res = http_websocket_server_->create_json_response(json);
+        });
+
+        http_websocket_server_->register_get_handler("/api/stats", [this](const http_request& req, http_response& res) {
+            std::string json = R"({
+                "total_monsters": 0,
+                "active_monsters": 0,
+                "total_players": 0,
+                "active_players": 0,
+                "server_uptime": 0,
+                "connected_clients": 0
+            })";
+            res = http_websocket_server_->create_json_response(json);
+        });
+
+        LogMessage("HTTP 핸들러 등록 완료");
     }
 
 

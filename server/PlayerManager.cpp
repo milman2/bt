@@ -3,7 +3,7 @@
 #include <random>
 
 #include "PlayerManager.h"
-#include "Network/WebSocket/SimpleWebSocketServer.h"
+#include "Network/WebSocket/BeastHttpWebSocketServer.h"
 
 namespace bt
 {
@@ -243,10 +243,10 @@ namespace bt
         }
     }
 
-    void PlayerManager::SetWebSocketServer(std::shared_ptr<bt::SimpleWebSocketServer> server)
+    void PlayerManager::SetHttpWebSocketServer(std::shared_ptr<bt::BeastHttpWebSocketServer> server)
     {
-        websocket_server_ = server;
-        std::cout << "PlayerManager에 WebSocket 서버 설정 완료" << std::endl;
+        http_websocket_server_ = server;
+        std::cout << "PlayerManager에 통합 HTTP+WebSocket 서버 설정 완료" << std::endl;
     }
 
     void PlayerManager::Update(float delta_time)

@@ -6,6 +6,9 @@ include_directories(${CMAKE_SOURCE_DIR}/shared)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/BT)
 
+# Boost.Beast 찾기
+find_package(Boost REQUIRED COMPONENTS beast)
+
 # 서버 실행 파일 생성
 add_executable(BT_MMORPG_Server ${SERVER_SOURCES})
 
@@ -19,6 +22,7 @@ target_link_libraries(BT_MMORPG_Server
     Boost::chrono
     Boost::date_time
     Boost::atomic
+    Boost::beast
     nlohmann_json::nlohmann_json
     OpenSSL::SSL
     OpenSSL::Crypto

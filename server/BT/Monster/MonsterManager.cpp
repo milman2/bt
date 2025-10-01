@@ -3,7 +3,7 @@
 #include "MonsterBTExecutor.h"
 #include "../../PlayerManager.h"
 #include "../../BT/Engine.h"
-#include "../../Network/WebSocket/SimpleWebSocketServer.h"
+#include "../../Network/WebSocket/BeastHttpWebSocketServer.h"
 
 #include <algorithm>
 #include <fstream>
@@ -165,10 +165,11 @@ namespace bt
         std::cout << "MonsterManager에 Behavior Tree 엔진 설정 완료" << std::endl;
     }
 
-    void MonsterManager::SetWebSocketServer(std::shared_ptr<bt::SimpleWebSocketServer> server)
+
+    void MonsterManager::SetHttpWebSocketServer(std::shared_ptr<bt::BeastHttpWebSocketServer> server)
     {
-        websocket_server_ = server;
-        std::cout << "MonsterManager에 WebSocket 서버 설정 완료" << std::endl;
+        http_websocket_server_ = server;
+        std::cout << "MonsterManager에 Beast HTTP+WebSocket 서버 설정 완료" << std::endl;
     }
 
     void MonsterManager::SetPlayerManager(std::shared_ptr<PlayerManager> manager)
@@ -445,7 +446,7 @@ namespace bt
             broadcast_timer = 0.0f;
             std::cout << "WebSocket 브로드캐스트 시도 중..." << std::endl;
 
-            if (websocket_server_)
+            if (http_websocket_server_)
             {
                 nlohmann::json event;
                 event["type"]     = "monster_update";
@@ -474,9 +475,9 @@ namespace bt
                     }
                 }
 
-                std::cout << "WebSocket 브로드캐스트: " << event["monsters"].size() << "마리 몬스터 전송" << std::endl;
-                // WebSocket 브로드캐스트 처리
-                websocket_server_->broadcast(event.dump());
+                std::cout << "통합 HTTP+WebSocket 브로드캐스트: " << event["monsters"].size() << "마리 몬스터 전송" << std::endl;
+                // 통합 HTTP+WebSocket 서버로 브로드캐스트
+                http_websocket_server_->broadcast(event.dump());
 
                 // 서버 통계도 함께 브로드캐스트
                 nlohmann::json stats_event;
