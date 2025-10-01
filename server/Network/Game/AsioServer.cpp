@@ -338,6 +338,11 @@ namespace bt
                             " (ID: " + std::to_string(player->GetID()) + ")");
             }
         }
+
+        // 클라이언트 패킷 수신 시작
+        LogMessage("클라이언트 연결 완료: " + info.ip_address + ":" + std::to_string(info.port));
+        client->ReceivePacket();
+        LogMessage("클라이언트 패킷 수신 시작: " + info.ip_address);
     }
 
     void AsioServer::RemoveClient(boost::shared_ptr<AsioClient> client)
@@ -394,6 +399,11 @@ namespace bt
     void AsioServer::ProcessPacket(boost::shared_ptr<AsioClient> client, const Packet& packet)
     {
         total_packets_received_.fetch_add(1);
+        
+        LogMessage("패킷 수신: 타입=" + std::to_string(packet.type) + 
+                  ", 크기=" + std::to_string(packet.size) + 
+                  ", 데이터크기=" + std::to_string(packet.data.size()) + 
+                  ", 클라이언트=" + client->GetIPAddress());
 
         // 패킷 타입에 따른 처리
         switch (static_cast<PacketType>(packet.type))
@@ -407,7 +417,8 @@ namespace bt
 
             case PacketType::PLAYER_JOIN:
                 // 플레이어 참여 요청 처리
-                LogMessage("플레이어 참여 요청 수신: " + client->GetIPAddress());
+                LogMessage("플레이어 참여 요청 수신: " + client->GetIPAddress() + 
+                          ", 데이터 크기: " + std::to_string(packet.data.size()));
                 HandlePlayerJoin(client, packet);
                 break;
 
@@ -605,6 +616,9 @@ namespace bt
     {
         try
         {
+            LogMessage("HandlePlayerJoin 시작: 클라이언트=" + client->GetIPAddress() + 
+                      ", 패킷 데이터 크기=" + std::to_string(packet.data.size()));
+            
             // 패킷 데이터 파싱
             const uint8_t* data = packet.data.data();
             size_t offset = 0;
@@ -612,10 +626,14 @@ namespace bt
             // 이름 길이 읽기
             uint32_t name_len = *reinterpret_cast<const uint32_t*>(data + offset);
             offset += sizeof(uint32_t);
+            
+            LogMessage("이름 길이: " + std::to_string(name_len));
 
             // 이름 읽기
             std::string player_name(data + offset, data + offset + name_len);
             offset += name_len;
+            
+            LogMessage("플레이어 이름: " + player_name);
 
             // 위치 읽기
             float x = *reinterpret_cast<const float*>(data + offset);

@@ -119,6 +119,10 @@ namespace bt
             packet.type = *reinterpret_cast<uint16_t*>(packet_buffer_.data());
             packet.data.assign(packet_buffer_.begin() + sizeof(uint16_t), packet_buffer_.end());
 
+            std::cout << "AsioClient: 패킷 수신 완료 - 타입=" << packet.type 
+                      << ", 크기=" << packet.size 
+                      << ", 데이터크기=" << packet.data.size() << std::endl;
+
             // 서버에 패킷 전달
             if (server_)
             {
@@ -130,6 +134,9 @@ namespace bt
         }
         else
         {
+            std::cout << "AsioClient: 패킷 수신 오류 - error=" << error.message() 
+                      << ", bytes_transferred=" << bytes_transferred 
+                      << ", expected=" << packet_buffer_.size() << std::endl;
             HandleDisconnect();
         }
     }

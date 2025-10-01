@@ -1,6 +1,16 @@
 # 클라이언트 소스 파일들
 file(GLOB_RECURSE CLIENT_SOURCES "*.cpp")
 
+# 메시지 큐 관련 파일들 명시적 추가
+set(CLIENT_MESSAGE_QUEUE_SOURCES
+    "Common/ClientMessageProcessor.cpp"
+    "Network/ClientNetworkMessageHandler.cpp"
+    "AI/ClientAIMessageHandler.cpp"
+)
+
+# 소스 파일 목록에 추가
+list(APPEND CLIENT_SOURCES ${CLIENT_MESSAGE_QUEUE_SOURCES})
+
 # 헤더 파일 디렉토리 설정
 include_directories(${CMAKE_SOURCE_DIR}/shared)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})

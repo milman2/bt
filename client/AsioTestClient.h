@@ -28,6 +28,9 @@
 #include "../BT/IExecutor.h"
 #include "../BT/EnvironmentInfo.h"
 #include "BT/PlayerBTs.h"
+#include "Common/ClientMessageProcessor.h"
+#include "Network/ClientNetworkMessageHandler.h"
+#include "AI/ClientAIMessageHandler.h"
 
 namespace bt
 {
@@ -115,7 +118,20 @@ namespace bt
 
         // 유틸리티
         void SetVerbose(bool verbose) { verbose_ = verbose; }
+        bool IsVerbose() const { return verbose_; }
         void LogMessage(const std::string& message, bool is_error = false);
+
+        // 메시지 큐 관련 메서드
+        void InitializeMessageQueue();
+        void ShutdownMessageQueue();
+        void SendNetworkPacket(const std::vector<uint8_t>& data, uint16_t packet_type);
+        void UpdateMonsters(const std::unordered_map<uint32_t, std::tuple<float, float, float, float>>& monsters);
+        void HandleCombatResult(uint32_t attacker_id, uint32_t target_id, uint32_t damage, uint32_t remaining_health);
+        void SetPlayerID(uint32_t player_id) { player_id_ = player_id; }
+        void SetConnected(bool connected) { connected_.store(connected); }
+        
+        // 환경 인지 (메시지 핸들러에서 접근 가능하도록 public)
+        void UpdateEnvironmentInfo();
 
     private:
         // 네트워킹
@@ -139,7 +155,6 @@ namespace bt
         bool IsInRange(float x, float z, float range) const;
         
         // 환경 인지
-        void UpdateEnvironmentInfo();
         const EnvironmentInfo& GetEnvironmentInfo() const { return environment_info_; }
 
         // 패킷 처리
@@ -178,6 +193,11 @@ namespace bt
         
         // 환경 인지 정보
         EnvironmentInfo                                 environment_info_;
+
+        // 메시지 큐 시스템
+        std::shared_ptr<ClientMessageProcessor>         message_processor_;
+        std::shared_ptr<ClientNetworkMessageHandler>    network_handler_;
+        std::shared_ptr<ClientAIMessageHandler>         ai_handler_;
 
         // 로깅
         boost::mutex log_mutex_;

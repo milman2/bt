@@ -39,12 +39,16 @@ namespace bt
     {
         // shared_from_this() 사용을 위해 context에 AI 설정
         context_.SetAI(shared_from_this());
+        
+        // 메시지 큐 시스템 초기화 (shared_from_this() 사용 가능한 시점)
+        InitializeMessageQueue();
     }
 
     AsioTestClient::~AsioTestClient()
     {
         StopAI();
         Disconnect();
+        ShutdownMessageQueue();
         LogMessage("AI 플레이어 클라이언트 소멸됨");
     }
 
@@ -274,11 +278,16 @@ namespace bt
         if (!ai_running_.load() || !connected_.load())
             return;
 
-        // 패킷 수신 처리
+        // 패킷 수신 처리 (메시지 큐로 전송)
         Packet packet;
         while (ReceivePacket(packet))
         {
-            ParsePacketResponse(packet);
+            // 패킷을 메시지 큐로 전송
+            if (message_processor_)
+            {
+                auto packet_msg = std::make_shared<NetworkPacketMessage>(packet.data, packet.type);
+                message_processor_->SendMessage(packet_msg);
+            }
         }
         
         // 연결이 끊어진 경우 AI 종료
@@ -600,21 +609,21 @@ namespace bt
 
         try
         {
-            boost::array<uint8_t, 1024> buffer;
-            
-            // 비블로킹 읽기 시도
+            // 패킷 크기 읽기
+            uint32_t packet_size;
             boost::system::error_code ec;
-            size_t bytes_read = socket_->read_some(boost::asio::buffer(buffer), ec);
+            size_t bytes_read = boost::asio::read(*socket_, boost::asio::buffer(&packet_size, sizeof(packet_size)), 
+                                                boost::asio::transfer_exactly(sizeof(packet_size)), ec);
             
             if (ec == boost::asio::error::would_block || ec == boost::asio::error::try_again)
             {
                 // 데이터가 없으면 false 반환
-            return false;
-        }
+                return false;
+            }
 
             if (ec)
             {
-                LogMessage("패킷 수신 오류: " + ec.message(), true);
+                LogMessage("패킷 크기 수신 오류: " + ec.message(), true);
                 
                 // 서버 연결이 끊어진 경우 클라이언트 종료
                 if (ec == boost::asio::error::eof || 
@@ -624,36 +633,36 @@ namespace bt
                     LogMessage("서버 연결이 끊어졌습니다. 클라이언트를 종료합니다.", true);
                     connected_.store(false);
                     ai_running_.store(false);
-            return false;
-        }
-
+                }
                 return false;
             }
             
-            if (bytes_read > 0)
+            if (bytes_read == sizeof(packet_size) && packet_size > sizeof(uint32_t))
             {
-                size_t offset = 0;
+                // 패킷 데이터 읽기 (크기 - 헤더 크기)
+                size_t data_size = packet_size - sizeof(uint32_t);
+                std::vector<uint8_t> buffer(data_size);
                 
-                // 크기 읽기
-                if (bytes_read < sizeof(uint32_t))
+                bytes_read = boost::asio::read(*socket_, boost::asio::buffer(buffer), 
+                                             boost::asio::transfer_exactly(data_size), ec);
+                
+                if (ec)
+                {
+                    LogMessage("패킷 데이터 수신 오류: " + ec.message(), true);
                     return false;
+                }
+                
+                if (bytes_read == data_size && data_size >= sizeof(uint16_t))
+                {
+                    // 타입 읽기
+                    uint16_t type = *reinterpret_cast<uint16_t*>(buffer.data());
                     
-                uint32_t size = *reinterpret_cast<uint32_t*>(buffer.data() + offset);
-                offset += sizeof(uint32_t);
-                
-                // 타입 읽기
-                if (bytes_read < offset + sizeof(uint16_t))
-                    return false;
+                    // 데이터 읽기
+                    std::vector<uint8_t> data(buffer.begin() + sizeof(uint16_t), buffer.end());
                     
-                uint16_t type = *reinterpret_cast<uint16_t*>(buffer.data() + offset);
-                offset += sizeof(uint16_t);
-                
-                // 데이터 읽기
-                size_t data_size = bytes_read - offset;
-                std::vector<uint8_t> data(buffer.data() + offset, buffer.data() + offset + data_size);
-                
-                packet = Packet(type, data);
-                return true;
+                    packet = Packet(type, data);
+                    return true;
+                }
             }
         }
         catch (const boost::system::system_error& e)
@@ -932,6 +941,95 @@ namespace bt
             LogMessage("환경 인지: 주변 몬스터 " + std::to_string(environment_info_.nearby_monsters.size()) + 
                       "마리, 가장 가까운 적 ID: " + std::to_string(environment_info_.nearest_enemy_id) +
                       " (거리: " + std::to_string(environment_info_.nearest_enemy_distance) + ")");
+        }
+    }
+
+    // 메시지 큐 관련 메서드들
+    void AsioTestClient::InitializeMessageQueue()
+    {
+        // 메시지 프로세서 생성
+        message_processor_ = std::make_shared<ClientMessageProcessor>();
+        
+        // 네트워크 핸들러 생성
+        network_handler_ = std::make_shared<ClientNetworkMessageHandler>(shared_from_this());
+        network_handler_->SetMessageProcessor(message_processor_);
+        
+        // AI 핸들러 생성
+        ai_handler_ = std::make_shared<ClientAIMessageHandler>(shared_from_this());
+        ai_handler_->SetMessageProcessor(message_processor_);
+        
+        // 핸들러 등록
+        message_processor_->RegisterHandler(ClientMessageType::NETWORK_PACKET_RECEIVED, network_handler_);
+        message_processor_->RegisterHandler(ClientMessageType::NETWORK_CONNECTION_LOST, network_handler_);
+        message_processor_->RegisterHandler(ClientMessageType::NETWORK_CONNECTION_ESTABLISHED, network_handler_);
+        message_processor_->RegisterHandler(ClientMessageType::AI_UPDATE_REQUEST, ai_handler_);
+        message_processor_->RegisterHandler(ClientMessageType::AI_STATE_CHANGE, ai_handler_);
+        message_processor_->RegisterHandler(ClientMessageType::PLAYER_ACTION_REQUEST, ai_handler_);
+        message_processor_->RegisterHandler(ClientMessageType::MONSTER_UPDATE, ai_handler_);
+        message_processor_->RegisterHandler(ClientMessageType::COMBAT_RESULT, ai_handler_);
+        
+        // 메시지 프로세서 시작
+        message_processor_->Start();
+        
+        LogMessage("메시지 큐 시스템 초기화 완료");
+    }
+
+    void AsioTestClient::ShutdownMessageQueue()
+    {
+        if (message_processor_)
+        {
+            message_processor_->Stop();
+            message_processor_.reset();
+        }
+        
+        network_handler_.reset();
+        ai_handler_.reset();
+        
+        LogMessage("메시지 큐 시스템 종료 완료");
+    }
+
+    void AsioTestClient::SendNetworkPacket(const std::vector<uint8_t>& data, uint16_t packet_type)
+    {
+        if (!message_processor_)
+            return;
+
+        auto packet_msg = std::make_shared<NetworkPacketMessage>(data, packet_type);
+        message_processor_->SendMessage(packet_msg);
+    }
+
+    void AsioTestClient::UpdateMonsters(const std::unordered_map<uint32_t, std::tuple<float, float, float, float>>& monsters)
+    {
+        monsters_.clear();
+        
+        for (const auto& [id, pos] : monsters)
+        {
+            auto [x, y, z, rotation] = pos;
+            monsters_[id] = PlayerPosition(x, y, z, rotation);
+        }
+        
+        last_monster_update_ = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::steady_clock::now().time_since_epoch()).count() / 1000.0f;
+    }
+
+    void AsioTestClient::HandleCombatResult(uint32_t attacker_id, uint32_t target_id, uint32_t damage, uint32_t remaining_health)
+    {
+        if (attacker_id == player_id_)
+        {
+            if (verbose_)
+            {
+                LogMessage("공격 결과: 타겟 " + std::to_string(target_id) + 
+                          ", 데미지 " + std::to_string(damage) + 
+                          ", 남은 체력 " + std::to_string(remaining_health));
+            }
+        }
+        else if (target_id == player_id_)
+        {
+            health_ = remaining_health;
+            if (health_ <= 0)
+            {
+                LogMessage("플레이어 사망!", true);
+                target_id_ = 0;
+            }
         }
     }
 
