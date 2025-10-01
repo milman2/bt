@@ -1050,44 +1050,44 @@ namespace bt
         }
 
         // 월드 상태 수집
-        WorldState world_state;
-        world_state.timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::system_clock::now().time_since_epoch()).count();
+        bt::WorldStateBroadcast world_state;
+        world_state.set_timestamp(std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch()).count());
 
         // 플레이어 상태 수집
-        std::vector<PlayerState> players;
+        std::vector<bt::PlayerState> players;
         // TODO: 실제 플레이어 데이터 수집 구현
-        world_state.player_count = 0;
+        world_state.set_player_count(0);
 
         // 몬스터 상태 수집 (MessageBasedMonsterManager에서)
-        std::vector<MonsterState> monsters;
+        std::vector<bt::MonsterState> monsters;
         if (message_based_monster_manager_)
         {
             monsters = message_based_monster_manager_->GetMonsterStates();
-            world_state.monster_count = monsters.size();
+            world_state.set_monster_count(monsters.size());
         }
         else
         {
-            world_state.monster_count = 0;
+            world_state.set_monster_count(0);
         }
 
         // 월드 상태 직렬화
         std::vector<uint8_t> serialized_data;
         
         // 타임스탬프
-        uint64_t timestamp = world_state.timestamp;
+        uint64_t timestamp = world_state.timestamp();
         serialized_data.insert(serialized_data.end(), 
                               reinterpret_cast<uint8_t*>(&timestamp), 
                               reinterpret_cast<uint8_t*>(&timestamp) + sizeof(timestamp));
         
         // 플레이어 수
-        uint32_t player_count = world_state.player_count;
+        uint32_t player_count = world_state.player_count();
         serialized_data.insert(serialized_data.end(), 
                               reinterpret_cast<uint8_t*>(&player_count), 
                               reinterpret_cast<uint8_t*>(&player_count) + sizeof(player_count));
         
         // 몬스터 수
-        uint32_t monster_count = world_state.monster_count;
+        uint32_t monster_count = world_state.monster_count();
         serialized_data.insert(serialized_data.end(), 
                               reinterpret_cast<uint8_t*>(&monster_count), 
                               reinterpret_cast<uint8_t*>(&monster_count) + sizeof(monster_count));
@@ -1095,12 +1095,12 @@ namespace bt
         // 플레이어 데이터 추가
         for (const auto& player : players)
         {
-            uint32_t id = player.id;
+            uint32_t id = player.id();
             serialized_data.insert(serialized_data.end(), 
                                   reinterpret_cast<const uint8_t*>(&id), 
                                   reinterpret_cast<const uint8_t*>(&id) + sizeof(id));
             
-            float x = player.x, y = player.y, z = player.z;
+            float x = player.x(), y = player.y(), z = player.z();
             serialized_data.insert(serialized_data.end(), 
                                   reinterpret_cast<const uint8_t*>(&x), 
                                   reinterpret_cast<const uint8_t*>(&x) + sizeof(x));
@@ -1111,7 +1111,7 @@ namespace bt
                                   reinterpret_cast<const uint8_t*>(&z), 
                                   reinterpret_cast<const uint8_t*>(&z) + sizeof(z));
             
-            uint32_t health = player.health;
+            uint32_t health = player.health();
             serialized_data.insert(serialized_data.end(), 
                                   reinterpret_cast<const uint8_t*>(&health), 
                                   reinterpret_cast<const uint8_t*>(&health) + sizeof(health));
@@ -1120,12 +1120,12 @@ namespace bt
         // 몬스터 데이터 추가
         for (const auto& monster : monsters)
         {
-            uint32_t id = monster.id;
+            uint32_t id = monster.id();
             serialized_data.insert(serialized_data.end(), 
                                   reinterpret_cast<const uint8_t*>(&id), 
                                   reinterpret_cast<const uint8_t*>(&id) + sizeof(id));
             
-            float x = monster.x, y = monster.y, z = monster.z;
+            float x = monster.x(), y = monster.y(), z = monster.z();
             serialized_data.insert(serialized_data.end(), 
                                   reinterpret_cast<const uint8_t*>(&x), 
                                   reinterpret_cast<const uint8_t*>(&x) + sizeof(x));
@@ -1136,7 +1136,7 @@ namespace bt
                                   reinterpret_cast<const uint8_t*>(&z), 
                                   reinterpret_cast<const uint8_t*>(&z) + sizeof(z));
             
-            uint32_t health = monster.health;
+            uint32_t health = monster.health();
             serialized_data.insert(serialized_data.end(), 
                                   reinterpret_cast<const uint8_t*>(&health), 
                                   reinterpret_cast<const uint8_t*>(&health) + sizeof(health));
@@ -1151,8 +1151,8 @@ namespace bt
         auto now = std::chrono::steady_clock::now();
         if (std::chrono::duration_cast<std::chrono::seconds>(now - last_log_time).count() >= 1)
         {
-            LogMessage("월드 상태 브로드캐스팅: 플레이어 " + std::to_string(world_state.player_count) + 
-                      "명, 몬스터 " + std::to_string(world_state.monster_count) + "마리");
+            LogMessage("월드 상태 브로드캐스팅: 플레이어 " + std::to_string(world_state.player_count()) + 
+                      "명, 몬스터 " + std::to_string(world_state.monster_count()) + "마리");
             last_log_time = now;
         }
     }

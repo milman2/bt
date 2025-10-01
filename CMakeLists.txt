@@ -82,7 +82,7 @@ find_package(nlohmann_json REQUIRED)
 message(STATUS "nlohmann/json found: ${nlohmann_json_VERSION}")
 
 # Protocol Buffers 라이브러리 찾기
-find_package(Protobuf REQUIRED)
+find_package(Protobuf CONFIG REQUIRED)
 message(STATUS "Protobuf found: ${Protobuf_VERSION}")
 
 # OpenSSL 라이브러리 찾기 (WebSocket용)
@@ -96,8 +96,8 @@ find_package(Threads REQUIRED)
 
 # 공통 라이브러리 설정
 set(COMMON_LIBRARIES
-    Threads::Threads 
-    Boost::system 
+    Threads::Threads
+    Boost::system
     Boost::thread
     nlohmann_json::nlohmann_json
     protobuf::libprotobuf

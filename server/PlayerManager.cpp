@@ -85,7 +85,7 @@ namespace bt
         player->SetPosition(position.x, position.y, position.z, position.rotation);
 
         // 기본 스탯 설정
-        PlayerStats stats;
+        PlayerGameStats stats;
         stats.health     = 100;
         stats.max_health = 100;
         stats.mana       = 50;
@@ -112,7 +112,7 @@ namespace bt
         player->SetPosition(position.x, position.y, position.z, position.rotation);
 
         // 기본 스탯 설정
-        PlayerStats stats;
+        PlayerGameStats stats;
         stats.health     = 100;
         stats.max_health = 100;
         stats.mana       = 50;
@@ -350,7 +350,7 @@ namespace bt
         player->SetPosition(respawn_pos.x, respawn_pos.y, respawn_pos.z, respawn_pos.rotation);
 
         // 스탯 복구
-        PlayerStats stats = player->GetStats();
+        PlayerGameStats stats = player->GetStats();
         stats.health      = stats.max_health;
         stats.mana        = stats.max_mana;
         player->SetStats(stats);

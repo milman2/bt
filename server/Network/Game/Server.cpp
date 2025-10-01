@@ -586,8 +586,8 @@ namespace bt
         auto now = std::chrono::steady_clock::now();
         if (std::chrono::duration_cast<std::chrono::seconds>(now - last_log_time).count() >= 1)
         {
-            LogMessage("월드 상태 브로드캐스팅: 플레이어 " + std::to_string(world_state.player_count) + 
-                      "명, 몬스터 " + std::to_string(world_state.monster_count) + "마리");
+            LogMessage("월드 상태 브로드캐스팅: 플레이어 " + std::to_string(world_state.player_count()) +
+                      "명, 몬스터 " + std::to_string(world_state.monster_count()) + "마리");
             last_log_time = now;
         }
     }
