@@ -29,6 +29,7 @@
 #include "../BT/Node.h"
 #include "../BT/Tree.h"
 #include "../shared/Network/ReceiveBuffer.h"
+#include "../shared/Network/SendBuffer.h"
 #include "AI/ClientAIMessageHandler.h"
 #include "BT/PlayerBTs.h"
 #include "Common/ClientMessageProcessor.h"
@@ -237,7 +238,7 @@ namespace bt
         std::atomic<bool>       network_running_;
         std::vector<uint8_t>    read_buffer_;
         ReceiveBuffer           receive_buffer_; // 링버퍼 기반 수신 버퍼
-        std::vector<uint8_t>    write_buffer_;
+        SendBuffer              send_buffer_;    // 링버퍼 기반 전송 버퍼
         std::queue<Packet>      send_queue_;
         std::mutex              send_queue_mutex_;
         std::condition_variable send_queue_cv_;

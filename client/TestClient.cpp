@@ -36,7 +36,7 @@ namespace bt
 
         // 비동기 네트워크 버퍼 초기화
         read_buffer_.resize(4096);
-        write_buffer_.resize(4096);
+        // SendBuffer는 생성자에서 자동 초기화됨
         
         // 패킷 로그 파일 초기화
         packet_log_file_.open("packet.log", std::ios::out | std::ios::app);
@@ -1461,31 +1461,33 @@ namespace bt
                 send_queue_.pop();
                 lock.unlock();
 
-                // 패킷을 비동기로 전송
+                // 패킷을 SendBuffer에 추가하고 비동기로 전송
                 try
                 {
+                    // SendBuffer 초기화
+                    send_buffer_.Clear();
+                    
                     uint32_t total_size = sizeof(uint32_t) + sizeof(uint16_t) + packet.data.size();
-                    write_buffer_.resize(total_size);
-
-                    size_t offset = 0;
-
+                    
                     // 크기 (4바이트)
-                    std::memcpy(write_buffer_.data() + offset, &total_size, sizeof(uint32_t));
-                    offset += sizeof(uint32_t);
-
+                    send_buffer_.AppendData(&total_size, sizeof(uint32_t));
+                    
                     // 타입 (2바이트)
                     uint16_t packet_type = static_cast<uint16_t>(packet.type);
-                    std::memcpy(write_buffer_.data() + offset, &packet_type, sizeof(uint16_t));
-                    offset += sizeof(uint16_t);
-
+                    send_buffer_.AppendData(&packet_type, sizeof(uint16_t));
+                    
                     // 데이터
                     if (!packet.data.empty())
                     {
-                        std::memcpy(write_buffer_.data() + offset, packet.data.data(), packet.data.size());
+                        send_buffer_.AppendData(packet.data.data(), packet.data.size());
                     }
 
+                    // SendBuffer에서 데이터를 추출하여 전송
+                    std::vector<uint8_t> send_data(send_buffer_.GetUsedSize());
+                    send_buffer_.ExtractData(send_data.data(), send_data.size());
+
                     boost::asio::async_write(*socket_,
-                                             boost::asio::buffer(write_buffer_),
+                                             boost::asio::buffer(send_data),
                                              boost::bind(&TestClient::HandleAsyncWrite,
                                                          this,
                                                          boost::asio::placeholders::error,
