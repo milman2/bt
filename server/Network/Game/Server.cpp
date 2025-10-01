@@ -491,15 +491,10 @@ namespace bt
 
     void Server::SendMonsterSpawnResponse(boost::shared_ptr<Client> client, bool success)
     {
-        Packet response;
-        response.type = static_cast<uint32_t>(PacketType::CONNECT_RES);
-        response.size = sizeof(uint32_t) * 2; // type + success
-        response.data.resize(response.size);
-
-        uint32_t success_value = success ? 1 : 0;
-        memcpy(response.data.data(), &response.type, sizeof(uint32_t));
-        memcpy(response.data.data() + sizeof(uint32_t), &success_value, sizeof(uint32_t));
-
+        // PacketUtils를 사용하여 에러 메시지 패킷 생성
+        std::string message = success ? "몬스터 스폰 성공" : "몬스터 스폰 실패";
+        Packet response = PacketUtils::CreateErrorMessageEvt(message, success ? 0 : 1);
+        
         client->SendPacket(response);
         total_packets_sent_.fetch_add(1);
         LogMessage("몬스터 스폰 응답 전송 완료: " + std::string(success ? "성공" : "실패"));
@@ -507,15 +502,10 @@ namespace bt
 
     void Server::SendMonsterUpdateResponse(boost::shared_ptr<Client> client, bool success)
     {
-        Packet response;
-        response.type = static_cast<uint32_t>(PacketType::CONNECT_RES);
-        response.size = sizeof(uint32_t) * 2; // type + success
-        response.data.resize(response.size);
-
-        uint32_t success_value = success ? 1 : 0;
-        memcpy(response.data.data(), &response.type, sizeof(uint32_t));
-        memcpy(response.data.data() + sizeof(uint32_t), &success_value, sizeof(uint32_t));
-
+        // PacketUtils를 사용하여 에러 메시지 패킷 생성
+        std::string message = success ? "몬스터 업데이트 성공" : "몬스터 업데이트 실패";
+        Packet response = PacketUtils::CreateErrorMessageEvt(message, success ? 0 : 1);
+        
         client->SendPacket(response);
         total_packets_sent_.fetch_add(1);
         LogMessage("몬스터 업데이트 응답 전송 완료: " + std::string(success ? "성공" : "실패"));
@@ -523,15 +513,10 @@ namespace bt
 
     void Server::SendBTExecuteResponse(boost::shared_ptr<Client> client, bool success)
     {
-        Packet response;
-        response.type = static_cast<uint32_t>(PacketType::CONNECT_RES);
-        response.size = sizeof(uint32_t) * 2; // type + success
-        response.data.resize(response.size);
-
-        uint32_t success_value = success ? 1 : 0;
-        memcpy(response.data.data(), &response.type, sizeof(uint32_t));
-        memcpy(response.data.data() + sizeof(uint32_t), &success_value, sizeof(uint32_t));
-
+        // PacketUtils를 사용하여 BT 결과 패킷 생성
+        std::string message = success ? "BT 실행 성공" : "BT 실행 실패";
+        Packet response = PacketUtils::CreateBTResultEvt(0, "server_bt", success, message);
+        
         client->SendPacket(response);
         total_packets_sent_.fetch_add(1);
         LogMessage("BT 실행 응답 전송 완료: " + std::string(success ? "성공" : "실패"));
