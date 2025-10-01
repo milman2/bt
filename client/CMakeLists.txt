@@ -8,8 +8,15 @@ set(CLIENT_MESSAGE_QUEUE_SOURCES
     "AI/ClientAIMessageHandler.cpp"
 )
 
+# BT 노드 관련 파일들 명시적 추가
+set(CLIENT_BT_SOURCES
+    "BT/Action/Chase.cpp"
+    "BT/Condition/InDetectionRange.cpp"
+)
+
 # 소스 파일 목록에 추가
 list(APPEND CLIENT_SOURCES ${CLIENT_MESSAGE_QUEUE_SOURCES})
+list(APPEND CLIENT_SOURCES ${CLIENT_BT_SOURCES})
 
 # 헤더 파일 디렉토리 설정
 include_directories(${CMAKE_SOURCE_DIR}/shared)

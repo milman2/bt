@@ -171,6 +171,14 @@ int main(int argc, char* argv[])
 
             // AI 업데이트
             client->UpdateAI(delta_time);
+            
+            // 디버깅: 연결 상태 확인
+            static int loop_count = 0;
+            loop_count++;
+            if (loop_count % 100 == 0)
+            {
+                std::cout << "메인 루프 실행 중... (카운트: " << loop_count << ", 연결상태: " << (client->IsConnected() ? "true" : "false") << ")" << std::endl;
+            }
 
             // 실행 시간 체크
             if (duration > 0)

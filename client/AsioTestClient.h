@@ -115,6 +115,7 @@ namespace bt
         float GetMoveSpeed() const { return config_.move_speed; }
         float GetAttackRange() const { return config_.attack_range; }
         float GetDetectionRange() const { return config_.detection_range; }
+        const PlayerPosition* GetMonsterPosition(uint32_t monster_id) const;
 
         // 유틸리티
         void SetVerbose(bool verbose) { verbose_ = verbose; }

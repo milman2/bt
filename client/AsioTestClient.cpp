@@ -89,12 +89,11 @@ namespace bt
         connected_.store(true);
         LogMessage("서버 연결 성공");
 
-        // 게임 참여
+        // 게임 참여 시도 (실패해도 연결 유지)
         if (!JoinGame())
         {
-            LogMessage("게임 참여 실패", true);
-            Disconnect();
-            return false;
+            LogMessage("게임 참여 실패 - 서버 응답 없음, 오프라인 모드로 AI 시작", true);
+            // 연결은 유지하고 AI는 시작
         }
 
         return true;
@@ -194,28 +193,45 @@ namespace bt
 
     bool AsioTestClient::MoveTo(float x, float y, float z)
     {
-        if (!connected_.load())
-            return false;
-
+        // 위치 업데이트 (연결 상태와 관계없이)
         position_.x = x;
         position_.y = y;
         position_.z = z;
 
-        Packet move_packet = CreatePlayerMovePacket(x, y, z);
-        if (SendPacket(move_packet))
+        // 서버에 전송 (연결된 경우에만)
+        if (connected_.load())
+        {
+            Packet move_packet = CreatePlayerMovePacket(x, y, z);
+            if (SendPacket(move_packet))
+            {
+                if (verbose_)
+                {
+                    LogMessage("이동: (" + std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z) + ")");
+                }
+                return true;
+            }
+            else
+            {
+                if (verbose_)
+                {
+                    LogMessage("이동 패킷 전송 실패, 로컬 위치만 업데이트: (" + std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z) + ")");
+                }
+            }
+        }
+        else
         {
             if (verbose_)
             {
-                LogMessage("이동: (" + std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z) + ")");
+                LogMessage("오프라인 모드 - 이동: (" + std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z) + ")");
             }
-            return true;
         }
-            return false;
-        }
+        
+        return true; // 로컬 위치 업데이트는 항상 성공
+    }
 
     bool AsioTestClient::AttackTarget(uint32_t target_id)
     {
-        if (!connected_.load() || !IsAlive())
+        if (!IsAlive())
             return false;
 
         float current_time = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -224,29 +240,48 @@ namespace bt
         if (current_time - last_attack_time_ < attack_cooldown_)
             return false;
 
-        Packet attack_packet = CreatePlayerAttackPacket(target_id);
-        if (SendPacket(attack_packet))
+        // 공격 쿨다운 업데이트 (연결 상태와 관계없이)
+        last_attack_time_ = current_time;
+
+        // 서버에 전송 (연결된 경우에만)
+        if (connected_.load())
         {
-            last_attack_time_ = current_time;
+            Packet attack_packet = CreatePlayerAttackPacket(target_id);
+            if (SendPacket(attack_packet))
+            {
+                if (verbose_)
+                {
+                    LogMessage("공격: 타겟 ID " + std::to_string(target_id));
+                }
+                return true;
+            }
+            else
+            {
+                if (verbose_)
+                {
+                    LogMessage("공격 패킷 전송 실패, 로컬 공격만 실행: 타겟 ID " + std::to_string(target_id));
+                }
+            }
+        }
+        else
+        {
             if (verbose_)
             {
-                LogMessage("공격: 타겟 ID " + std::to_string(target_id));
+                LogMessage("오프라인 모드 - 공격: 타겟 ID " + std::to_string(target_id));
             }
-            return true;
         }
-        return false;
+        
+        return true; // 로컬 공격은 항상 성공
     }
 
     bool AsioTestClient::Respawn()
-        {
-        if (!connected_.load())
-            return false;
-
-        // 부활 위치로 이동
+    {
+        // 부활 처리 (연결 상태와 관계없이)
         position_ = spawn_position_;
         health_ = max_health_;
         target_id_ = 0;
 
+        // MoveTo는 이미 연결 상태를 확인하므로 그대로 호출
         if (MoveTo(spawn_position_.x, spawn_position_.y, spawn_position_.z))
         {
             LogMessage("부활 완료: " + config_.player_name);
@@ -275,27 +310,30 @@ namespace bt
 
     void AsioTestClient::UpdateAI(float delta_time)
     {
-        if (!ai_running_.load() || !connected_.load())
+        if (!ai_running_.load())
             return;
 
-        // 패킷 수신 처리 (메시지 큐로 전송)
-        Packet packet;
-        while (ReceivePacket(packet))
+        // AI 업데이트 호출 확인 (매 틱마다 로깅)
+        static int update_count = 0;
+        update_count++;
+        if (verbose_ && update_count % 50 == 0)
         {
-            // 패킷을 메시지 큐로 전송
-            if (message_processor_)
-            {
-                auto packet_msg = std::make_shared<NetworkPacketMessage>(packet.data, packet.type);
-                message_processor_->SendMessage(packet_msg);
-            }
+            LogMessage("AI 업데이트 호출됨 (카운트: " + std::to_string(update_count) + ")");
         }
-        
-        // 연결이 끊어진 경우 AI 종료
-        if (!connected_.load())
+
+        // 패킷 수신 처리 (메시지 큐로 전송) - 연결된 경우에만
+        if (connected_.load())
         {
-            LogMessage("서버 연결이 끊어져 AI를 종료합니다.", true);
-            ai_running_.store(false);
-            return;
+            Packet packet;
+            while (ReceivePacket(packet))
+            {
+                // 패킷을 메시지 큐로 전송
+                if (message_processor_)
+                {
+                    auto packet_msg = std::make_shared<NetworkPacketMessage>(packet.data, packet.type);
+                    message_processor_->SendMessage(packet_msg);
+                }
+            }
         }
 
         // 환경 인지 정보 업데이트
@@ -311,7 +349,7 @@ namespace bt
             NodeStatus status = behavior_tree_->Execute(context_);
             
             // 실행 상태 로깅 (디버깅용)
-            if (verbose_ && context_.GetExecutionCount() % 100 == 0)
+            if (verbose_ && context_.GetExecutionCount() % 10 == 0)
             {
                 std::string status_str = (status == NodeStatus::SUCCESS) ? "SUCCESS" :
                                        (status == NodeStatus::FAILURE) ? "FAILURE" : "RUNNING";
@@ -423,44 +461,8 @@ namespace bt
             return;
         }
 
-        // 가장 가까운 몬스터 찾기
+        // 가장 가까운 몬스터 찾기 (BT에서 사용할 수 있도록 타겟 설정)
         FindNearestMonster();
-
-        if (HasTarget())
-        {
-            float distance = GetDistanceToTarget();
-            
-            if (distance <= config_.attack_range)
-            {
-                // 공격 범위 내 - 공격
-                AttackTarget(target_id_);
-            }
-            else if (distance <= config_.detection_range)
-            {
-                // 탐지 범위 내 - 추적
-                auto target_pos = monsters_[target_id_];
-                float dx = target_pos.x - position_.x;
-                float dz = target_pos.z - position_.z;
-                float dist = std::sqrt(dx * dx + dz * dz);
-                
-                if (dist > 0.1f)
-                {
-                    float step_size = config_.move_speed * delta_time;
-                    float normalized_dx = dx / dist;
-                    float normalized_dz = dz / dist;
-                    
-                    float new_x = position_.x + normalized_dx * step_size;
-                    float new_z = position_.z + normalized_dz * step_size;
-                    
-                    MoveTo(new_x, position_.y, new_z);
-                }
-            }
-            else
-            {
-                // 탐지 범위 밖 - 타겟 해제
-                target_id_ = 0;
-            }
-        }
     }
 
     void AsioTestClient::FindNearestMonster()
@@ -526,6 +528,16 @@ namespace bt
         }
 
         return nearest_id;
+    }
+
+    const PlayerPosition* AsioTestClient::GetMonsterPosition(uint32_t monster_id) const
+    {
+        auto it = monsters_.find(monster_id);
+        if (it != monsters_.end())
+        {
+            return &it->second;
+        }
+        return nullptr;
     }
 
     bool AsioTestClient::IsInRange(float x, float z, float range) const
@@ -609,15 +621,23 @@ namespace bt
 
         try
         {
+            // 소켓을 논블로킹 모드로 설정
+            socket_->non_blocking(true);
+            
             // 패킷 크기 읽기
             uint32_t packet_size;
             boost::system::error_code ec;
-            size_t bytes_read = boost::asio::read(*socket_, boost::asio::buffer(&packet_size, sizeof(packet_size)), 
-                                                boost::asio::transfer_exactly(sizeof(packet_size)), ec);
+            size_t bytes_read = socket_->read_some(boost::asio::buffer(&packet_size, sizeof(packet_size)), ec);
             
             if (ec == boost::asio::error::would_block || ec == boost::asio::error::try_again)
             {
                 // 데이터가 없으면 false 반환
+                return false;
+            }
+            
+            if (bytes_read != sizeof(packet_size))
+            {
+                // 완전한 패킷 크기를 읽지 못한 경우
                 return false;
             }
 
@@ -637,18 +657,29 @@ namespace bt
                 return false;
             }
             
-            if (bytes_read == sizeof(packet_size) && packet_size > sizeof(uint32_t))
+            if (packet_size > sizeof(uint32_t))
             {
                 // 패킷 데이터 읽기 (크기 - 헤더 크기)
                 size_t data_size = packet_size - sizeof(uint32_t);
                 std::vector<uint8_t> buffer(data_size);
                 
-                bytes_read = boost::asio::read(*socket_, boost::asio::buffer(buffer), 
-                                             boost::asio::transfer_exactly(data_size), ec);
+                bytes_read = socket_->read_some(boost::asio::buffer(buffer), ec);
+                
+                if (ec == boost::asio::error::would_block || ec == boost::asio::error::try_again)
+                {
+                    // 데이터가 없으면 false 반환
+                    return false;
+                }
                 
                 if (ec)
                 {
                     LogMessage("패킷 데이터 수신 오류: " + ec.message(), true);
+                    return false;
+                }
+                
+                if (bytes_read != data_size)
+                {
+                    // 완전한 패킷 데이터를 읽지 못한 경우
                     return false;
                 }
                 
@@ -908,6 +939,25 @@ namespace bt
     {
         // 환경 인지 정보 초기화
         environment_info_.Clear();
+        
+        // 테스트용 가상 몬스터 추가 (서버에서 몬스터 정보를 받지 못하는 경우)
+        if (monsters_.empty())
+        {
+            // 플레이어 위치 근처에 가상 몬스터 생성
+            static bool test_monster_added = false;
+            if (!test_monster_added)
+            {
+                // 플레이어 위치에서 10유닛 떨어진 곳에 몬스터 배치
+                PlayerPosition monster_pos = position_;
+                monster_pos.x += 10.0f; // X축으로 10유닛 이동
+                monsters_[999] = monster_pos; // 테스트 몬스터 ID: 999
+                test_monster_added = true;
+                LogMessage("테스트용 몬스터 추가: ID 999, 위치 (" + 
+                          std::to_string(monster_pos.x) + ", " + 
+                          std::to_string(monster_pos.y) + ", " + 
+                          std::to_string(monster_pos.z) + ")");
+            }
+        }
         
         // 주변 몬스터 정보 업데이트
         for (const auto& [monster_id, monster_pos] : monsters_)

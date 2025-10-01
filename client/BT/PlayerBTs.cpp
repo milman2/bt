@@ -4,8 +4,10 @@
 #include "../../BT/Control/Selector.h"
 #include "Action/Patrol.h"
 #include "Action/Attack.h"
+#include "Action/Chase.h"
 #include "Condition/HasTarget.h"
 #include "Condition/InAttackRange.h"
+#include "Condition/InDetectionRange.h"
 
 #include <iostream>
 
@@ -22,10 +24,17 @@ namespace bt
         attack_sequence->AddChild(std::make_shared<bt::condition::InAttackRange>("in_attack_range"));
         attack_sequence->AddChild(std::make_shared<bt::action::Attack>("attack"));
         
+        // 추적 시퀀스
+        auto chase_sequence = std::make_shared<bt::Sequence>("chase_sequence");
+        chase_sequence->AddChild(std::make_shared<bt::condition::HasTarget>("has_target"));
+        chase_sequence->AddChild(std::make_shared<bt::condition::InDetectionRange>("in_detection_range"));
+        chase_sequence->AddChild(std::make_shared<bt::action::Chase>("chase"));
+        
         // 순찰 액션
         auto patrol_action = std::make_shared<bt::action::Patrol>("patrol");
         
         root->AddChild(attack_sequence);
+        root->AddChild(chase_sequence);
         root->AddChild(patrol_action);
         
         auto tree = std::make_shared<Tree>("player_bt");
@@ -45,10 +54,17 @@ namespace bt
         attack_sequence->AddChild(std::make_shared<bt::condition::InAttackRange>("in_attack_range"));
         attack_sequence->AddChild(std::make_shared<bt::action::Attack>("warrior_attack"));
         
+        // 추적 시퀀스
+        auto chase_sequence = std::make_shared<bt::Sequence>("warrior_chase_sequence");
+        chase_sequence->AddChild(std::make_shared<bt::condition::HasTarget>("has_target"));
+        chase_sequence->AddChild(std::make_shared<bt::condition::InDetectionRange>("in_detection_range"));
+        chase_sequence->AddChild(std::make_shared<bt::action::Chase>("warrior_chase"));
+        
         // 순찰 액션
         auto patrol_action = std::make_shared<bt::action::Patrol>("warrior_patrol");
         
         root->AddChild(attack_sequence);
+        root->AddChild(chase_sequence);
         root->AddChild(patrol_action);
         
         auto tree = std::make_shared<Tree>("warrior_bt");
@@ -68,10 +84,17 @@ namespace bt
         attack_sequence->AddChild(std::make_shared<bt::condition::InAttackRange>("in_attack_range"));
         attack_sequence->AddChild(std::make_shared<bt::action::Attack>("archer_attack"));
         
+        // 추적 시퀀스
+        auto chase_sequence = std::make_shared<bt::Sequence>("archer_chase_sequence");
+        chase_sequence->AddChild(std::make_shared<bt::condition::HasTarget>("has_target"));
+        chase_sequence->AddChild(std::make_shared<bt::condition::InDetectionRange>("in_detection_range"));
+        chase_sequence->AddChild(std::make_shared<bt::action::Chase>("archer_chase"));
+        
         // 순찰 액션
         auto patrol_action = std::make_shared<bt::action::Patrol>("archer_patrol");
         
         root->AddChild(attack_sequence);
+        root->AddChild(chase_sequence);
         root->AddChild(patrol_action);
         
         auto tree = std::make_shared<Tree>("archer_bt");
@@ -91,10 +114,17 @@ namespace bt
         attack_sequence->AddChild(std::make_shared<bt::condition::InAttackRange>("in_attack_range"));
         attack_sequence->AddChild(std::make_shared<bt::action::Attack>("mage_attack"));
         
+        // 추적 시퀀스
+        auto chase_sequence = std::make_shared<bt::Sequence>("mage_chase_sequence");
+        chase_sequence->AddChild(std::make_shared<bt::condition::HasTarget>("has_target"));
+        chase_sequence->AddChild(std::make_shared<bt::condition::InDetectionRange>("in_detection_range"));
+        chase_sequence->AddChild(std::make_shared<bt::action::Chase>("mage_chase"));
+        
         // 순찰 액션
         auto patrol_action = std::make_shared<bt::action::Patrol>("mage_patrol");
         
         root->AddChild(attack_sequence);
+        root->AddChild(chase_sequence);
         root->AddChild(patrol_action);
         
         auto tree = std::make_shared<Tree>("mage_bt");
