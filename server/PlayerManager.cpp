@@ -4,6 +4,7 @@
 
 #include "PlayerManager.h"
 #include "Network/WebSocket/BeastHttpWebSocketServer.h"
+#include "Common/LockOrder.h"
 
 namespace bt
 {
@@ -14,14 +15,14 @@ namespace bt
 
     void PlayerManager::AddPlayer(std::shared_ptr<Player> player)
     {
-        std::lock_guard<std::mutex> lock(players_mutex_);
+        LOCK_PLAYERS(players_mutex_);
         players_[player->GetID()] = player;
         std::cout << "플레이어 추가: " << player->GetName() << " (ID: " << player->GetID() << ")" << std::endl;
     }
 
     void PlayerManager::RemovePlayer(uint32_t player_id)
     {
-        std::lock_guard<std::mutex> lock(players_mutex_);
+        LOCK_PLAYERS(players_mutex_);
         auto                        it = players_.find(player_id);
         if (it != players_.end())
         {
@@ -32,7 +33,7 @@ namespace bt
 
     std::shared_ptr<Player> PlayerManager::GetPlayer(uint32_t player_id)
     {
-        std::lock_guard<std::mutex> lock(players_mutex_);
+        LOCK_PLAYERS(players_mutex_);
         auto                        it = players_.find(player_id);
         if (it != players_.end())
         {
@@ -43,7 +44,7 @@ namespace bt
 
     std::vector<std::shared_ptr<Player>> PlayerManager::GetAllPlayers()
     {
-        std::lock_guard<std::mutex>          lock(players_mutex_);
+        LOCK_PLAYERS(players_mutex_);
         std::vector<std::shared_ptr<Player>> result;
         for (const auto& [id, player] : players_)
         {

@@ -6,9 +6,11 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <shared_mutex>
 
 #include "MonsterTypes.h"
 #include "Monster.h"
+#include "../../Common/ReadOnlyView.h"
 
 // 전방 선언
 namespace bt
@@ -68,7 +70,8 @@ namespace bt
         size_t GetMonsterCountByName(const std::string& name) const;
 
     private:
-        std::unordered_map<uint32_t, std::shared_ptr<Monster>>                 monsters_;
+        // 성능 최적화된 몬스터 컬렉션 (shared_mutex 사용)
+        OptimizedCollection<uint32_t, std::shared_ptr<Monster>> monsters_;
         std::vector<MonsterSpawnConfig>                                        spawn_configs_;
         std::unordered_map<std::string, std::chrono::steady_clock::time_point> last_spawn_times_;
         std::atomic<uint32_t>                                                  next_monster_id_;
@@ -76,7 +79,6 @@ namespace bt
         std::shared_ptr<Engine>                                    bt_engine_;
         std::shared_ptr<bt::BeastHttpWebSocketServer>                          http_websocket_server_;
         std::shared_ptr<PlayerManager>                                         player_manager_;
-        mutable std::mutex                                                     monsters_mutex_;
         mutable std::mutex                                                     spawn_mutex_;
 
         void ProcessAutoSpawn(float delta_time);

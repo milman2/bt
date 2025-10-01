@@ -11,10 +11,10 @@
 #include "../../BT/Tree.h"
 #include "../shared/Logger.h"
 #include "BT/Monster/MonsterTypes.h"
-#include "BT/Monster/MonsterManager.h"
+#include "BT/Monster/MessageBasedMonsterManager.h"
 #include "BT/Monster/MonsterBTs.h"
 #include "Player.h"
-#include "PlayerManager.h"
+#include "Player/MessageBasedPlayerManager.h"
 
 namespace bt
 {

@@ -25,6 +25,8 @@
 #include "PacketProtocol.h"
 #include "../../BT/Engine.h"
 #include "AsioClient.h"
+#include "../../Common/GameMessageProcessor.h"
+#include "../../Common/GameMessages.h"
 
 namespace bt
 {
@@ -32,9 +34,10 @@ namespace bt
     // 전방 선언
     class Engine;
     class MonsterBTExecutor;
-    class MonsterManager;
-    class PlayerManager;
+    class MessageBasedMonsterManager;
+    class MessageBasedPlayerManager;
     class BeastHttpWebSocketServer;
+    class NetworkMessageHandler;
 
     // Asio 서버 전용 설정 구조체 (공통 ServerConfig 확장)
     struct AsioServerConfig
@@ -94,8 +97,8 @@ namespace bt
         Engine* GetBTEngine() { return bt_engine_.get(); }
 
         // 매니저 접근
-        std::shared_ptr<MonsterManager> GetMonsterManager() const { return monster_manager_; }
-        std::shared_ptr<PlayerManager>  GetPlayerManager() const { return player_manager_; }
+        std::shared_ptr<MessageBasedMonsterManager> GetMonsterManager() const { return message_based_monster_manager_; }
+        std::shared_ptr<MessageBasedPlayerManager>  GetPlayerManager() const { return message_based_player_manager_; }
 
         // 통합 HTTP+WebSocket 서버 접근
         std::shared_ptr<BeastHttpWebSocketServer> GetHttpWebSocketServer() const { return http_websocket_server_; }
@@ -157,14 +160,18 @@ namespace bt
         mutable boost::mutex                                              clients_mutex_;
 
         // Behavior Tree 엔진
-        std::unique_ptr<Engine> bt_engine_;
+        std::shared_ptr<Engine> bt_engine_;
 
-        // 몬스터 및 플레이어 매니저
-        std::shared_ptr<MonsterManager> monster_manager_;
-        std::shared_ptr<PlayerManager>  player_manager_;
+        // 몬스터 및 플레이어 매니저 (메시지 큐 기반)
+        std::shared_ptr<MessageBasedMonsterManager> message_based_monster_manager_;
+        std::shared_ptr<MessageBasedPlayerManager> message_based_player_manager_;
 
         // 통합 HTTP+WebSocket 서버
         std::shared_ptr<BeastHttpWebSocketServer> http_websocket_server_;
+        
+        // 메시지 큐 시스템
+        std::shared_ptr<GameMessageProcessor> message_processor_;
+        std::shared_ptr<NetworkMessageHandler> network_handler_;
 
         // 통계
         std::atomic<size_t> total_packets_sent_;

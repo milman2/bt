@@ -4,6 +4,7 @@
 #include "../../PlayerManager.h"
 #include "../../BT/Engine.h"
 #include "../../Network/WebSocket/BeastHttpWebSocketServer.h"
+#include "../../Common/LockOrder.h"
 
 #include <algorithm>
 #include <fstream>
@@ -23,66 +24,38 @@ namespace bt
 
     void MonsterManager::AddMonster(std::shared_ptr<Monster> monster)
     {
-        std::lock_guard<std::mutex> lock(monsters_mutex_);
-        uint32_t                    id = next_monster_id_.fetch_add(1);
+        uint32_t id = next_monster_id_.fetch_add(1);
         monster->SetID(id); // 몬스터 객체에 ID 설정
-        monsters_[id] = monster;
+        monsters_.insert(id, monster);
         std::cout << "몬스터 추가: " << monster->GetName() << " (ID: " << id << ")" << std::endl;
     }
 
     void MonsterManager::RemoveMonster(uint32_t monster_id)
     {
-        std::lock_guard<std::mutex> lock(monsters_mutex_);
-        auto                        it = monsters_.find(monster_id);
-        if (it != monsters_.end())
-        {
-            std::cout << "몬스터 제거: " << it->second->GetName() << " (ID: " << monster_id << ")" << std::endl;
-            monsters_.erase(it);
-        }
+        monsters_.erase(monster_id);
+        std::cout << "몬스터 제거: ID " << monster_id << std::endl;
     }
 
     std::shared_ptr<Monster> MonsterManager::GetMonster(uint32_t monster_id)
     {
-        std::lock_guard<std::mutex> lock(monsters_mutex_);
-        auto                        it = monsters_.find(monster_id);
-        if (it != monsters_.end())
-        {
-            return it->second;
-        }
-        return nullptr;
+        return monsters_.get(monster_id);
     }
 
     std::vector<std::shared_ptr<Monster>> MonsterManager::GetAllMonsters()
     {
-        std::lock_guard<std::mutex>           lock(monsters_mutex_);
-        std::vector<std::shared_ptr<Monster>> result;
-        for (const auto& [id, monster] : monsters_)
-        {
-            result.push_back(monster);
-        }
-        return result;
+        return monsters_.to_vector();
     }
 
     std::vector<std::shared_ptr<Monster>> MonsterManager::GetMonstersInRange(const MonsterPosition& position,
                                                                                 float                  range)
     {
-        std::lock_guard<std::mutex>           lock(monsters_mutex_);
-        std::vector<std::shared_ptr<Monster>> result;
-
-        for (const auto& [id, monster] : monsters_)
-        {
+        return monsters_.filter([&position, range](const std::shared_ptr<Monster>& monster) {
             const auto& monster_pos = monster->GetPosition();
             float       distance =
                 std::sqrt(std::pow(monster_pos.x - position.x, 2) + std::pow(monster_pos.y - position.y, 2) +
                           std::pow(monster_pos.z - position.z, 2));
-
-            if (distance <= range)
-            {
-                result.push_back(monster);
-            }
-        }
-
-        return result;
+            return distance <= range;
+        });
     }
 
     std::shared_ptr<Monster> MonsterManager::SpawnMonster(MonsterType            type,
@@ -373,22 +346,15 @@ namespace bt
 
     void MonsterManager::ProcessRespawn(float /* delta_time */)
     {
-        std::lock_guard<std::mutex> lock(monsters_mutex_);
+        // 죽은 몬스터들을 찾아서 제거
+        auto dead_monsters = monsters_.filter([](const std::shared_ptr<Monster>& monster) {
+            return !monster->IsAlive();
+        });
 
-        std::vector<uint32_t> dead_monsters;
-        for (const auto& [id, monster] : monsters_)
+        for (const auto& monster : dead_monsters)
         {
-            if (!monster->IsAlive())
-            {
-                dead_monsters.push_back(id);
-            }
-        }
-
-        // 죽은 몬스터 제거
-        for (uint32_t id : dead_monsters)
-        {
-            monsters_.erase(id);
-            std::cout << "죽은 몬스터 제거: ID " << id << std::endl;
+            monsters_.erase(monster->GetID());
+            std::cout << "죽은 몬스터 제거: ID " << monster->GetID() << std::endl;
         }
     }
 
@@ -422,16 +388,16 @@ namespace bt
             all_players = player_manager_->GetAllPlayers();
         }
 
-        // 몬스터 정보 수집 및 업데이트
+        // 몬스터 정보 수집 및 업데이트 (읽기 전용 뷰 사용)
         {
-            std::lock_guard<std::mutex> lock(monsters_mutex_);
-            for (const auto& [id, monster] : monsters_)
+            auto read_view = monsters_.get_read_only_view();
+            for (const auto& [id, monster] : read_view)
             {
                 all_monsters.push_back(monster);
             }
 
             // 각 몬스터의 환경 정보 업데이트
-            for (const auto& [id, monster] : monsters_)
+            for (const auto& [id, monster] : read_view)
             {
                 monster->UpdateEnvironmentInfo(all_players, all_monsters);
                 monster->Update(delta_time);
@@ -460,12 +426,10 @@ namespace bt
                         monster_data["id"]       = monster->GetID();
                         monster_data["name"]     = monster->GetName();
                         monster_data["type"]     = MonsterFactory::MonsterTypeToString(monster->GetType());
-                        monster_data["position"] = {
-                            {"x",        monster->GetPosition().x       },
-                            {"y",        monster->GetPosition().y       },
-                            {"z",        monster->GetPosition().z       },
-                            {"rotation", monster->GetPosition().rotation}
-                        };
+                        monster_data["position"]["x"] = monster->GetPosition().x;
+                        monster_data["position"]["y"] = monster->GetPosition().y;
+                        monster_data["position"]["z"] = monster->GetPosition().z;
+                        monster_data["position"]["rotation"] = monster->GetPosition().rotation;
                         monster_data["health"]     = monster->GetStats().health;
                         monster_data["max_health"] = monster->GetStats().max_health;
                         monster_data["level"]      = monster->GetStats().level;
@@ -476,8 +440,10 @@ namespace bt
                 }
 
                 std::cout << "통합 HTTP+WebSocket 브로드캐스트: " << event["monsters"].size() << "마리 몬스터 전송" << std::endl;
-                // 통합 HTTP+WebSocket 서버로 브로드캐스트
-                http_websocket_server_->broadcast(event.dump());
+                
+                // 락 해제 후 WebSocket 브로드캐스트 (데드락 방지)
+                std::string event_data = event.dump();
+                http_websocket_server_->broadcast(event_data);
 
                 // 서버 통계도 함께 브로드캐스트
                 nlohmann::json stats_event;
@@ -496,37 +462,26 @@ namespace bt
                 stats_event["data"]["registeredBTTrees"] = 7; // 등록된 BT 트리 수
                 // TODO: 서버에서 WebSocket 브로드캐스트 처리
                 stats_event["data"]["connectedClients"]  = 0;
-                // websocket_server_->broadcast(stats_event.dump());
+                stats_event["data"]["serverUptime"]      = 0;
+                
+                std::string stats_data = stats_event.dump();
+                http_websocket_server_->broadcast(stats_data);
             }
         }
     }
 
     size_t MonsterManager::GetMonsterCountByType(MonsterType type) const
     {
-        std::lock_guard<std::mutex> lock(monsters_mutex_);
-        size_t                      count = 0;
-        for (const auto& [id, monster] : monsters_)
-        {
-            if (monster->GetType() == type)
-            {
-                count++;
-            }
-        }
-        return count;
+        return monsters_.count_if([type](const std::shared_ptr<Monster>& monster) {
+            return monster->GetType() == type;
+        });
     }
 
     size_t MonsterManager::GetMonsterCountByName(const std::string& name) const
     {
-        std::lock_guard<std::mutex> lock(monsters_mutex_);
-        size_t                      count = 0;
-        for (const auto& [id, monster] : monsters_)
-        {
-            if (monster->GetName() == name)
-            {
-                count++;
-            }
-        }
-        return count;
+        return monsters_.count_if([&name](const std::shared_ptr<Monster>& monster) {
+            return monster->GetName() == name;
+        });
     }
 
 } // namespace bt

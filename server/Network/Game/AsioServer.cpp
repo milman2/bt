@@ -11,9 +11,10 @@
 #include "BT/Monster/MonsterTypes.h"
 #include "BT/Monster/MonsterBTExecutor.h"
 #include "Player.h"
-#include "PlayerManager.h"
-#include "BT/Monster/MonsterManager.h"
+#include "BT/Monster/MessageBasedMonsterManager.h"
+#include "Player/MessageBasedPlayerManager.h"
 #include "Network/WebSocket/BeastHttpWebSocketServer.h"
+#include "Network/WebSocket/NetworkMessageHandler.h"
 
 namespace bt
 {
@@ -22,14 +23,18 @@ namespace bt
         : config_(config), running_(false), acceptor_(io_context_), total_packets_sent_(0), total_packets_received_(0), server_start_time_(std::chrono::steady_clock::now())
     {
         // Behavior Tree 엔진 초기화
-        bt_engine_ = std::make_unique<Engine>();
+        bt_engine_ = std::make_shared<Engine>();
         
         // Behavior Tree 초기화
         //InitializeBehaviorTrees();
 
-        // 매니저들 초기화
-        monster_manager_ = std::make_shared<MonsterManager>();
-        player_manager_  = std::make_shared<PlayerManager>();
+        // 매니저들 초기화 (메시지 큐 기반)
+
+        // 메시지 큐 시스템 초기화
+        message_processor_ = std::make_shared<GameMessageProcessor>();
+        network_handler_ = std::make_shared<NetworkMessageHandler>();
+        message_based_monster_manager_ = std::make_shared<MessageBasedMonsterManager>();
+        message_based_player_manager_ = std::make_shared<MessageBasedPlayerManager>();
 
         // 통합 HTTP+WebSocket 서버 초기화 (포트 8080 사용)
         http_websocket_server_ = std::make_shared<BeastHttpWebSocketServer>(8080, io_context_);
@@ -37,23 +42,27 @@ namespace bt
         // HTTP 핸들러 등록
         RegisterHttpHandlers();
 
-        // bt_engine_을 shared_ptr로 변환 (원본은 유지)
-        std::shared_ptr<Engine> shared_bt_engine(bt_engine_.get(),
-                                                             [](Engine*)
-                                                             {
-                                                             });
+        // 메시지 기반 몬스터 매니저 설정
+        message_based_monster_manager_->SetBTEngine(bt_engine_);
+        message_based_monster_manager_->SetMessageProcessor(message_processor_);
+        message_based_monster_manager_->SetPlayerManager(message_based_player_manager_);
 
-        // MonsterManager에 통합 서버 설정
-        monster_manager_->SetHttpWebSocketServer(http_websocket_server_);
+        // 메시지 기반 플레이어 매니저 설정
+        message_based_player_manager_->SetMessageProcessor(message_processor_);
+        message_based_player_manager_->SetWebSocketServer(http_websocket_server_);
 
-        // MonsterManager에 PlayerManager 설정
-        monster_manager_->SetPlayerManager(player_manager_);
+        // 네트워크 핸들러 설정
+        network_handler_->SetWebSocketServer(http_websocket_server_);
 
-        // MonsterManager에 BT 엔진 설정
-        monster_manager_->SetBTEngine(shared_bt_engine);
+        // 메시지 프로세서에 핸들러 등록
+        // Note: 실제 구현에서는 핸들러를 unique_ptr로 관리해야 하지만,
+        // 현재는 shared_ptr로 관리하므로 별도의 래퍼가 필요할 수 있습니다.
+        // 일단 주석 처리하고 나중에 수정
+        // message_processor_->RegisterGameHandler(
+        //     std::unique_ptr<IGameMessageHandler>(message_based_monster_manager_.get()));
+        // message_processor_->RegisterNetworkHandler(
+        //     std::unique_ptr<IGameMessageHandler>(network_handler_.get()));
 
-        // PlayerManager에 통합 서버 설정
-        player_manager_->SetHttpWebSocketServer(http_websocket_server_);
 
         LogMessage("AsioServer 인스턴스가 생성되었습니다.");
     }
@@ -106,6 +115,27 @@ namespace bt
                     });
             }
 
+            // 메시지 큐 시스템 시작
+            if (message_processor_)
+            {
+                message_processor_->Start();
+                LogMessage("메시지 큐 시스템 시작됨");
+            }
+
+            // 메시지 기반 몬스터 매니저 시작
+            if (message_based_monster_manager_)
+            {
+                message_based_monster_manager_->Start();
+                LogMessage("메시지 기반 몬스터 매니저 시작됨");
+            }
+
+            // 메시지 기반 플레이어 매니저 시작
+            if (message_based_player_manager_)
+            {
+                message_based_player_manager_->Start();
+                LogMessage("메시지 기반 플레이어 매니저 시작됨");
+            }
+
             // 통합 HTTP+WebSocket 서버 시작
             if (http_websocket_server_)
             {
@@ -154,6 +184,27 @@ namespace bt
 
             // 워커 스레드 종료
             worker_threads_.join_all();
+
+            // 메시지 기반 몬스터 매니저 중지
+            if (message_based_monster_manager_)
+            {
+                message_based_monster_manager_->Stop();
+                LogMessage("메시지 기반 몬스터 매니저 중지됨");
+            }
+
+            // 메시지 기반 플레이어 매니저 중지
+            if (message_based_player_manager_)
+            {
+                message_based_player_manager_->Stop();
+                LogMessage("메시지 기반 플레이어 매니저 중지됨");
+            }
+
+            // 메시지 큐 시스템 중지
+            if (message_processor_)
+            {
+                message_processor_->Stop();
+                LogMessage("메시지 큐 시스템 중지됨");
+            }
 
             // 통합 HTTP+WebSocket 서버 중지
             if (http_websocket_server_)
@@ -266,7 +317,7 @@ namespace bt
         clients_[client] = info;
 
         // 클라이언트 연결 시 플레이어 생성
-        if (player_manager_)
+        if (message_based_player_manager_)
         {
             // 클라이언트 ID 생성 (포인터 주소의 해시를 사용)
             uint32_t client_id = static_cast<uint32_t>(std::hash<void*>{}(client.get()));
@@ -278,7 +329,7 @@ namespace bt
             MonsterPosition spawn_position = {0.0f, 0.0f, 0.0f, 0.0f};
 
             // 플레이어 생성
-            auto player = player_manager_->CreatePlayerForClient(client_id, player_name, spawn_position);
+            auto player = message_based_player_manager_->CreatePlayerForClient(client_id, player_name, spawn_position);
             if (player)
             {
                 info.player_id          = player->GetID();
@@ -306,9 +357,9 @@ namespace bt
         }
 
         // 클라이언트 연결 해제 시 플레이어 제거
-        if (player_manager_ && client_id != 0)
+        if (message_based_player_manager_ && client_id != 0)
         {
-            player_manager_->RemovePlayerByClientID(client_id);
+            message_based_player_manager_->RemovePlayerByClientID(client_id);
         }
 
         if (!client_info.empty())
@@ -579,7 +630,7 @@ namespace bt
                       std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z) + ")");
 
             // 플레이어 매니저를 통해 플레이어 생성
-            if (player_manager_)
+            if (message_based_player_manager_)
             {
                 // MonsterPosition 구조체 생성
                 MonsterPosition position;
@@ -588,7 +639,7 @@ namespace bt
                 position.z = z;
                 position.rotation = rotation;
                 
-                auto player = player_manager_->CreatePlayer(player_name, position);
+                auto player = message_based_player_manager_->CreatePlayer(player_name, position);
                 if (player)
                 {
                     // 성공 응답 전송
@@ -779,7 +830,7 @@ namespace bt
 
         // API 엔드포인트들
         http_websocket_server_->register_get_handler("/api/monsters", [this](const http_request& req, http_response& res) {
-            if (!monster_manager_) {
+            if (!message_based_monster_manager_) {
                 res = http_websocket_server_->create_error_response(boost::beast::http::status::internal_server_error, "MonsterManager not available");
                 return;
             }
@@ -799,7 +850,7 @@ namespace bt
             };
             
             // 실제 몬스터 정보를 JSON으로 반환
-            auto monsters = monster_manager_->GetAllMonsters();
+            auto monsters = message_based_monster_manager_->GetAllMonsters();
             std::string json = "{\"monsters\":[";
             
             bool first = true;
@@ -825,8 +876,8 @@ namespace bt
 
         http_websocket_server_->register_get_handler("/api/stats", [this](const http_request& req, http_response& res) {
             // 실제 서버 통계 정보를 JSON으로 반환
-            auto monsters = monster_manager_ ? monster_manager_->GetAllMonsters() : std::vector<std::shared_ptr<Monster>>();
-            auto players = player_manager_ ? player_manager_->GetAllPlayers() : std::vector<std::shared_ptr<Player>>();
+            auto monsters = message_based_monster_manager_ ? message_based_monster_manager_->GetAllMonsters() : std::vector<std::shared_ptr<Monster>>();
+            auto players = message_based_player_manager_ ? message_based_player_manager_->GetAllPlayers() : std::vector<std::shared_ptr<Player>>();
             
             int active_monsters = 0;
             for (const auto& monster : monsters) {
