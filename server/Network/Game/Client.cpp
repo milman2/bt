@@ -1,11 +1,11 @@
-#include "AsioClient.h"
-#include "AsioServer.h"
+#include "Client.h"
+#include "Server.h"
 
 namespace bt
 {
 
-    // AsioClient 구현
-    AsioClient::AsioClient(boost::asio::io_context& io_context, AsioServer* server)
+    // Client 구현
+    Client::Client(boost::asio::io_context& io_context, Server* server)
         : io_context_(io_context)
         , socket_(io_context)
         , server_(server)
@@ -16,18 +16,18 @@ namespace bt
         connect_time_ = boost::chrono::steady_clock::now();
     }
 
-    AsioClient::~AsioClient()
+    Client::~Client()
     {
         Stop();
     }
 
-    void AsioClient::Start()
+    void Client::Start()
     {
         connected_.store(true);
         ReceivePacket();
     }
 
-    void AsioClient::Stop()
+    void Client::Stop()
     {
         if (connected_.load())
         {
@@ -43,7 +43,7 @@ namespace bt
         }
     }
 
-    void AsioClient::SendPacket(const Packet& packet)
+    void Client::SendPacket(const Packet& packet)
     {
         if (!connected_.load())
         {
@@ -73,7 +73,7 @@ namespace bt
         }
     }
 
-    void AsioClient::ReceivePacket()
+    void Client::ReceivePacket()
     {
         if (!connected_.load())
         {
@@ -89,7 +89,7 @@ namespace bt
                                 });
     }
 
-    void AsioClient::HandlePacketSize(const boost::system::error_code& error, size_t bytes_transferred)
+    void Client::HandlePacketSize(const boost::system::error_code& error, size_t bytes_transferred)
     {
         if (!error && bytes_transferred == sizeof(expected_packet_size_))
         {
@@ -109,7 +109,7 @@ namespace bt
         }
     }
 
-    void AsioClient::HandlePacketData(const boost::system::error_code& error, size_t bytes_transferred)
+    void Client::HandlePacketData(const boost::system::error_code& error, size_t bytes_transferred)
     {
         if (!error && bytes_transferred == packet_buffer_.size())
         {
@@ -119,7 +119,7 @@ namespace bt
             packet.type = *reinterpret_cast<uint16_t*>(packet_buffer_.data());
             packet.data.assign(packet_buffer_.begin() + sizeof(uint16_t), packet_buffer_.end());
 
-            std::cout << "AsioClient: 패킷 수신 완료 - 타입=" << packet.type 
+            std::cout << "Client: 패킷 수신 완료 - 타입=" << packet.type 
                       << ", 크기=" << packet.size 
                       << ", 데이터크기=" << packet.data.size() << std::endl;
 
@@ -134,14 +134,14 @@ namespace bt
         }
         else
         {
-            std::cout << "AsioClient: 패킷 수신 오류 - error=" << error.message() 
+            std::cout << "Client: 패킷 수신 오류 - error=" << error.message() 
                       << ", bytes_transferred=" << bytes_transferred 
                       << ", expected=" << packet_buffer_.size() << std::endl;
             HandleDisconnect();
         }
     }
 
-    void AsioClient::HandleSend(const boost::system::error_code& error, size_t /* bytes_transferred */)
+    void Client::HandleSend(const boost::system::error_code& error, size_t /* bytes_transferred */)
     {
         if (!error)
         {
@@ -164,7 +164,7 @@ namespace bt
         }
     }
 
-    void AsioClient::HandleDisconnect()
+    void Client::HandleDisconnect()
     {
         if (connected_.load())
         {
@@ -177,7 +177,7 @@ namespace bt
         }
     }
 
-    std::string AsioClient::GetIPAddress() const
+    std::string Client::GetIPAddress() const
     {
         try
         {
@@ -189,7 +189,7 @@ namespace bt
         }
     }
 
-    uint16_t AsioClient::GetPort() const
+    uint16_t Client::GetPort() const
     {
         try
         {

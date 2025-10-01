@@ -7,7 +7,7 @@
 #include <csignal>
 #include <signal.h>
 
-#include "AsioServer.h"
+#include "Server.h"
 #include "../../BT/Tree.h"
 #include "../shared/Logger.h"
 #include "BT/Monster/MonsterTypes.h"
@@ -20,7 +20,7 @@ namespace bt
 {
 
     // 전역 서버 인스턴스 (시그널 핸들링용)
-    std::unique_ptr<AsioServer> g_server = nullptr;
+    std::unique_ptr<Server> g_server = nullptr;
 
     // 시그널 핸들러
     void signal_handler(int signal)
@@ -111,7 +111,7 @@ int main(int argc, char* argv[])
     // 서버 생성 및 시작
     try
     {
-        g_server = std::make_unique<AsioServer>(config);
+        g_server = std::make_unique<Server>(config);
 
         if (!g_server->Start())
         {

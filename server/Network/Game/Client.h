@@ -28,14 +28,14 @@ namespace bt
 {
 
     // 전방 선언
-    class AsioServer;
+    class Server;
 
     // Asio 기반 클라이언트 클래스
-    class AsioClient : public boost::enable_shared_from_this<AsioClient>
+    class Client : public boost::enable_shared_from_this<Client>
     {
     public:
-        AsioClient(boost::asio::io_context& io_context, AsioServer* server);
-        ~AsioClient();
+        Client(boost::asio::io_context& io_context, Server* server);
+        ~Client();
 
         // 연결 관리
         void Start();
@@ -67,7 +67,7 @@ namespace bt
     private:
         boost::asio::io_context&     io_context_;
         boost::asio::ip::tcp::socket socket_;
-        AsioServer*                  server_;
+        Server*                      server_;
 
         std::atomic<bool>                       connected_;
         boost::chrono::steady_clock::time_point connect_time_;

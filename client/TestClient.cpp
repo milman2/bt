@@ -146,19 +146,19 @@ namespace bt
             boost::asio::connect(*socket_, endpoints);
             LogMessage("소켓 연결 완료");
         
-        // 연결 상태 확인
-        if (socket_->is_open())
-        {
-            LogMessage("소켓 연결 확인됨: " + socket_->remote_endpoint().address().to_string() + 
-                      ":" + std::to_string(socket_->remote_endpoint().port()));
-        }
-        else
-        {
-            LogMessage("소켓이 열려있지 않음", true);
-            return false;
-        }
-        
-        return true;
+            // 연결 상태 확인
+            if (socket_->is_open())
+            {
+                LogMessage("소켓 연결 확인됨: " + socket_->remote_endpoint().address().to_string() + 
+                        ":" + std::to_string(socket_->remote_endpoint().port()));
+            }
+            else
+            {
+                LogMessage("소켓이 열려있지 않음", true);
+                return false;
+            }
+            
+            return true;
         }
         catch (const std::exception& e)
         {
