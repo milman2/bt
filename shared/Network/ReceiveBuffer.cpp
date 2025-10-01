@@ -237,4 +237,5 @@ bool ReceiveBuffer::EnsureSpace(size_t needed)
     return GetFreeSize() >= needed;
 }
 
+
 } // namespace bt

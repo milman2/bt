@@ -36,8 +36,8 @@ public:
     ReceiveBuffer& operator=(ReceiveBuffer&&) = default;
     
     /**
-     * @brief 소켓에서 데이터를 읽어서 버퍼에 추가
-     * @param socket 소켓 객체
+     * @brief Boost.Asio 호환 소켓에서 데이터를 읽어서 버퍼에 추가
+     * @param socket Boost.Asio 호환 소켓 객체 (read_some 메서드가 있어야 함)
      * @return 읽은 바이트 수 (0이면 데이터 없음, -1이면 오류)
      */
     template<typename SocketType>
@@ -170,3 +170,17 @@ int ReceiveBuffer::ReadFromSocket(SocketType& socket)
 }
 
 } // namespace bt
+
+/*
+사용 예시:
+
+Boost.Asio 호환 소켓 사용:
+   boost::asio::ip::tcp::socket socket(io_context);
+   ReceiveBuffer buffer(65536);
+   int bytes_read = buffer.ReadFromSocket(socket);
+
+요구사항:
+- SocketType은 read_some(buffer, error_code) 메서드를 가져야 함
+- boost::asio::buffer()와 호환되어야 함
+- boost::system::error_code를 사용해야 함
+*/
