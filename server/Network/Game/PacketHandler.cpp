@@ -16,17 +16,6 @@ namespace bt
                              HandleConnectRequest(socket_fd, packet);
                          });
 
-        RegisterHandler(PacketType::LOGIN_REQUEST,
-                         [this](int socket_fd, const Packet& packet)
-                         {
-                             HandleLoginRequest(socket_fd, packet);
-                         });
-
-        RegisterHandler(PacketType::LOGOUT_REQUEST,
-                         [this](int socket_fd, const Packet& packet)
-                         {
-                             HandleLogoutRequest(socket_fd, packet);
-                         });
 
         RegisterHandler(PacketType::PLAYER_MOVE,
                          [this](int socket_fd, const Packet& packet)
@@ -34,11 +23,6 @@ namespace bt
                              HandlePlayerMove(socket_fd, packet);
                          });
 
-        RegisterHandler(PacketType::PLAYER_CHAT,
-                         [this](int socket_fd, const Packet& packet)
-                         {
-                             HandlePlayerChat(socket_fd, packet);
-                         });
 
         RegisterHandler(PacketType::DISCONNECT,
                          [this](int socket_fd, const Packet& packet)
@@ -76,29 +60,12 @@ namespace bt
         // 실제로는 서버 인스턴스에 접근해서 전송해야 함
     }
 
-    void PacketHandler::HandleLoginRequest(int socket_fd, const Packet& packet)
-    {
-        std::cout << "로그인 요청 수신: 소켓 " << socket_fd << std::endl;
-
-        // 간단한 로그인 처리 (실제로는 데이터베이스 확인 필요)
-        Packet response = PacketUtils::create_login_response(true, 1, "로그인 성공");
-        // 실제로는 서버 인스턴스에 접근해서 전송해야 함
-    }
-
-    void PacketHandler::HandleLogoutRequest(int socket_fd, const Packet& packet)
-    {
-        std::cout << "로그아웃 요청 수신: 소켓 " << socket_fd << std::endl;
-    }
 
     void PacketHandler::HandlePlayerMove(int socket_fd, const Packet& packet)
     {
         std::cout << "플레이어 이동 요청 수신: 소켓 " << socket_fd << std::endl;
     }
 
-    void PacketHandler::HandlePlayerChat(int socket_fd, const Packet& packet)
-    {
-        std::cout << "플레이어 채팅 요청 수신: 소켓 " << socket_fd << std::endl;
-    }
 
     void PacketHandler::HandleDisconnect(int socket_fd, const Packet& packet)
     {

@@ -23,26 +23,6 @@ Packet create_connect_response(bool success, const std::string& message) {
     return Packet(static_cast<uint16_t>(PacketType::CONNECT_RESPONSE), data);
 }
 
-Packet create_login_response(bool success, uint32_t player_id, const std::string& message) {
-    std::vector<uint8_t> data;
-    
-    // 성공 여부 (1바이트)
-    data.push_back(success ? 1 : 0);
-    
-    // 플레이어 ID (4바이트)
-    data.insert(data.end(), reinterpret_cast<const uint8_t*>(&player_id), 
-                reinterpret_cast<const uint8_t*>(&player_id) + sizeof(player_id));
-    
-    // 메시지 길이 (4바이트)
-    uint32_t message_len = static_cast<uint32_t>(message.length());
-    data.insert(data.end(), reinterpret_cast<const uint8_t*>(&message_len), 
-                reinterpret_cast<const uint8_t*>(&message_len) + sizeof(message_len));
-    
-    // 메시지 내용
-    data.insert(data.end(), message.begin(), message.end());
-    
-    return Packet(static_cast<uint16_t>(PacketType::LOGIN_RESPONSE), data);
-}
 
 Packet create_error_message(const std::string& error) {
     std::vector<uint8_t> data;
@@ -58,27 +38,6 @@ Packet create_error_message(const std::string& error) {
     return Packet(static_cast<uint16_t>(PacketType::ERROR_MESSAGE), data);
 }
 
-Packet create_chat_message(const std::string& sender, const std::string& message) {
-    std::vector<uint8_t> data;
-    
-    // 발신자 이름 길이 (4바이트)
-    uint32_t sender_len = static_cast<uint32_t>(sender.length());
-    data.insert(data.end(), reinterpret_cast<const uint8_t*>(&sender_len), 
-                reinterpret_cast<const uint8_t*>(&sender_len) + sizeof(sender_len));
-    
-    // 발신자 이름
-    data.insert(data.end(), sender.begin(), sender.end());
-    
-    // 메시지 길이 (4바이트)
-    uint32_t message_len = static_cast<uint32_t>(message.length());
-    data.insert(data.end(), reinterpret_cast<const uint8_t*>(&message_len), 
-                reinterpret_cast<const uint8_t*>(&message_len) + sizeof(message_len));
-    
-    // 메시지 내용
-    data.insert(data.end(), message.begin(), message.end());
-    
-    return Packet(static_cast<uint16_t>(PacketType::CHAT_MESSAGE), data);
-}
 
 Packet create_player_move(uint32_t player_id, float x, float y, float z) {
     std::vector<uint8_t> data;
@@ -152,9 +111,6 @@ Packet create_monster_update(uint32_t monster_id, float x, float y, float z, uin
     return Packet(static_cast<uint16_t>(PacketType::MONSTER_UPDATE), data);
 }
 
-Packet create_world_update(const std::vector<uint8_t>& world_data) {
-    return Packet(static_cast<uint16_t>(PacketType::WORLD_UPDATE), world_data);
-}
 
 template<typename T>
 T read_from_packet(const Packet& packet, size_t offset) {

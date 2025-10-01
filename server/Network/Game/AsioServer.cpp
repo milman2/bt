@@ -435,12 +435,6 @@ namespace bt
                 HandlePlayerMove(client, packet);
                 break;
 
-            case PacketType::MONSTER_SPAWN:
-                // 몬스터 스폰 요청 처리
-                LogMessage("몬스터 스폰 요청 수신");
-                // 몬스터 스폰 응답 전송
-                SendMonsterSpawnResponse(client, true);
-                break;
 
             case PacketType::MONSTER_UPDATE:
                 // 몬스터 업데이트 처리

@@ -29,10 +29,7 @@ namespace bt
     private:
         // 기본 핸들러들
         void HandleConnectRequest(int socket_fd, const Packet& packet);
-        void HandleLoginRequest(int socket_fd, const Packet& packet);
-        void HandleLogoutRequest(int socket_fd, const Packet& packet);
         void HandlePlayerMove(int socket_fd, const Packet& packet);
-        void HandlePlayerChat(int socket_fd, const Packet& packet);
         void HandleDisconnect(int socket_fd, const Packet& packet);
 
         // 패킷 파싱은 PacketUtils 네임스페이스의 함수들을 사용

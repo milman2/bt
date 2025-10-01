@@ -24,45 +24,25 @@ enum class PacketType : uint16_t {
     CONNECT_RESPONSE = 0x0002,
     DISCONNECT = 0x0003,
     
-    // 인증 관련
-    LOGIN_REQUEST = 0x0100,
-    LOGIN_RESPONSE = 0x0101,
-    LOGOUT_REQUEST = 0x0102,
     
     // 플레이어 관련
     PLAYER_JOIN = 0x1000,
     PLAYER_JOIN_RESPONSE = 0x1001,
     PLAYER_MOVE = 0x2000,
     PLAYER_ATTACK = 0x2001,
-    PLAYER_CHAT = 0x2002,
     PLAYER_STATS = 0x0203,
     
     // 몬스터 관련
     MONSTER_UPDATE = 0x3000,
-    MONSTER_ACTION = 0x3001,
-    MONSTER_DEATH = 0x3002,
-    MONSTER_SPAWN = 0x3003,
     
     // Behavior Tree 관련
     BT_EXECUTE = 0x4000,
     BT_RESULT = 0x4001,
-    BT_DEBUG = 0x4002,
     
     // 게임 월드 관련
-    WORLD_UPDATE = 0x0300,
     WORLD_STATE_BROADCAST = 0x0301,  // 서버에서 클라이언트로 월드 상태 브로드캐스팅
-    MAP_CHANGE = 0x0302,
-    NPC_SPAWN = 0x0303,
-    NPC_UPDATE = 0x0304,
     
-    // 아이템 관련
-    ITEM_PICKUP = 0x0400,
-    ITEM_DROP = 0x0401,
-    INVENTORY_UPDATE = 0x0402,
     
-    // 채팅 관련
-    CHAT_MESSAGE = 0x0500,
-    WHISPER_MESSAGE = 0x0501,
     
     // 에러 관련
     ERROR_MESSAGE = 0xFF00
