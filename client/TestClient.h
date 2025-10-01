@@ -31,6 +31,7 @@
 #include "Common/ClientMessageProcessor.h"
 #include "Network/ClientNetworkMessageHandler.h"
 #include "AI/ClientAIMessageHandler.h"
+#include "../shared/Network/ReceiveBuffer.h"
 
 namespace bt
 {
@@ -231,7 +232,7 @@ namespace bt
         std::thread                                     network_thread_;
         std::atomic<bool>                               network_running_;
         std::vector<uint8_t>                            read_buffer_;
-        std::vector<uint8_t>                            receive_buffer_;
+        ReceiveBuffer                                   receive_buffer_;  // 링버퍼 기반 수신 버퍼
         std::vector<uint8_t>                            write_buffer_;
         std::queue<Packet>                              send_queue_;
         std::mutex                                      send_queue_mutex_;
