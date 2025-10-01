@@ -1,0 +1,124 @@
+syntax = "proto3";
+
+package bt;
+
+// 연결 관련 패킷
+message ConnectRequest {
+    string client_name = 1;
+    uint32 version = 2;
+}
+
+message ConnectResponse {
+    bool success = 1;
+    string message = 2;
+    uint32 client_id = 3;
+}
+
+message Disconnect {
+    uint32 client_id = 1;
+    string reason = 2;
+}
+
+// 플레이어 관련 패킷
+message PlayerJoin {
+    string player_name = 1;
+    float x = 2;
+    float y = 3;
+    float z = 4;
+}
+
+message PlayerJoinResponse {
+    bool success = 1;
+    uint32 player_id = 2;
+    string message = 3;
+}
+
+message PlayerMove {
+    uint32 player_id = 1;
+    float x = 2;
+    float y = 3;
+    float z = 4;
+    float rotation = 5;
+}
+
+message PlayerAttack {
+    uint32 attacker_id = 1;
+    uint32 target_id = 2;
+    uint32 damage = 3;
+}
+
+message PlayerStats {
+    uint32 player_id = 1;
+    uint32 health = 2;
+    uint32 max_health = 3;
+    uint32 level = 4;
+}
+
+// 몬스터 관련 패킷
+message MonsterUpdate {
+    uint32 monster_id = 1;
+    string name = 2;
+    float x = 3;
+    float y = 4;
+    float z = 5;
+    float rotation = 6;
+    uint32 health = 7;
+    uint32 max_health = 8;
+    uint32 level = 9;
+    uint32 type = 10;
+}
+
+// Behavior Tree 관련 패킷
+message BTExecute {
+    uint32 monster_id = 1;
+    string bt_name = 2;
+    map<string, string> parameters = 3;
+}
+
+message BTResult {
+    uint32 monster_id = 1;
+    string bt_name = 2;
+    bool success = 3;
+    string result_message = 4;
+    map<string, string> state_changes = 5;
+}
+
+// 게임 월드 관련 패킷
+message WorldStateBroadcast {
+    uint64 timestamp = 1;
+    uint32 player_count = 2;
+    uint32 monster_count = 3;
+    repeated PlayerState players = 4;
+    repeated MonsterState monsters = 5;
+}
+
+message PlayerState {
+    uint32 id = 1;
+    string name = 2;
+    float x = 3;
+    float y = 4;
+    float z = 5;
+    float rotation = 6;
+    uint32 health = 7;
+    uint32 max_health = 8;
+    uint32 level = 9;
+}
+
+message MonsterState {
+    uint32 id = 1;
+    string name = 2;
+    float x = 3;
+    float y = 4;
+    float z = 5;
+    float rotation = 6;
+    uint32 health = 7;
+    uint32 max_health = 8;
+    uint32 level = 9;
+    uint32 type = 10;
+}
+
+// 에러 관련 패킷
+message ErrorMessage {
+    string error = 1;
+    uint32 error_code = 2;
+}

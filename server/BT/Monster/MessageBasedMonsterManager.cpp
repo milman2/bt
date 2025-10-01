@@ -554,19 +554,19 @@ std::vector<MonsterState> MessageBasedMonsterManager::GetMonsterStates() const
         if (!monster) continue;
         
         MonsterState state;
-        state.id = id;
-        state.name = monster->GetName();
+        state.set_id(id);
+        state.set_name(monster->GetName());
         
         MonsterPosition pos = monster->GetPosition();
-        state.x = pos.x;
-        state.y = pos.y;
-        state.z = pos.z;
-        state.rotation = pos.rotation;
+        state.set_x(pos.x);
+        state.set_y(pos.y);
+        state.set_z(pos.z);
+        state.set_rotation(pos.rotation);
         
-        state.health = monster->GetStats().health;
-        state.max_health = monster->GetMaxHealth();
-        state.level = monster->GetStats().level;
-        state.type = static_cast<uint32_t>(monster->GetType());
+        state.set_health(monster->GetStats().health);
+        state.set_max_health(monster->GetMaxHealth());
+        state.set_level(monster->GetStats().level);
+        state.set_type(static_cast<uint32_t>(monster->GetType()));
         
         states.push_back(state);
     }

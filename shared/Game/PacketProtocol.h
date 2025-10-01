@@ -3,10 +3,13 @@
 #include <cstdint>
 #include <vector>
 #include <string>
+#include <memory>
+#include <map>
+#include "generated/packets.pb.h"
 
 namespace bt {
 
-// 공통 패킷 구조체
+// 공통 패킷 구조체 (protobuf 기반)
 struct Packet {
     uint32_t size;
     uint16_t type;
@@ -15,6 +18,22 @@ struct Packet {
     Packet() : size(0), type(0) {}
     Packet(uint16_t packet_type, const std::vector<uint8_t>& packet_data) 
         : size(packet_data.size() + sizeof(uint16_t)), type(packet_type), data(packet_data) {}
+    
+    // protobuf 메시지로부터 패킷 생성
+    template<typename T>
+    static Packet FromProtobuf(uint16_t packet_type, const T& message) {
+        std::string serialized;
+        message.SerializeToString(&serialized);
+        std::vector<uint8_t> data(serialized.begin(), serialized.end());
+        return Packet(packet_type, data);
+    }
+    
+    // protobuf 메시지로 역직렬화
+    template<typename T>
+    bool ToProtobuf(T& message) const {
+        std::string serialized(data.begin(), data.end());
+        return message.ParseFromString(serialized);
+    }
 };
 
 // 공통 패킷 타입 정의
@@ -50,29 +69,47 @@ enum class PacketType : uint16_t {
 
 // 공통 패킷 생성 유틸리티 함수들
 namespace PacketUtils {
-    // 연결 응답 패킷 생성
-    Packet create_connect_response(bool success, const std::string& message);
+    // 연결 요청 패킷 생성 (protobuf 기반)
+    Packet create_connect_request(const std::string& client_name, uint32_t version = 1);
+    
+    // 연결 응답 패킷 생성 (protobuf 기반)
+    Packet create_connect_response(bool success, const std::string& message, uint32_t client_id = 0);
     
     // 로그인 응답 패킷 생성
     Packet create_login_response(bool success, uint32_t player_id, const std::string& message);
     
-    // 에러 메시지 패킷 생성
-    Packet create_error_message(const std::string& error);
+    // 에러 메시지 패킷 생성 (protobuf 기반)
+    Packet create_error_message(const std::string& error, uint32_t error_code = 0);
     
     // 채팅 메시지 패킷 생성
     Packet create_chat_message(const std::string& sender, const std::string& message);
     
-    // 플레이어 이동 패킷 생성
-    Packet create_player_move(uint32_t player_id, float x, float y, float z);
+    // 플레이어 이동 패킷 생성 (protobuf 기반)
+    Packet create_player_move(uint32_t player_id, float x, float y, float z, float rotation = 0.0f);
     
-    // 플레이어 공격 패킷 생성
+    // 플레이어 공격 패킷 생성 (protobuf 기반)
     Packet create_player_attack(uint32_t attacker_id, uint32_t target_id, uint32_t damage);
     
-    // 몬스터 업데이트 패킷 생성
-    Packet create_monster_update(uint32_t monster_id, float x, float y, float z, uint32_t health);
+    // 몬스터 업데이트 패킷 생성 (protobuf 기반)
+    Packet create_monster_update(uint32_t monster_id, const std::string& name, float x, float y, float z, 
+                               float rotation, uint32_t health, uint32_t max_health, uint32_t level, uint32_t type);
     
     // 월드 업데이트 패킷 생성
     Packet create_world_update(const std::vector<uint8_t>& world_data);
+    
+    // WORLD_STATE_BROADCAST 패킷 생성 (protobuf 기반)
+    Packet create_world_state_broadcast(uint64_t timestamp, uint32_t player_count, uint32_t monster_count,
+                                       const std::vector<bt::PlayerState>& players,
+                                       const std::vector<bt::MonsterState>& monsters);
+    
+    // BT_EXECUTE 패킷 생성 (protobuf 기반)
+    Packet create_bt_execute(uint32_t monster_id, const std::string& bt_name, 
+                            const std::map<std::string, std::string>& parameters = {});
+    
+    // BT_RESULT 패킷 생성 (protobuf 기반)
+    Packet create_bt_result(uint32_t monster_id, const std::string& bt_name, bool success, 
+                           const std::string& result_message = "",
+                           const std::map<std::string, std::string>& state_changes = {});
     
     // 패킷에서 데이터 읽기
     template<typename T>
@@ -105,41 +142,7 @@ struct ServerConfig {
     uint32_t broadcast_fps = 10; // 브로드캐스팅 FPS
 };
 
-// 게임 월드 상태 구조체
-struct WorldState {
-    uint64_t timestamp; // 서버 시간
-    uint32_t player_count;
-    uint32_t monster_count;
-    std::vector<uint8_t> serialized_data; // 직렬화된 월드 데이터
-    
-    WorldState() : timestamp(0), player_count(0), monster_count(0) {}
-};
-
-// 플레이어 상태 구조체
-struct PlayerState {
-    uint32_t id;
-    std::string name;
-    float x, y, z;
-    float rotation;
-    uint32_t health;
-    uint32_t max_health;
-    uint32_t level;
-    
-    PlayerState() : id(0), x(0), y(0), z(0), rotation(0), health(0), max_health(0), level(0) {}
-};
-
-// 몬스터 상태 구조체
-struct MonsterState {
-    uint32_t id;
-    std::string name;
-    float x, y, z;
-    float rotation;
-    uint32_t health;
-    uint32_t max_health;
-    uint32_t level;
-    uint32_t type; // 몬스터 타입
-    
-    MonsterState() : id(0), x(0), y(0), z(0), rotation(0), health(0), max_health(0), level(0), type(0) {}
-};
+// protobuf 메시지를 사용하므로 기존 구조체들은 제거됨
+// 대신 packets.pb.h의 bt::PlayerState, bt::MonsterState, bt::WorldStateBroadcast 사용
 
 } // namespace bt

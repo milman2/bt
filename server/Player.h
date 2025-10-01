@@ -18,8 +18,8 @@ namespace bt
         DEAD
     };
 
-    // 플레이어 통계 구조체
-    struct PlayerStats
+    // 플레이어 통계 구조체 (protobuf PlayerStats와 구분)
+    struct PlayerGameStats
     {
         uint32_t level        = 1;
         uint32_t experience   = 0;
@@ -62,8 +62,8 @@ namespace bt
         void            MoveTo(float x, float y, float z, float rotation = 0.0f);
 
         // 통계 관련
-        const PlayerStats& GetStats() const { return stats_; }
-        void               SetStats(const PlayerStats& stats) { stats_ = stats; }
+        const PlayerGameStats& GetStats() const { return stats_; }
+        void               SetStats(const PlayerGameStats& stats) { stats_ = stats; }
         void               AddExperience(uint32_t exp);
         void               LevelUp();
         void               TakeDamage(uint32_t damage);
@@ -91,7 +91,7 @@ namespace bt
         std::string                           name_;
         PlayerStateType                       state_;
         Position                              position_;
-        PlayerStats                           stats_;
+        PlayerGameStats                       stats_;
         uint32_t                              current_map_id_;
         int                                   socket_fd_;
         std::chrono::steady_clock::time_point last_activity_;
