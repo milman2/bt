@@ -1,13 +1,12 @@
-#include "ClientMessageProcessor.h"
-#include <iostream>
 #include <chrono>
+#include <iostream>
+
+#include "ClientMessageProcessor.h"
 
 namespace bt
 {
 
-    ClientMessageProcessor::ClientMessageProcessor() : running_(false)
-    {
-    }
+    ClientMessageProcessor::ClientMessageProcessor() : running_(false) {}
 
     ClientMessageProcessor::~ClientMessageProcessor()
     {
@@ -21,7 +20,7 @@ namespace bt
 
         running_.store(true);
         processor_thread_ = std::thread(&ClientMessageProcessor::ProcessMessages, this);
-        
+
         std::cout << "클라이언트 메시지 프로세서 시작됨" << std::endl;
     }
 
@@ -57,7 +56,7 @@ namespace bt
     {
         std::lock_guard<std::mutex> lock(handlers_mutex_);
         handlers_[type] = handler;
-        
+
         std::cout << "클라이언트 메시지 핸들러 등록: " << static_cast<int>(type) << std::endl;
     }
 
@@ -74,9 +73,13 @@ namespace bt
         while (running_.load())
         {
             std::unique_lock<std::mutex> lock(queue_mutex_);
-            
+
             // 메시지가 올 때까지 대기
-            queue_cv_.wait(lock, [this] { return !message_queue_.empty() || !running_.load(); });
+            queue_cv_.wait(lock,
+                           [this]
+                           {
+                               return !message_queue_.empty() || !running_.load();
+                           });
 
             if (!running_.load())
                 break;
@@ -103,7 +106,7 @@ namespace bt
             return;
 
         std::lock_guard<std::mutex> lock(handlers_mutex_);
-        auto it = handlers_.find(message->GetType());
+        auto                        it = handlers_.find(message->GetType());
         if (it != handlers_.end() && it->second)
         {
             try
@@ -117,7 +120,8 @@ namespace bt
         }
         else
         {
-            std::cout << "클라이언트 메시지 핸들러를 찾을 수 없음: " << static_cast<int>(message->GetType()) << std::endl;
+            std::cout << "클라이언트 메시지 핸들러를 찾을 수 없음: " << static_cast<int>(message->GetType())
+                      << std::endl;
         }
     }
 

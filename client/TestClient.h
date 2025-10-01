@@ -5,11 +5,10 @@
 #include <functional>
 #include <iostream>
 #include <memory>
+#include <random>
 #include <string>
 #include <thread>
 #include <vector>
-#include <cmath>
-#include <random>
 
 #include <boost/array.hpp>
 #include <boost/asio.hpp>
@@ -20,18 +19,20 @@
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
 
-#include "Game/PacketProtocol.h"
-#include "../BT/Node.h"
-#include "../BT/Tree.h"
+#include <cmath>
+
 #include "../BT/Context.h"
 #include "../BT/Engine.h"
-#include "../BT/IExecutor.h"
 #include "../BT/EnvironmentInfo.h"
+#include "../BT/IExecutor.h"
+#include "../BT/Node.h"
+#include "../BT/Tree.h"
+#include "../shared/Network/ReceiveBuffer.h"
+#include "AI/ClientAIMessageHandler.h"
 #include "BT/PlayerBTs.h"
 #include "Common/ClientMessageProcessor.h"
+#include "Game/PacketProtocol.h"
 #include "Network/ClientNetworkMessageHandler.h"
-#include "AI/ClientAIMessageHandler.h"
-#include "../shared/Network/ReceiveBuffer.h"
 
 namespace bt
 {
@@ -39,25 +40,24 @@ namespace bt
     // 플레이어 AI 클라이언트 설정
     struct PlayerAIConfig
     {
-        std::string                 server_host = "127.0.0.1";
-        uint16_t                    server_port = 7000;
-        std::string                 player_name = "AI_Player";
-        float                       spawn_x = 0.0f;
-        float                       spawn_z = 0.0f;
-        float                       patrol_radius = 50.0f;
-        float                       detection_range = 30.0f;
-        float                       attack_range = 5.0f;
-        float                       move_speed = 3.0f;
-        int                         health = 100;
-        int                         damage = 20;
+        std::string server_host     = "127.0.0.1";
+        uint16_t    server_port     = 7000;
+        std::string player_name     = "AI_Player";
+        float       spawn_x         = 0.0f;
+        float       spawn_z         = 0.0f;
+        float       patrol_radius   = 50.0f;
+        float       detection_range = 30.0f;
+        float       attack_range    = 5.0f;
+        float       move_speed      = 3.0f;
+        int         health          = 100;
+        int         damage          = 20;
     };
 
     // 플레이어 위치 정보
     struct PlayerPosition
     {
         float x, y, z, rotation;
-        PlayerPosition(float x = 0, float y = 0, float z = 0, float r = 0) 
-            : x(x), y(y), z(z), rotation(r) {}
+        PlayerPosition(float x = 0, float y = 0, float z = 0, float r = 0) : x(x), y(y), z(z), rotation(r) {}
     };
 
     // 플레이어 AI 클라이언트 클래스
@@ -78,20 +78,20 @@ namespace bt
         void UpdateAI(float delta_time);
 
         // IExecutor 인터페이스 구현
-        void Update(float delta_time) override;
-        void SetBehaviorTree(std::shared_ptr<Tree> tree) override;
+        void                  Update(float delta_time) override;
+        void                  SetBehaviorTree(std::shared_ptr<Tree> tree) override;
         std::shared_ptr<Tree> GetBehaviorTree() const override;
-        Context& GetContext() override;
-        const Context& GetContext() const override;
-        const std::string& GetName() const override;
-        const std::string& GetBTName() const override;
-        bool IsActive() const override;
-        void SetActive(bool active) override;
+        Context&              GetContext() override;
+        const Context&        GetContext() const override;
+        const std::string&    GetName() const override;
+        const std::string&    GetBTName() const override;
+        bool                  IsActive() const override;
+        void                  SetActive(bool active) override;
 
         // 패킷 송수신
         bool SendPacket(const Packet& packet);
         bool ReceivePacket(Packet& packet);
-        
+
         // 비동기 네트워크 메서드
         void StartAsyncNetwork();
         void StopAsyncNetwork();
@@ -107,29 +107,29 @@ namespace bt
         bool Respawn();
 
         // AI 상태
-        bool IsAlive() const { return health_ > 0; }
-        bool HasTarget() const { return target_id_ != 0; }
-        float GetDistanceToTarget() const;
+        bool     IsAlive() const { return health_ > 0; }
+        bool     HasTarget() const { return target_id_ != 0; }
+        float    GetDistanceToTarget() const;
         uint32_t GetNearestMonster() const;
-        
+
         // Context 설정 (shared_from_this() 사용을 위해)
         void SetContextAI();
-        
+
         // BT 노드에서 사용할 헬퍼 메서드들
-        bool HasPatrolPoints() const { return !patrol_points_.empty(); }
-        PlayerPosition GetNextPatrolPoint() const;
-        void AdvanceToNextPatrolPoint();
-        PlayerPosition GetPosition() const { return position_; }
-        uint32_t GetTargetID() const { return target_id_; }
-        float GetMoveSpeed() const { return config_.move_speed; }
-        float GetAttackRange() const { return config_.attack_range; }
-        float GetDetectionRange() const { return config_.detection_range; }
+        bool                  HasPatrolPoints() const { return !patrol_points_.empty(); }
+        PlayerPosition        GetNextPatrolPoint() const;
+        void                  AdvanceToNextPatrolPoint();
+        PlayerPosition        GetPosition() const { return position_; }
+        uint32_t              GetTargetID() const { return target_id_; }
+        float                 GetMoveSpeed() const { return config_.move_speed; }
+        float                 GetAttackRange() const { return config_.attack_range; }
+        float                 GetDetectionRange() const { return config_.detection_range; }
         const PlayerPosition* GetMonsterPosition(uint32_t monster_id) const;
-        
+
         // 월드 상태 업데이트
-        void UpdateWorldState(uint64_t timestamp, 
-                             const std::unordered_map<uint32_t, PlayerPosition>& players,
-                             const std::unordered_map<uint32_t, PlayerPosition>& monsters);
+        void UpdateWorldState(uint64_t                                            timestamp,
+                              const std::unordered_map<uint32_t, PlayerPosition>& players,
+                              const std::unordered_map<uint32_t, PlayerPosition>& monsters);
 
         // 유틸리티
         void SetVerbose(bool verbose) { verbose_ = verbose; }
@@ -144,14 +144,14 @@ namespace bt
         void HandleCombatResult(uint32_t attacker_id, uint32_t target_id, uint32_t damage, uint32_t remaining_health);
         void SetPlayerID(uint32_t player_id) { player_id_ = player_id; }
         void SetConnected(bool connected) { connected_.store(connected); }
-        
+
         // 환경 인지 (메시지 핸들러에서 접근 가능하도록 public)
         void UpdateEnvironmentInfo();
-        
+
         // BT에서 사용할 텔레포트 관련 메서드들
         float GetTeleportTimer() const { return teleport_timer_; }
-        void ResetTeleportTimer() { teleport_timer_ = 0.0f; }
-        bool ExecuteTeleportToNearest();
+        void  ResetTeleportTimer() { teleport_timer_ = 0.0f; }
+        bool  ExecuteTeleportToNearest();
 
     private:
         // 네트워킹
@@ -173,11 +173,11 @@ namespace bt
         void UpdateCombat(float delta_time);
         void FindNearestMonster();
         bool IsInRange(float x, float z, float range) const;
-        
+
         // 텔레포트 기능
         void TeleportToNearestMonster();
         void UpdateTeleportTimer(float delta_time);
-        
+
         // 환경 인지
         const EnvironmentInfo& GetEnvironmentInfo() const { return environment_info_; }
 
@@ -195,48 +195,48 @@ namespace bt
         bool                                            verbose_;
 
         // AI 상태
-        std::atomic<bool>                               ai_running_;
-        std::shared_ptr<Tree>                           behavior_tree_;
-        Context                                         context_;
-        std::string                                     bt_name_;
-        PlayerPosition                                  position_;
-        PlayerPosition                                  spawn_position_;
-        std::vector<PlayerPosition>                     patrol_points_;
-        size_t                                         current_patrol_index_;
-        
+        std::atomic<bool>           ai_running_;
+        std::shared_ptr<Tree>       behavior_tree_;
+        Context                     context_;
+        std::string                 bt_name_;
+        PlayerPosition              position_;
+        PlayerPosition              spawn_position_;
+        std::vector<PlayerPosition> patrol_points_;
+        size_t                      current_patrol_index_;
+
         // 전투 상태
-        uint32_t                                        player_id_;
-        uint32_t                                        target_id_;
-        int                                             health_;
-        
+        uint32_t player_id_;
+        uint32_t target_id_;
+        int      health_;
+
         // 텔레포트 상태
-        float                                           teleport_timer_;
-        static constexpr float                          TELEPORT_TIMEOUT = 3.0f;  // 3초
-        int                                             max_health_;
-        float                                           last_attack_time_;
-        float                                           attack_cooldown_;
-        
+        float                  teleport_timer_;
+        static constexpr float TELEPORT_TIMEOUT = 3.0f; // 3초
+        int                    max_health_;
+        float                  last_attack_time_;
+        float                  attack_cooldown_;
+
         // 몬스터 정보
-        std::unordered_map<uint32_t, PlayerPosition>   monsters_;
-        float                                           last_monster_update_;
-        
+        std::unordered_map<uint32_t, PlayerPosition> monsters_;
+        float                                        last_monster_update_;
+
         // 환경 인지 정보
-        EnvironmentInfo                                 environment_info_;
+        EnvironmentInfo environment_info_;
 
         // 메시지 큐 시스템
-        std::shared_ptr<ClientMessageProcessor>         message_processor_;
-        std::shared_ptr<ClientNetworkMessageHandler>    network_handler_;
-        std::shared_ptr<ClientAIMessageHandler>         ai_handler_;
+        std::shared_ptr<ClientMessageProcessor>      message_processor_;
+        std::shared_ptr<ClientNetworkMessageHandler> network_handler_;
+        std::shared_ptr<ClientAIMessageHandler>      ai_handler_;
 
         // 비동기 네트워크 관련
-        std::thread                                     network_thread_;
-        std::atomic<bool>                               network_running_;
-        std::vector<uint8_t>                            read_buffer_;
-        ReceiveBuffer                                   receive_buffer_;  // 링버퍼 기반 수신 버퍼
-        std::vector<uint8_t>                            write_buffer_;
-        std::queue<Packet>                              send_queue_;
-        std::mutex                                      send_queue_mutex_;
-        std::condition_variable                         send_queue_cv_;
+        std::thread             network_thread_;
+        std::atomic<bool>       network_running_;
+        std::vector<uint8_t>    read_buffer_;
+        ReceiveBuffer           receive_buffer_; // 링버퍼 기반 수신 버퍼
+        std::vector<uint8_t>    write_buffer_;
+        std::queue<Packet>      send_queue_;
+        std::mutex              send_queue_mutex_;
+        std::condition_variable send_queue_cv_;
 
         // 로깅
         boost::mutex log_mutex_;

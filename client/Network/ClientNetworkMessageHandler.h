@@ -1,7 +1,8 @@
 #pragma once
 
-#include "../Common/ClientMessageProcessor.h"
 #include <memory>
+
+#include "../Common/ClientMessageProcessor.h"
 
 namespace bt
 {
@@ -27,7 +28,7 @@ namespace bt
         void HandleConnectionEstablished(std::shared_ptr<ClientMessage> message);
         void HandleWorldStateBroadcast(const std::vector<uint8_t>& data);
 
-        std::shared_ptr<TestClient> client_;
+        std::shared_ptr<TestClient>             client_;
         std::shared_ptr<ClientMessageProcessor> message_processor_;
     };
 

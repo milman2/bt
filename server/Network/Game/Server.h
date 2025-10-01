@@ -22,11 +22,11 @@
 #include <boost/thread/condition_variable.hpp>
 #include <boost/thread/mutex.hpp>
 
-#include "Game/PacketProtocol.h"
 #include "../../BT/Engine.h"
-#include "Client.h"
 #include "../../Common/GameMessageProcessor.h"
 #include "../../Common/GameMessages.h"
+#include "Client.h"
+#include "Game/PacketProtocol.h"
 
 namespace bt
 {
@@ -42,13 +42,13 @@ namespace bt
     // Asio 서버 전용 설정 구조체 (공통 ServerConfig 확장)
     struct AsioServerConfig
     {
-        std::string                 host            = "0.0.0.0";
-        uint16_t                    port            = 7000;
-        uint16_t                    http_websocket_port = 8080;  // HTTP/WebSocket 서버 포트 (고정)
-        size_t                      max_clients     = 1000;
-        size_t                      worker_threads  = 4;
-        bool                        debug_mode      = false;
-        size_t                      max_packet_size = 4096;
+        std::string                 host                = "0.0.0.0";
+        uint16_t                    port                = 7000;
+        uint16_t                    http_websocket_port = 8080; // HTTP/WebSocket 서버 포트 (고정)
+        size_t                      max_clients         = 1000;
+        size_t                      worker_threads      = 4;
+        bool                        debug_mode          = false;
+        size_t                      max_packet_size     = 4096;
         boost::chrono::milliseconds connection_timeout{30000}; // 30초
     };
 
@@ -93,7 +93,7 @@ namespace bt
         void RemoveClient(boost::shared_ptr<Client> client);
         void BroadcastPacket(const Packet& packet, boost::shared_ptr<Client> exclude_client = nullptr);
         void SendPacket(boost::shared_ptr<Client> client, const Packet& packet);
-        
+
         // 월드 상태 브로드캐스팅
         void BroadcastWorldState();
         void StartBroadcastLoop();
@@ -139,7 +139,7 @@ namespace bt
         // 패킷 처리 함수들
         void HandlePlayerJoin(boost::shared_ptr<Client> client, const Packet& packet);
         void HandlePlayerMove(boost::shared_ptr<Client> client, const Packet& packet);
-        
+
         // 응답 전송 함수들
         void SendConnectResponse(boost::shared_ptr<Client> client);
         void SendMonsterSpawnResponse(boost::shared_ptr<Client> client, bool success);
@@ -165,25 +165,25 @@ namespace bt
 
         // 클라이언트 관리
         std::unordered_map<boost::shared_ptr<Client>, AsioClientInfo> clients_;
-        mutable boost::mutex                                              clients_mutex_;
+        mutable boost::mutex                                          clients_mutex_;
 
         // Behavior Tree 엔진
         std::shared_ptr<Engine> bt_engine_;
 
         // 몬스터 및 플레이어 매니저 (메시지 큐 기반)
         std::shared_ptr<MessageBasedMonsterManager> message_based_monster_manager_;
-        std::shared_ptr<MessageBasedPlayerManager> message_based_player_manager_;
+        std::shared_ptr<MessageBasedPlayerManager>  message_based_player_manager_;
 
         // 통합 HTTP+WebSocket 서버
         std::shared_ptr<BeastHttpWebSocketServer> http_websocket_server_;
-        
+
         // 메시지 큐 시스템
-        std::shared_ptr<GameMessageProcessor> message_processor_;
+        std::shared_ptr<GameMessageProcessor>  message_processor_;
         std::shared_ptr<NetworkMessageHandler> network_handler_;
-        
+
         // 브로드캐스팅 스레드
-        boost::thread                        broadcast_thread_;
-        std::atomic<bool>                    broadcast_running_;
+        boost::thread                         broadcast_thread_;
+        std::atomic<bool>                     broadcast_running_;
         std::chrono::steady_clock::time_point last_broadcast_time_;
 
         // 통계
@@ -196,6 +196,5 @@ namespace bt
         // 로깅
         mutable boost::mutex log_mutex_;
     };
-
 
 } // namespace bt

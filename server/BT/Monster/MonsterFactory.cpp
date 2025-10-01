@@ -1,11 +1,11 @@
-#include "MonsterFactory.h"
-#include "MonsterBTExecutor.h"
-
-#include <iostream>
 #include <algorithm>
+#include <iostream>
+
 #include <cctype>
 
 #include "../../BT/Tree.h"
+#include "MonsterBTExecutor.h"
+#include "MonsterFactory.h"
 
 namespace bt
 {
@@ -23,7 +23,7 @@ namespace bt
 
         // AI 생성 및 설정
         auto ai = std::make_shared<MonsterBTExecutor>(name, bt_name);
-        ai->SetMonster(monster);  // AI에 몬스터 참조 설정
+        ai->SetMonster(monster); // AI에 몬스터 참조 설정
         monster->SetAI(ai);
 
         return monster;
@@ -33,7 +33,7 @@ namespace bt
     {
         auto monster = std::make_shared<Monster>(config.name, config.type, config.position);
         monster->SetPosition(config.position.x, config.position.y, config.position.z, config.position.rotation);
-        monster->Heal(config.health);                                          // 체력 설정
+        monster->Heal(config.health);                                        // 체력 설정
         monster->TakeDamage(monster->GetStats().max_health - config.health); // 현재 체력 설정
 
         // AI 이름과 BT 이름 설정
@@ -43,7 +43,7 @@ namespace bt
 
         // AI 생성 및 설정
         auto ai = std::make_shared<MonsterBTExecutor>(config.name, bt_name);
-        ai->SetMonster(monster);  // AI에 몬스터 참조 설정
+        ai->SetMonster(monster); // AI에 몬스터 참조 설정
         monster->SetAI(ai);
 
         return monster;
@@ -201,7 +201,7 @@ namespace bt
         // 대소문자 구분 없이 처리
         std::string lower_str = str;
         std::transform(lower_str.begin(), lower_str.end(), lower_str.begin(), ::tolower);
-        
+
         if (lower_str == "goblin")
             return MonsterType::GOBLIN;
         if (lower_str == "orc")

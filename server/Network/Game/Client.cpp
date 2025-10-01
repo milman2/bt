@@ -53,7 +53,7 @@ namespace bt
         try
         {
             // 패킷 크기 + 타입 + 데이터 전송
-            uint32_t total_size = sizeof(uint32_t) + sizeof(uint16_t) + packet.data.size();
+            uint32_t             total_size = sizeof(uint32_t) + sizeof(uint16_t) + packet.data.size();
             std::vector<uint8_t> send_buffer(total_size);
 
             // 패킷 크기
@@ -61,7 +61,8 @@ namespace bt
             // 패킷 타입
             *reinterpret_cast<uint16_t*>(send_buffer.data() + sizeof(uint32_t)) = packet.type;
             // 패킷 데이터
-            std::copy(packet.data.begin(), packet.data.end(), send_buffer.begin() + sizeof(uint32_t) + sizeof(uint16_t));
+            std::copy(
+                packet.data.begin(), packet.data.end(), send_buffer.begin() + sizeof(uint32_t) + sizeof(uint16_t));
 
             // 동기 전송
             boost::asio::write(socket_, boost::asio::buffer(send_buffer));
@@ -119,8 +120,7 @@ namespace bt
             packet.type = *reinterpret_cast<uint16_t*>(packet_buffer_.data());
             packet.data.assign(packet_buffer_.begin() + sizeof(uint16_t), packet_buffer_.end());
 
-            std::cout << "Client: 패킷 수신 완료 - 타입=" << packet.type 
-                      << ", 크기=" << packet.size 
+            std::cout << "Client: 패킷 수신 완료 - 타입=" << packet.type << ", 크기=" << packet.size
                       << ", 데이터크기=" << packet.data.size() << std::endl;
 
             // 서버에 패킷 전달
@@ -134,9 +134,9 @@ namespace bt
         }
         else
         {
-            std::cout << "Client: 패킷 수신 오류 - error=" << error.message() 
-                      << ", bytes_transferred=" << bytes_transferred 
-                      << ", expected=" << packet_buffer_.size() << std::endl;
+            std::cout << "Client: 패킷 수신 오류 - error=" << error.message()
+                      << ", bytes_transferred=" << bytes_transferred << ", expected=" << packet_buffer_.size()
+                      << std::endl;
             HandleDisconnect();
         }
     }

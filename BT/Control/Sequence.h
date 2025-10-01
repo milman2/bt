@@ -15,7 +15,7 @@ namespace bt
     {
     public:
         Sequence(const std::string& name) : Node(name, NodeType::SEQUENCE) {}
-        
+
         NodeStatus Execute(Context& context) override
         {
             // 모든 자식 노드를 순차적으로 실행
@@ -24,7 +24,7 @@ namespace bt
             {
                 if (!child)
                     continue;
-                    
+
                 NodeStatus status = child->Execute(context);
                 if (status == NodeStatus::FAILURE)
                 {

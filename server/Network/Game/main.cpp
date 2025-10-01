@@ -7,14 +7,14 @@
 #include <csignal>
 #include <signal.h>
 
-#include "Server.h"
 #include "../../BT/Tree.h"
 #include "../shared/Logger.h"
-#include "BT/Monster/MonsterTypes.h"
 #include "BT/Monster/MessageBasedMonsterManager.h"
 #include "BT/Monster/MonsterBTs.h"
+#include "BT/Monster/MonsterTypes.h"
 #include "Player.h"
 #include "Player/MessageBasedPlayerManager.h"
+#include "Server.h"
 
 namespace bt
 {
@@ -30,13 +30,16 @@ namespace bt
         {
             g_server->Stop();
         }
-        
+
         // 5초 후 강제 종료
-        std::thread([]() {
-            std::this_thread::sleep_for(std::chrono::seconds(5));
-            std::cout << "강제 종료합니다...\n";
-            std::exit(0);
-        }).detach();
+        std::thread(
+            []()
+            {
+                std::this_thread::sleep_for(std::chrono::seconds(5));
+                std::cout << "강제 종료합니다...\n";
+                std::exit(0);
+            })
+            .detach();
     }
 
 } // namespace bt
@@ -200,7 +203,8 @@ int main(int argc, char* argv[])
             update_count++;
             if (update_count % 100 == 0)
             { // 10초마다 로그 출력
-                std::cout << "asio_main.cpp에서 MonsterManager::update 호출 (카운트: " << update_count << ")" << std::endl;
+                std::cout << "asio_main.cpp에서 MonsterManager::update 호출 (카운트: " << update_count << ")"
+                          << std::endl;
             }
             monster_manager->Update(0.1f); // 100ms 간격으로 업데이트
         }

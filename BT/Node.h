@@ -46,32 +46,32 @@ namespace bt
 
         // 노드 정보
         const std::string& GetName() const { return name_; }
-        NodeType         GetType() const { return type_; }
+        NodeType           GetType() const { return type_; }
 
         // 자식 노드 관리
-        void AddChild(std::shared_ptr<Node> child) { children_.push_back(child); }
+        void                                      AddChild(std::shared_ptr<Node> child) { children_.push_back(child); }
         const std::vector<std::shared_ptr<Node>>& GetChildren() const { return children_; }
 
         // 노드 상태
         NodeStatus GetLastStatus() const { return last_status_; }
-        void         SetLastStatus(NodeStatus status) { last_status_ = status; }
-        
+        void       SetLastStatus(NodeStatus status) { last_status_ = status; }
+
         // 실행 상태 관리
         bool IsRunning() const { return is_running_; }
         void SetRunning(bool running) { is_running_ = running; }
-        
+
         // 노드 초기화 (새로운 실행 시작 시)
         virtual void Initialize() { is_running_ = false; }
-        
+
         // 노드 정리 (실행 완료 시)
         virtual void Cleanup() { is_running_ = false; }
 
     protected:
-        std::string                          name_;
+        std::string                        name_;
         NodeType                           type_;
         std::vector<std::shared_ptr<Node>> children_;
         NodeStatus                         last_status_ = NodeStatus::FAILURE;
-        bool                               is_running_ = false;
+        bool                               is_running_  = false;
     };
 
 } // namespace bt

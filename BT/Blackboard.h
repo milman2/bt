@@ -1,12 +1,13 @@
 #pragma once
 
-#include <any>
 #include <iostream>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
 #include <unordered_map>
 #include <vector>
+
+#include <any>
 
 namespace bt
 {
@@ -15,18 +16,15 @@ namespace bt
     class Blackboard
     {
     public:
-        Blackboard() = default;
+        Blackboard()  = default;
         ~Blackboard() = default;
 
         // 데이터 설정
-        void SetData(const std::string& key, const std::any& value) 
-        { 
-            data_[key] = value; 
-        }
+        void SetData(const std::string& key, const std::any& value) { data_[key] = value; }
 
         // 데이터 조회
-        std::any GetData(const std::string& key) const 
-        { 
+        std::any GetData(const std::string& key) const
+        {
             auto it = data_.find(key);
             if (it != data_.end())
             {
@@ -36,34 +34,19 @@ namespace bt
         }
 
         // 데이터 존재 여부 확인
-        bool HasData(const std::string& key) const 
-        { 
-            return data_.find(key) != data_.end(); 
-        }
+        bool HasData(const std::string& key) const { return data_.find(key) != data_.end(); }
 
         // 데이터 삭제
-        void RemoveData(const std::string& key) 
-        { 
-            data_.erase(key); 
-        }
+        void RemoveData(const std::string& key) { data_.erase(key); }
 
         // 모든 데이터 삭제
-        void Clear() 
-        { 
-            data_.clear(); 
-        }
+        void Clear() { data_.clear(); }
 
         // 데이터 개수
-        size_t Size() const 
-        { 
-            return data_.size(); 
-        }
+        size_t Size() const { return data_.size(); }
 
         // 비어있는지 확인
-        bool Empty() const 
-        { 
-            return data_.empty(); 
-        }
+        bool Empty() const { return data_.empty(); }
 
         // 타입 안전한 데이터 접근
         template <typename T>
@@ -89,7 +72,7 @@ namespace bt
                     }
                 }
             }
-            
+
             // 키가 없으면 기본값 반환
             if constexpr (std::is_default_constructible_v<T>)
             {
@@ -152,11 +135,11 @@ namespace bt
         }
 
         // 복사 생성자 및 할당 연산자
-        Blackboard(const Blackboard& other) = default;
+        Blackboard(const Blackboard& other)            = default;
         Blackboard& operator=(const Blackboard& other) = default;
 
         // 이동 생성자 및 할당 연산자
-        Blackboard(Blackboard&& other) noexcept = default;
+        Blackboard(Blackboard&& other) noexcept            = default;
         Blackboard& operator=(Blackboard&& other) noexcept = default;
 
     private:

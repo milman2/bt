@@ -1,18 +1,19 @@
-#include "MonsterManager.h"
-#include "MonsterFactory.h"
-#include "MonsterBTExecutor.h"
-#include "../../PlayerManager.h"
-#include "../../BT/Engine.h"
-#include "../../Network/WebSocket/BeastHttpWebSocketServer.h"
-#include "../../Common/LockOrder.h"
-
 #include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <random>
 #include <sstream>
+
 #include <cmath>
 #include <nlohmann/json.hpp>
+
+#include "../../BT/Engine.h"
+#include "../../Common/LockOrder.h"
+#include "../../Network/WebSocket/BeastHttpWebSocketServer.h"
+#include "../../PlayerManager.h"
+#include "MonsterBTExecutor.h"
+#include "MonsterFactory.h"
+#include "MonsterManager.h"
 
 namespace bt
 {
@@ -47,20 +48,22 @@ namespace bt
     }
 
     std::vector<std::shared_ptr<Monster>> MonsterManager::GetMonstersInRange(const MonsterPosition& position,
-                                                                                float                  range)
+                                                                             float                  range)
     {
-        return monsters_.filter([&position, range](const std::shared_ptr<Monster>& monster) {
-            const auto& monster_pos = monster->GetPosition();
-            float       distance =
-                std::sqrt(std::pow(monster_pos.x - position.x, 2) + std::pow(monster_pos.y - position.y, 2) +
-                          std::pow(monster_pos.z - position.z, 2));
-            return distance <= range;
-        });
+        return monsters_.filter(
+            [&position, range](const std::shared_ptr<Monster>& monster)
+            {
+                const auto& monster_pos = monster->GetPosition();
+                float       distance =
+                    std::sqrt(std::pow(monster_pos.x - position.x, 2) + std::pow(monster_pos.y - position.y, 2) +
+                              std::pow(monster_pos.z - position.z, 2));
+                return distance <= range;
+            });
     }
 
     std::shared_ptr<Monster> MonsterManager::SpawnMonster(MonsterType            type,
-                                                           const std::string&     name,
-                                                           const MonsterPosition& position)
+                                                          const std::string&     name,
+                                                          const MonsterPosition& position)
     {
         auto monster = MonsterFactory::CreateMonster(type, name, position);
         AddMonster(monster);
@@ -137,7 +140,6 @@ namespace bt
         bt_engine_ = engine;
         std::cout << "MonsterManager에 Behavior Tree 엔진 설정 완료" << std::endl;
     }
-
 
     void MonsterManager::SetHttpWebSocketServer(std::shared_ptr<bt::BeastHttpWebSocketServer> server)
     {
@@ -347,9 +349,11 @@ namespace bt
     void MonsterManager::ProcessRespawn(float /* delta_time */)
     {
         // 죽은 몬스터들을 찾아서 제거
-        auto dead_monsters = monsters_.filter([](const std::shared_ptr<Monster>& monster) {
-            return !monster->IsAlive();
-        });
+        auto dead_monsters = monsters_.filter(
+            [](const std::shared_ptr<Monster>& monster)
+            {
+                return !monster->IsAlive();
+            });
 
         for (const auto& monster : dead_monsters)
         {
@@ -362,7 +366,7 @@ namespace bt
     {
         static int update_count = 0;
         update_count++;
-        
+
         if (update_count % 10 == 0)
         {
             std::cout << "MonsterManager::Update 호출됨 (카운트: " << update_count << ")" << std::endl;
@@ -423,24 +427,25 @@ namespace bt
                     if (monster)
                     {
                         nlohmann::json monster_data;
-                        monster_data["id"]       = monster->GetID();
-                        monster_data["name"]     = monster->GetName();
-                        monster_data["type"]     = MonsterFactory::MonsterTypeToString(monster->GetType());
-                        monster_data["position"]["x"] = monster->GetPosition().x;
-                        monster_data["position"]["y"] = monster->GetPosition().y;
-                        monster_data["position"]["z"] = monster->GetPosition().z;
+                        monster_data["id"]                   = monster->GetID();
+                        monster_data["name"]                 = monster->GetName();
+                        monster_data["type"]                 = MonsterFactory::MonsterTypeToString(monster->GetType());
+                        monster_data["position"]["x"]        = monster->GetPosition().x;
+                        monster_data["position"]["y"]        = monster->GetPosition().y;
+                        monster_data["position"]["z"]        = monster->GetPosition().z;
                         monster_data["position"]["rotation"] = monster->GetPosition().rotation;
-                        monster_data["health"]     = monster->GetStats().health;
-                        monster_data["max_health"] = monster->GetStats().max_health;
-                        monster_data["level"]      = monster->GetStats().level;
-                        monster_data["ai_name"]    = monster->GetAIName();
-                        monster_data["bt_name"]    = monster->GetBTName();
+                        monster_data["health"]               = monster->GetStats().health;
+                        monster_data["max_health"]           = monster->GetStats().max_health;
+                        monster_data["level"]                = monster->GetStats().level;
+                        monster_data["ai_name"]              = monster->GetAIName();
+                        monster_data["bt_name"]              = monster->GetBTName();
                         event["monsters"].push_back(monster_data);
                     }
                 }
 
-                std::cout << "통합 HTTP+WebSocket 브로드캐스트: " << event["monsters"].size() << "마리 몬스터 전송" << std::endl;
-                
+                std::cout << "통합 HTTP+WebSocket 브로드캐스트: " << event["monsters"].size() << "마리 몬스터 전송"
+                          << std::endl;
+
                 // 락 해제 후 WebSocket 브로드캐스트 (데드락 방지)
                 std::string event_data = event.dump();
                 http_websocket_server_->broadcast(event_data);
@@ -461,9 +466,9 @@ namespace bt
                 }
                 stats_event["data"]["registeredBTTrees"] = 7; // 등록된 BT 트리 수
                 // TODO: 서버에서 WebSocket 브로드캐스트 처리
-                stats_event["data"]["connectedClients"]  = 0;
-                stats_event["data"]["serverUptime"]      = 0;
-                
+                stats_event["data"]["connectedClients"] = 0;
+                stats_event["data"]["serverUptime"]     = 0;
+
                 std::string stats_data = stats_event.dump();
                 http_websocket_server_->broadcast(stats_data);
             }
@@ -472,16 +477,20 @@ namespace bt
 
     size_t MonsterManager::GetMonsterCountByType(MonsterType type) const
     {
-        return monsters_.count_if([type](const std::shared_ptr<Monster>& monster) {
-            return monster->GetType() == type;
-        });
+        return monsters_.count_if(
+            [type](const std::shared_ptr<Monster>& monster)
+            {
+                return monster->GetType() == type;
+            });
     }
 
     size_t MonsterManager::GetMonsterCountByName(const std::string& name) const
     {
-        return monsters_.count_if([&name](const std::shared_ptr<Monster>& monster) {
-            return monster->GetName() == name;
-        });
+        return monsters_.count_if(
+            [&name](const std::shared_ptr<Monster>& monster)
+            {
+                return monster->GetName() == name;
+            });
     }
 
 } // namespace bt

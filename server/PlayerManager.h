@@ -34,8 +34,8 @@ namespace bt
 
         // 클라이언트 ID와 플레이어 ID 매핑
         std::shared_ptr<Player> CreatePlayerForClient(uint32_t               client_id,
-                                                         const std::string&     name,
-                                                         const MonsterPosition& position);
+                                                      const std::string&     name,
+                                                      const MonsterPosition& position);
         void                    RemovePlayerByClientID(uint32_t client_id);
         std::shared_ptr<Player> GetPlayerByClientID(uint32_t client_id);
         uint32_t                GetClientIDByPlayerID(uint32_t player_id);
@@ -69,7 +69,7 @@ namespace bt
         std::unordered_map<uint32_t, uint32_t>                client_to_player_id_; // 클라이언트 ID -> 플레이어 ID
         std::unordered_map<uint32_t, uint32_t>                player_to_client_id_; // 플레이어 ID -> 클라이언트 ID
         std::atomic<uint32_t>                                 next_player_id_;
-        std::shared_ptr<bt::BeastHttpWebSocketServer>        http_websocket_server_;
+        std::shared_ptr<bt::BeastHttpWebSocketServer>         http_websocket_server_;
         mutable std::mutex                                    players_mutex_;
 
         // 플레이어 리스폰 포인트

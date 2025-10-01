@@ -1,26 +1,27 @@
 #pragma once
 
+#include <atomic>
+#include <functional>
+#include <memory>
+#include <mutex>
+#include <queue>
+#include <string>
+#include <thread>
+#include <unordered_map>
+#include <vector>
+
+#include <boost/asio/ip/tcp.hpp>
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
 #include <boost/beast/websocket.hpp>
-#include <boost/asio/ip/tcp.hpp>
-#include <memory>
-#include <string>
-#include <thread>
-#include <vector>
-#include <mutex>
-#include <atomic>
-#include <unordered_map>
-#include <functional>
-#include <queue>
 
 namespace bt
 {
 
     // HTTP 요청 타입
-    using http_request = boost::beast::http::request<boost::beast::http::string_body>;
+    using http_request  = boost::beast::http::request<boost::beast::http::string_body>;
     using http_response = boost::beast::http::response<boost::beast::http::string_body>;
-    using http_status = boost::beast::http::status;
+    using http_status   = boost::beast::http::status;
 
     // HTTP 핸들러 타입
     using http_handler = std::function<void(const http_request&, http_response&)>;
@@ -49,7 +50,7 @@ namespace bt
 
         // WebSocket 스트림 접근 (BeastWebSocketServer에서 사용)
         boost::beast::websocket::stream<boost::asio::ip::tcp::socket>& get_ws() { return ws_; }
-        
+
         // on_accept 메서드 접근 (BeastWebSocketServer에서 사용)
         void on_accept(boost::beast::error_code ec);
 
@@ -61,15 +62,15 @@ namespace bt
         void do_close();
 
         boost::beast::websocket::stream<boost::asio::ip::tcp::socket> ws_;
-        boost::beast::flat_buffer buffer_;
+        boost::beast::flat_buffer                                     buffer_;
 
-        std::atomic<bool> connected_;
-        uint32_t session_id_;
+        std::atomic<bool>            connected_;
+        uint32_t                     session_id_;
         static std::atomic<uint32_t> next_session_id_;
 
         std::queue<std::string> message_queue_;
-        std::mutex message_mutex_;
-        std::atomic<bool> writing_;
+        std::mutex              message_mutex_;
+        std::atomic<bool>       writing_;
     };
 
     // 통합 HTTP + WebSocket 서버 클래스
@@ -91,7 +92,7 @@ namespace bt
         size_t get_connected_clients() const;
 
         // 포트 설정
-        void set_port(uint16_t port) { port_ = port; }
+        void     set_port(uint16_t port) { port_ = port; }
         uint16_t get_port() const { return port_; }
 
         // IO Context 참조
@@ -107,7 +108,9 @@ namespace bt
         size_t get_websocket_connections() const { return websocket_connections_.load(); }
 
         // HTTP 응답 생성 (public으로 변경)
-        http_response create_http_response(http_status status, const std::string& body, const std::string& content_type = "text/html");
+        http_response create_http_response(http_status        status,
+                                           const std::string& body,
+                                           const std::string& content_type = "text/html");
         http_response create_json_response(const std::string& json);
         http_response create_error_response(http_status status, const std::string& message);
 
@@ -117,21 +120,20 @@ namespace bt
         void handle_http_request(boost::asio::ip::tcp::socket socket, http_request req);
         void handle_websocket_upgrade(boost::asio::ip::tcp::socket socket, http_request req);
 
-
-        boost::asio::io_context& ioc_;
+        boost::asio::io_context&       ioc_;
         boost::asio::ip::tcp::acceptor acceptor_;
         boost::asio::ip::tcp::endpoint endpoint_;
 
-        uint16_t port_;
+        uint16_t          port_;
         std::atomic<bool> running_;
 
         // HTTP 핸들러 맵
         std::unordered_map<std::string, http_handler> http_handlers_;
-        mutable std::mutex handlers_mutex_;
+        mutable std::mutex                            handlers_mutex_;
 
         // WebSocket 세션 관리
         std::vector<std::shared_ptr<BeastWebSocketSession>> sessions_;
-        mutable std::mutex sessions_mutex_;
+        mutable std::mutex                                  sessions_mutex_;
 
         // 통계
         std::atomic<size_t> total_requests_;

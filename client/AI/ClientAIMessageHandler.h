@@ -1,7 +1,8 @@
 #pragma once
 
-#include "../Common/ClientMessageProcessor.h"
 #include <memory>
+
+#include "../Common/ClientMessageProcessor.h"
 
 namespace bt
 {
@@ -28,7 +29,7 @@ namespace bt
         void HandleMonsterUpdate(std::shared_ptr<MonsterUpdateMessage> message);
         void HandleCombatResult(std::shared_ptr<CombatResultMessage> message);
 
-        std::shared_ptr<TestClient> client_;
+        std::shared_ptr<TestClient>             client_;
         std::shared_ptr<ClientMessageProcessor> message_processor_;
     };
 

@@ -1,15 +1,13 @@
-#include "ClientNetworkMessageHandler.h"
+#include <iostream>
+
 #include "../Common/ClientMessageProcessor.h"
 #include "../TestClient.h"
-#include <iostream>
+#include "ClientNetworkMessageHandler.h"
 
 namespace bt
 {
 
-    ClientNetworkMessageHandler::ClientNetworkMessageHandler(std::shared_ptr<TestClient> client)
-        : client_(client)
-    {
-    }
+    ClientNetworkMessageHandler::ClientNetworkMessageHandler(std::shared_ptr<TestClient> client) : client_(client) {}
 
     void ClientNetworkMessageHandler::SetMessageProcessor(std::shared_ptr<ClientMessageProcessor> processor)
     {
@@ -39,7 +37,8 @@ namespace bt
                 break;
 
             default:
-                std::cout << "클라이언트 네트워크 핸들러: 알 수 없는 메시지 타입: " << static_cast<int>(message->GetType()) << std::endl;
+                std::cout << "클라이언트 네트워크 핸들러: 알 수 없는 메시지 타입: "
+                          << static_cast<int>(message->GetType()) << std::endl;
                 break;
         }
     }
@@ -49,8 +48,8 @@ namespace bt
         if (!client_ || !message_processor_)
             return;
 
-        const auto& data = message->GetData();
-        uint16_t packet_type = message->GetPacketType();
+        const auto& data        = message->GetData();
+        uint16_t    packet_type = message->GetPacketType();
 
         // 패킷 타입에 따른 처리
         switch (static_cast<PacketType>(packet_type))
@@ -106,13 +105,14 @@ namespace bt
                 // 전투 결과 처리
                 if (data.size() >= sizeof(uint32_t) * 4)
                 {
-                    uint32_t attacker_id = *reinterpret_cast<const uint32_t*>(data.data());
-                    uint32_t target_id = *reinterpret_cast<const uint32_t*>(data.data() + sizeof(uint32_t));
-                    uint32_t damage = *reinterpret_cast<const uint32_t*>(data.data() + sizeof(uint32_t) * 2);
+                    uint32_t attacker_id      = *reinterpret_cast<const uint32_t*>(data.data());
+                    uint32_t target_id        = *reinterpret_cast<const uint32_t*>(data.data() + sizeof(uint32_t));
+                    uint32_t damage           = *reinterpret_cast<const uint32_t*>(data.data() + sizeof(uint32_t) * 2);
                     uint32_t remaining_health = *reinterpret_cast<const uint32_t*>(data.data() + sizeof(uint32_t) * 3);
 
                     // AI 로직으로 전투 결과 메시지 전송
-                    auto combat_result_msg = std::make_shared<CombatResultMessage>(attacker_id, target_id, damage, remaining_health);
+                    auto combat_result_msg =
+                        std::make_shared<CombatResultMessage>(attacker_id, target_id, damage, remaining_health);
                     message_processor_->SendMessage(combat_result_msg);
                 }
                 break;
@@ -131,7 +131,7 @@ namespace bt
     void ClientNetworkMessageHandler::HandleConnectionLost(std::shared_ptr<ClientMessage> message)
     {
         std::cout << "클라이언트 네트워크 핸들러: 연결 끊어짐" << std::endl;
-        
+
         if (client_)
         {
             client_->SetConnected(false);
@@ -141,7 +141,7 @@ namespace bt
     void ClientNetworkMessageHandler::HandleConnectionEstablished(std::shared_ptr<ClientMessage> message)
     {
         std::cout << "클라이언트 네트워크 핸들러: 연결 성공" << std::endl;
-        
+
         if (client_)
         {
             client_->SetConnected(true);
@@ -154,15 +154,15 @@ namespace bt
             return;
 
         size_t offset = 0;
-        
+
         // 타임스탬프 읽기
         uint64_t timestamp = *reinterpret_cast<const uint64_t*>(data.data() + offset);
         offset += sizeof(uint64_t);
-        
+
         // 플레이어 수 읽기
         uint32_t player_count = *reinterpret_cast<const uint32_t*>(data.data() + offset);
         offset += sizeof(uint32_t);
-        
+
         // 몬스터 수 읽기
         uint32_t monster_count = *reinterpret_cast<const uint32_t*>(data.data() + offset);
         offset += sizeof(uint32_t);
@@ -176,7 +176,7 @@ namespace bt
 
             uint32_t id = *reinterpret_cast<const uint32_t*>(data.data() + offset);
             offset += sizeof(uint32_t);
-            
+
             float x = *reinterpret_cast<const float*>(data.data() + offset);
             offset += sizeof(float);
             float y = *reinterpret_cast<const float*>(data.data() + offset);
@@ -187,11 +187,11 @@ namespace bt
             offset += sizeof(uint32_t);
 
             PlayerPosition pos;
-            pos.x = x;
-            pos.y = y;
-            pos.z = z;
+            pos.x        = x;
+            pos.y        = y;
+            pos.z        = z;
             pos.rotation = 0.0f; // 회전 정보는 현재 전송하지 않음
-            
+
             players[id] = pos;
         }
 
@@ -204,7 +204,7 @@ namespace bt
 
             uint32_t id = *reinterpret_cast<const uint32_t*>(data.data() + offset);
             offset += sizeof(uint32_t);
-            
+
             float x = *reinterpret_cast<const float*>(data.data() + offset);
             offset += sizeof(float);
             float y = *reinterpret_cast<const float*>(data.data() + offset);
@@ -215,23 +215,24 @@ namespace bt
             offset += sizeof(uint32_t);
 
             PlayerPosition pos;
-            pos.x = x;
-            pos.y = y;
-            pos.z = z;
+            pos.x        = x;
+            pos.y        = y;
+            pos.z        = z;
             pos.rotation = 0.0f; // 회전 정보는 현재 전송하지 않음
-            
+
             monsters[id] = pos;
         }
 
         // 클라이언트의 월드 상태 업데이트
         client_->UpdateWorldState(timestamp, players, monsters);
-        
+
         // 디버그 로그 (1초마다)
         static auto last_log_time = std::chrono::steady_clock::now();
-        auto now = std::chrono::steady_clock::now();
+        auto        now           = std::chrono::steady_clock::now();
         if (std::chrono::duration_cast<std::chrono::seconds>(now - last_log_time).count() >= 1)
         {
-            std::cout << "월드 상태 업데이트: 플레이어 " << player_count << "명, 몬스터 " << monster_count << "마리" << std::endl;
+            std::cout << "월드 상태 업데이트: 플레이어 " << player_count << "명, 몬스터 " << monster_count << "마리"
+                      << std::endl;
             last_log_time = now;
         }
     }

@@ -8,8 +8,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include "Tree.h"
 #include "Context.h"
+#include "Tree.h"
 
 namespace bt
 {
@@ -30,18 +30,18 @@ namespace bt
             std::lock_guard<std::mutex> lock(trees_mutex_);
             trees_[name] = tree;
         }
-        
+
         std::shared_ptr<Tree> GetTree(const std::string& name)
         {
             std::lock_guard<std::mutex> lock(trees_mutex_);
-            auto it = trees_.find(name);
+            auto                        it = trees_.find(name);
             if (it != trees_.end())
             {
                 return it->second;
             }
             return nullptr;
         }
-        
+
         void UnregisterTree(const std::string& name)
         {
             std::lock_guard<std::mutex> lock(trees_mutex_);
@@ -64,7 +64,7 @@ namespace bt
 
     private:
         std::unordered_map<std::string, std::shared_ptr<Tree>> trees_;
-        mutable std::mutex                                             trees_mutex_;
+        mutable std::mutex                                     trees_mutex_;
     };
 
 } // namespace bt

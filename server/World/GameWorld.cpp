@@ -2,9 +2,9 @@
 #include <iostream>
 #include <thread>
 
+#include "BT/NPC/NPC.h"
 #include "GameWorld.h"
 #include "Map.h"
-#include "BT/NPC/NPC.h"
 #include "Player.h"
 
 namespace bt

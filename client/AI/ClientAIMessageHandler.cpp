@@ -1,15 +1,13 @@
-#include "ClientAIMessageHandler.h"
+#include <iostream>
+
 #include "../Common/ClientMessageProcessor.h"
 #include "../TestClient.h"
-#include <iostream>
+#include "ClientAIMessageHandler.h"
 
 namespace bt
 {
 
-    ClientAIMessageHandler::ClientAIMessageHandler(std::shared_ptr<TestClient> client)
-        : client_(client)
-    {
-    }
+    ClientAIMessageHandler::ClientAIMessageHandler(std::shared_ptr<TestClient> client) : client_(client) {}
 
     void ClientAIMessageHandler::SetMessageProcessor(std::shared_ptr<ClientMessageProcessor> processor)
     {
@@ -59,7 +57,8 @@ namespace bt
                 break;
 
             default:
-                std::cout << "클라이언트 AI 핸들러: 알 수 없는 메시지 타입: " << static_cast<int>(message->GetType()) << std::endl;
+                std::cout << "클라이언트 AI 핸들러: 알 수 없는 메시지 타입: " << static_cast<int>(message->GetType())
+                          << std::endl;
                 break;
         }
     }
@@ -79,7 +78,7 @@ namespace bt
             return;
 
         bool active = message->IsActive();
-        
+
         if (active)
         {
             client_->StartAI();
@@ -98,7 +97,7 @@ namespace bt
             return;
 
         auto action = message->GetAction();
-        
+
         switch (action)
         {
             case PlayerActionMessage::ActionType::MOVE:
@@ -125,10 +124,10 @@ namespace bt
             return;
 
         const auto& monsters = message->GetMonsters();
-        
+
         // 클라이언트의 몬스터 정보 업데이트
         client_->UpdateMonsters(monsters);
-        
+
         std::cout << "클라이언트 AI 핸들러: 몬스터 업데이트 - " << monsters.size() << "마리" << std::endl;
     }
 
@@ -137,17 +136,16 @@ namespace bt
         if (!client_)
             return;
 
-        uint32_t attacker_id = message->GetAttackerId();
-        uint32_t target_id = message->GetTargetId();
-        uint32_t damage = message->GetDamage();
+        uint32_t attacker_id      = message->GetAttackerId();
+        uint32_t target_id        = message->GetTargetId();
+        uint32_t damage           = message->GetDamage();
         uint32_t remaining_health = message->GetRemainingHealth();
 
         // 전투 결과 처리
         client_->HandleCombatResult(attacker_id, target_id, damage, remaining_health);
-        
-        std::cout << "클라이언트 AI 핸들러: 전투 결과 - 공격자:" << attacker_id 
-                  << ", 타겟:" << target_id << ", 데미지:" << damage 
-                  << ", 남은체력:" << remaining_health << std::endl;
+
+        std::cout << "클라이언트 AI 핸들러: 전투 결과 - 공격자:" << attacker_id << ", 타겟:" << target_id
+                  << ", 데미지:" << damage << ", 남은체력:" << remaining_health << std::endl;
     }
 
 } // namespace bt

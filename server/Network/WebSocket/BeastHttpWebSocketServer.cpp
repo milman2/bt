@@ -1,8 +1,10 @@
-#include "BeastHttpWebSocketServer.h"
-#include <boost/beast/version.hpp>
+#include <chrono>
 #include <iostream>
 #include <sstream>
-#include <chrono>
+
+#include <boost/beast/version.hpp>
+
+#include "BeastHttpWebSocketServer.h"
 
 namespace bt
 {
@@ -39,20 +41,24 @@ namespace bt
         std::cout << "WebSocket session " << session_id_ << " connected" << std::endl;
 
         // 연결 메시지 전송
-        send_message("{\"type\":\"system_message\",\"data\":{\"message\":\"Beast HTTP+WebSocket 서버에 연결되었습니다.\",\"level\":\"info\"},\"timestamp\":" + 
-                    std::to_string(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count()) + "}");
+        send_message(
+            "{\"type\":\"system_message\",\"data\":{\"message\":\"Beast HTTP+WebSocket 서버에 "
+            "연결되었습니다.\",\"level\":\"info\"},\"timestamp\":" +
+            std::to_string(
+                std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch())
+                    .count()) +
+            "}");
 
         do_read();
     }
 
     void BeastWebSocketSession::do_read()
     {
-        ws_.async_read(
-            buffer_,
-            [self = shared_from_this()](boost::beast::error_code ec, std::size_t bytes_transferred)
-            {
-                self->on_read(ec, bytes_transferred);
-            });
+        ws_.async_read(buffer_,
+                       [self = shared_from_this()](boost::beast::error_code ec, std::size_t bytes_transferred)
+                       {
+                           self->on_read(ec, bytes_transferred);
+                       });
     }
 
     void BeastWebSocketSession::on_read(boost::beast::error_code ec, std::size_t bytes_transferred)
@@ -100,10 +106,10 @@ namespace bt
     void BeastWebSocketSession::do_write()
     {
         std::string message;
-        
+
         {
             std::lock_guard<std::mutex> lock(message_mutex_);
-            
+
             if (message_queue_.empty())
             {
                 writing_.store(false);
@@ -114,12 +120,11 @@ namespace bt
             message_queue_.pop();
         }
 
-        ws_.async_write(
-            boost::asio::buffer(message),
-            [self = shared_from_this()](boost::beast::error_code ec, std::size_t bytes_transferred)
-            {
-                self->on_write(ec, bytes_transferred);
-            });
+        ws_.async_write(boost::asio::buffer(message),
+                        [self = shared_from_this()](boost::beast::error_code ec, std::size_t bytes_transferred)
+                        {
+                            self->on_write(ec, bytes_transferred);
+                        });
     }
 
     void BeastWebSocketSession::on_write(boost::beast::error_code ec, std::size_t bytes_transferred)
@@ -137,7 +142,7 @@ namespace bt
             std::lock_guard<std::mutex> lock(message_mutex_);
             has_more_messages = !message_queue_.empty();
         }
-        
+
         if (has_more_messages)
         {
             do_write();
@@ -184,10 +189,12 @@ namespace bt
             return false;
 
         running_.store(true);
-        server_thread_ = std::thread([this]() { 
-            do_accept();
-            ioc_.run();
-        });
+        server_thread_ = std::thread(
+            [this]()
+            {
+                do_accept();
+                ioc_.run();
+            });
 
         std::cout << "Beast HTTP+WebSocket 서버가 포트 " << port_ << "에서 시작되었습니다." << std::endl;
         return true;
@@ -260,11 +267,11 @@ namespace bt
 
         // 소켓을 shared_ptr로 관리하여 안전하게 처리
         auto socket_ptr = std::make_shared<boost::asio::ip::tcp::socket>(std::move(socket));
-        auto req = std::make_shared<http_request>();
-        auto buffer = std::make_shared<boost::beast::flat_buffer>();
-        
+        auto req        = std::make_shared<http_request>();
+        auto buffer     = std::make_shared<boost::beast::flat_buffer>();
+
         std::cout << "HTTP 요청 읽기 시작..." << std::endl;
-        
+
         boost::beast::http::async_read(
             *socket_ptr,
             *buffer,
@@ -274,10 +281,8 @@ namespace bt
                 if (ec)
                 {
                     // 연결이 끊어진 경우는 정상적인 상황이므로 로그 레벨을 낮춤
-                    if (ec == boost::beast::http::error::end_of_stream || 
-                        ec == boost::asio::error::connection_reset ||
-                        ec == boost::asio::error::connection_aborted ||
-                        ec == boost::asio::error::bad_descriptor)
+                    if (ec == boost::beast::http::error::end_of_stream || ec == boost::asio::error::connection_reset ||
+                        ec == boost::asio::error::connection_aborted || ec == boost::asio::error::bad_descriptor)
                     {
                         // 정상적인 연결 종료
                         std::cout << "정상적인 연결 종료: " << ec.message() << std::endl;
@@ -316,19 +321,19 @@ namespace bt
         total_requests_.fetch_add(1);
 
         // 응답 객체를 shared_ptr로 관리하여 생명주기 보장
-        auto res = std::make_shared<http_response>();
-        std::string path = std::string(req.target());
+        auto        res    = std::make_shared<http_response>();
+        std::string path   = std::string(req.target());
         std::string method = std::string(req.method_string());
 
         std::cout << "HTTP 요청 처리: " << method << " " << path << std::endl;
 
         // 핸들러 찾기
-        std::string handler_key = method + ":" + path;
+        std::string                 handler_key = method + ":" + path;
         std::lock_guard<std::mutex> lock(handlers_mutex_);
-        
+
         std::cout << "핸들러 키: " << handler_key << std::endl;
         std::cout << "등록된 핸들러 수: " << http_handlers_.size() << std::endl;
-        
+
         auto it = http_handlers_.find(handler_key);
         if (it != http_handlers_.end())
         {
@@ -363,7 +368,7 @@ namespace bt
                 {
                     std::cout << "HTTP 응답 전송 완료: " << bytes_transferred << " bytes" << std::endl;
                 }
-                
+
                 // 소켓 종료
                 boost::beast::error_code shutdown_ec;
                 socket_ptr->shutdown(boost::asio::ip::tcp::socket::shutdown_both, shutdown_ec);
@@ -379,8 +384,9 @@ namespace bt
         websocket_connections_.fetch_add(1);
 
         // WebSocket 세션 생성
-        auto session = std::make_shared<BeastWebSocketSession>(std::move(socket), BeastWebSocketSession::get_next_session_id());
-        
+        auto session =
+            std::make_shared<BeastWebSocketSession>(std::move(socket), BeastWebSocketSession::get_next_session_id());
+
         // 세션을 리스트에 추가
         {
             std::lock_guard<std::mutex> lock(sessions_mutex_);
@@ -388,31 +394,30 @@ namespace bt
         }
 
         // WebSocket 핸드셰이크 수행
-        session->get_ws().async_accept(
-            req,
-            [session](boost::beast::error_code ec)
-            {
-                if (ec)
-                {
-                    std::cerr << "WebSocket accept error: " << ec.message() << std::endl;
-                    return;
-                }
-                session->on_accept(ec);
-            });
+        session->get_ws().async_accept(req,
+                                       [session](boost::beast::error_code ec)
+                                       {
+                                           if (ec)
+                                           {
+                                               std::cerr << "WebSocket accept error: " << ec.message() << std::endl;
+                                               return;
+                                           }
+                                           session->on_accept(ec);
+                                       });
     }
 
     void BeastHttpWebSocketServer::broadcast(const std::string& message)
     {
         std::lock_guard<std::mutex> lock(sessions_mutex_);
-        
+
         // 연결이 끊어진 세션들을 정리
-        sessions_.erase(
-            std::remove_if(sessions_.begin(), sessions_.end(),
-                [](const std::shared_ptr<BeastWebSocketSession>& session)
-                {
-                    return !session || !session->is_connected();
-                }),
-            sessions_.end());
+        sessions_.erase(std::remove_if(sessions_.begin(),
+                                       sessions_.end(),
+                                       [](const std::shared_ptr<BeastWebSocketSession>& session)
+                                       {
+                                           return !session || !session->is_connected();
+                                       }),
+                        sessions_.end());
 
         // 모든 연결된 세션에 메시지 전송
         size_t sent_count = 0;
@@ -425,24 +430,28 @@ namespace bt
             }
         }
 
-        std::cout << "Beast HTTP+WebSocket 브로드캐스트: " << sessions_.size() << "개 연결 중 " << sent_count << "개 전송 성공" << std::endl;
+        std::cout << "Beast HTTP+WebSocket 브로드캐스트: " << sessions_.size() << "개 연결 중 " << sent_count
+                  << "개 전송 성공" << std::endl;
     }
 
     size_t BeastHttpWebSocketServer::get_connected_clients() const
     {
         std::lock_guard<std::mutex> lock(sessions_mutex_);
-        return std::count_if(sessions_.begin(), sessions_.end(),
-            [](const std::shared_ptr<BeastWebSocketSession>& session)
-            {
-                return session && session->is_connected();
-            });
+        return std::count_if(sessions_.begin(),
+                             sessions_.end(),
+                             [](const std::shared_ptr<BeastWebSocketSession>& session)
+                             {
+                                 return session && session->is_connected();
+                             });
     }
 
-    void BeastHttpWebSocketServer::register_http_handler(const std::string& path, const std::string& method, http_handler handler)
+    void BeastHttpWebSocketServer::register_http_handler(const std::string& path,
+                                                         const std::string& method,
+                                                         http_handler       handler)
     {
         std::lock_guard<std::mutex> lock(handlers_mutex_);
-        std::string key = method + ":" + path;
-        http_handlers_[key] = handler;
+        std::string                 key = method + ":" + path;
+        http_handlers_[key]             = handler;
     }
 
     void BeastHttpWebSocketServer::register_get_handler(const std::string& path, http_handler handler)
@@ -455,7 +464,9 @@ namespace bt
         register_http_handler(path, "POST", handler);
     }
 
-    http_response BeastHttpWebSocketServer::create_http_response(http_status status, const std::string& body, const std::string& content_type)
+    http_response BeastHttpWebSocketServer::create_http_response(http_status        status,
+                                                                 const std::string& body,
+                                                                 const std::string& content_type)
     {
         http_response res{status, 11}; // HTTP/1.1
         res.set(boost::beast::http::field::server, "BT-MMORPG-HTTP-WebSocket-Server");
@@ -472,7 +483,8 @@ namespace bt
 
     http_response BeastHttpWebSocketServer::create_error_response(http_status status, const std::string& message)
     {
-        std::string body = "{\"error\":\"" + message + "\",\"status\":" + std::to_string(static_cast<int>(status)) + "}";
+        std::string body =
+            "{\"error\":\"" + message + "\",\"status\":" + std::to_string(static_cast<int>(status)) + "}";
         return create_http_response(status, body, "application/json");
     }
 

@@ -16,7 +16,7 @@ namespace bt
     {
     public:
         Random(const std::string& name) : Node(name, NodeType::RANDOM) {}
-        
+
         NodeStatus Execute(Context& context) override
         {
             if (children_.empty())
@@ -25,10 +25,10 @@ namespace bt
             }
 
             // 랜덤하게 자식 노드 선택
-            std::random_device rd;
-            std::mt19937 gen(rd());
+            std::random_device              rd;
+            std::mt19937                    gen(rd());
             std::uniform_int_distribution<> dis(0, children_.size() - 1);
-            
+
             int random_index = dis(gen);
             return children_[random_index]->Execute(context);
         }

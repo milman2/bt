@@ -3,14 +3,14 @@
 #include <atomic>
 #include <memory>
 #include <mutex>
+#include <shared_mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <shared_mutex>
 
-#include "MonsterTypes.h"
-#include "Monster.h"
 #include "../../Common/ReadOnlyView.h"
+#include "Monster.h"
+#include "MonsterTypes.h"
 
 // 전방 선언
 namespace bt
@@ -39,8 +39,8 @@ namespace bt
 
         // 몬스터 생성
         std::shared_ptr<Monster> SpawnMonster(MonsterType            type,
-                                               const std::string&     name,
-                                               const MonsterPosition& position);
+                                              const std::string&     name,
+                                              const MonsterPosition& position);
 
         // 자동 스폰 관리
         void AddSpawnConfig(const MonsterSpawnConfig& config);
@@ -71,12 +71,12 @@ namespace bt
 
     private:
         // 성능 최적화된 몬스터 컬렉션 (shared_mutex 사용)
-        OptimizedCollection<uint32_t, std::shared_ptr<Monster>> monsters_;
+        OptimizedCollection<uint32_t, std::shared_ptr<Monster>>                monsters_;
         std::vector<MonsterSpawnConfig>                                        spawn_configs_;
         std::unordered_map<std::string, std::chrono::steady_clock::time_point> last_spawn_times_;
         std::atomic<uint32_t>                                                  next_monster_id_;
         std::atomic<bool>                                                      auto_spawn_enabled_;
-        std::shared_ptr<Engine>                                    bt_engine_;
+        std::shared_ptr<Engine>                                                bt_engine_;
         std::shared_ptr<bt::BeastHttpWebSocketServer>                          http_websocket_server_;
         std::shared_ptr<PlayerManager>                                         player_manager_;
         mutable std::mutex                                                     spawn_mutex_;

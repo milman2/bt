@@ -1,186 +1,166 @@
 #pragma once
 
+#include <memory>
+
 #include <cstdint>
 #include <cstring>
-#include <vector>
-#include <boost/asio.hpp>
 
-namespace bt {
+#include "ReceiveBufferPool.h"
 
-/**
- * @brief 링버퍼를 사용한 패킷 수신 버퍼 클래스
- * 
- * 고정된 크기의 내부 버퍼를 사용하여 패킷 데이터를 링버퍼 형식으로 관리합니다.
- * TCP 스트림에서 분할된 패킷을 안전하게 처리할 수 있습니다.
- */
-class ReceiveBuffer
+namespace bt
 {
-public:
-    /**
-     * @brief 생성자
-     * @param buffer_size 내부 버퍼 크기 (기본값: 64KB)
-     */
-    explicit ReceiveBuffer(size_t buffer_size = 65536);
-    
-    /**
-     * @brief 소멸자
-     */
-    ~ReceiveBuffer() = default;
-    
-    // 복사 생성자와 대입 연산자 비활성화
-    ReceiveBuffer(const ReceiveBuffer&) = delete;
-    ReceiveBuffer& operator=(const ReceiveBuffer&) = delete;
-    
-    // 이동 생성자와 대입 연산자 허용
-    ReceiveBuffer(ReceiveBuffer&&) = default;
-    ReceiveBuffer& operator=(ReceiveBuffer&&) = default;
-    
-    /**
-     * @brief Boost.Asio 호환 소켓에서 데이터를 읽어서 버퍼에 추가
-     * @param socket Boost.Asio 호환 소켓 객체 (read_some 메서드가 있어야 함)
-     * @return 읽은 바이트 수 (0이면 데이터 없음, -1이면 오류)
-     */
-    template<typename SocketType>
-    int ReadFromSocket(SocketType& socket);
-    
-    /**
-     * @brief 완전한 패킷이 있는지 확인
-     * @return true면 완전한 패킷이 있음
-     */
-    bool HasCompletePacket() const;
-    
-    /**
-     * @brief 다음 패킷의 크기를 반환
-     * @return 패킷 크기 (0이면 패킷 크기를 읽을 수 없음)
-     */
-    uint32_t GetNextPacketSize() const;
-    
-    /**
-     * @brief 다음 패킷을 추출
-     * @param packet_type 패킷 타입을 저장할 변수
-     * @param packet_data 패킷 데이터를 저장할 벡터
-     * @return true면 패킷 추출 성공
-     */
-    bool ExtractNextPacket(uint16_t& packet_type, std::vector<uint8_t>& packet_data);
-    
-    /**
-     * @brief 버퍼에 사용 가능한 공간이 있는지 확인
-     * @return true면 공간이 있음
-     */
-    bool HasSpace() const;
-    
-    /**
-     * @brief 버퍼 상태 정보 반환
-     * @return 사용 중인 바이트 수
-     */
-    size_t GetUsedSize() const;
-    
-    /**
-     * @brief 버퍼 상태 정보 반환
-     * @return 사용 가능한 바이트 수
-     */
-    size_t GetFreeSize() const;
-    
-    /**
-     * @brief 버퍼 초기화
-     */
-    void Clear();
-    
-    /**
-     * @brief 디버그 정보 출력
-     */
-    void PrintDebugInfo() const;
-    
-    /**
-     * @brief 버퍼에 데이터 쓰기 (외부에서 사용)
-     * @param src 소스 데이터
-     * @param size 쓸 크기
-     * @return 실제로 쓴 크기
-     */
-    size_t WriteToBuffer(const void* src, size_t size);
 
-private:
     /**
-     * @brief 버퍼에서 데이터를 읽기
-     * @param dest 대상 버퍼
-     * @param size 읽을 크기
-     * @return 실제로 읽은 크기
+     * @brief 링크드 리스트 기반 패킷 수신 버퍼
+     *
+     * 이 클래스는 네트워크에서 수신된 데이터를 안전하게 저장하고
+     * 완전한 패킷을 추출할 수 있도록 도와줍니다.
+     *
+     * 특징:
+     * - 링크드 리스트 기반 동적 크기 버퍼
+     * - 메모리 풀을 통한 효율적인 노드 관리
+     * - 패킷 경계를 고려한 데이터 관리
+     * - 부분 패킷 처리 지원
      */
-    size_t ReadFromBuffer(void* dest, size_t size);
-    
-    /**
-     * @brief 버퍼에서 데이터 제거
-     * @param size 제거할 크기
-     */
-    void RemoveFromBuffer(size_t size);
-    
-    /**
-     * @brief 버퍼 공간 확보
-     * @param needed 필요한 공간 크기
-     * @return true면 공간 확보 성공
-     */
-    bool EnsureSpace(size_t needed);
+    class ReceiveBuffer
+    {
+    public:
+        /**
+         * @brief 생성자
+         */
+        ReceiveBuffer();
 
-private:
-    std::vector<uint8_t> buffer_;    ///< 내부 버퍼
-    size_t read_pos_;                ///< 읽기 위치
-    size_t write_pos_;               ///< 쓰기 위치
-    size_t data_size_;               ///< 현재 데이터 크기
-    static constexpr size_t MIN_PACKET_SIZE = sizeof(uint32_t) + sizeof(uint16_t); ///< 최소 패킷 크기
-};
+        /**
+         * @brief 소멸자
+         */
+        ~ReceiveBuffer();
 
-// 템플릿 구현
-template<typename SocketType>
-int ReceiveBuffer::ReadFromSocket(SocketType& socket)
-{
-    if (!HasSpace())
-    {
-        return 0; // 공간이 없음
-    }
-    
-    // 사용 가능한 공간 계산
-    size_t available_space = GetFreeSize();
-    if (available_space == 0)
-    {
-        return 0;
-    }
-    
-    // 소켓에서 읽기
-    boost::system::error_code ec;
-    size_t bytes_read = socket.read_some(
-        boost::asio::buffer(buffer_.data() + write_pos_, available_space), ec);
-    
-    if (ec == boost::asio::error::would_block || ec == boost::asio::error::try_again)
-    {
-        return 0; // 데이터 없음
-    }
-    
-    if (ec)
-    {
-        return -1; // 오류
-    }
-    
-    if (bytes_read > 0)
-    {
-        write_pos_ = (write_pos_ + bytes_read) % buffer_.size();
-        data_size_ += bytes_read;
-    }
-    
-    return static_cast<int>(bytes_read);
-}
+        // 복사 생성자와 대입 연산자 금지
+        ReceiveBuffer(const ReceiveBuffer&)            = delete;
+        ReceiveBuffer& operator=(const ReceiveBuffer&) = delete;
+
+        // 이동 생성자와 대입 연산자 허용
+        ReceiveBuffer(ReceiveBuffer&&)            = default;
+        ReceiveBuffer& operator=(ReceiveBuffer&&) = default;
+
+        /**
+         * @brief 외부에서 읽은 데이터를 버퍼에 추가
+         * @param data 읽은 데이터
+         * @param size 데이터 크기
+         * @return 실제로 추가된 바이트 수
+         */
+        size_t AppendData(const void* data, size_t size);
+
+        /**
+         * @brief 지정된 크기의 데이터가 있는지 확인
+         * @param required_size 필요한 데이터 크기
+         * @return true면 충분한 데이터가 있음
+         */
+        bool HasEnoughData(size_t required_size) const;
+
+        /**
+         * @brief 지정된 크기의 데이터를 추출
+         * @param dest 대상 버퍼
+         * @param size 추출할 크기
+         * @return 실제로 추출된 크기
+         */
+        size_t ExtractData(void* dest, size_t size);
+
+        /**
+         * @brief 데이터를 읽기만 하고 버퍼에서 제거하지 않음 (peek)
+         * @param dest 대상 버퍼
+         * @param size 읽을 크기
+         * @return 실제로 읽은 크기
+         */
+        size_t PeekData(void* dest, size_t size) const;
+
+        /**
+         * @brief 버퍼에 사용 가능한 공간이 있는지 확인
+         * @return true면 공간이 있음
+         */
+        bool HasSpace() const;
+
+        /**
+         * @brief 현재 사용 중인 데이터 크기
+         * @return 사용 중인 바이트 수
+         */
+        size_t GetUsedSize() const;
+
+        /**
+         * @brief 사용 가능한 공간 크기
+         * @return 사용 가능한 바이트 수
+         */
+        size_t GetFreeSize() const;
+
+        /**
+         * @brief 버퍼 초기화
+         */
+        void Clear();
+
+        /**
+         * @brief 디버그 정보 출력
+         */
+        void PrintDebugInfo() const;
+
+    private:
+        std::shared_ptr<BufferNode> head_;            ///< 첫 번째 노드
+        std::shared_ptr<BufferNode> tail_;            ///< 마지막 노드
+        size_t                      total_data_size_; ///< 전체 데이터 크기
+        size_t                      read_offset_;     ///< 현재 읽기 위치 (첫 번째 노드 기준)
+
+        /**
+         * @brief 새 노드 추가
+         */
+        void AddNewNode();
+
+        /**
+         * @brief 빈 노드들 정리
+         */
+        void CleanupEmptyNodes();
+
+        /**
+         * @brief 노드에서 데이터 읽기
+         * @param node 읽을 노드
+         * @param offset 노드 내 오프셋
+         * @param dest 대상 버퍼
+         * @param size 읽을 크기
+         * @return 실제로 읽은 크기
+         */
+        size_t ReadFromNode(std::shared_ptr<BufferNode> node, size_t offset, void* dest, size_t size) const;
+    };
 
 } // namespace bt
 
 /*
 사용 예시:
 
-Boost.Asio 호환 소켓 사용:
+1. 소켓에서 데이터 읽기:
    boost::asio::ip::tcp::socket socket(io_context);
-   ReceiveBuffer buffer(65536);
-   int bytes_read = buffer.ReadFromSocket(socket);
+   ReceiveBuffer buffer;
 
-요구사항:
-- SocketType은 read_some(buffer, error_code) 메서드를 가져야 함
-- boost::asio::buffer()와 호환되어야 함
-- boost::system::error_code를 사용해야 함
+   uint8_t temp_buffer[4096];
+   boost::system::error_code ec;
+   size_t bytes_read = socket.read_some(boost::asio::buffer(temp_buffer), ec);
+
+   if (bytes_read > 0) {
+       buffer.AppendData(temp_buffer, bytes_read);
+   }
+
+2. 패킷 크기 확인 및 데이터 추출:
+   // 패킷 크기 peek (4바이트)
+   if (buffer.HasEnoughData(4)) {
+       uint32_t packet_size;
+       buffer.PeekData(&packet_size, 4);
+
+       // 전체 패킷 데이터 확인
+       if (buffer.HasEnoughData(packet_size)) {
+           // 패킷 크기 추출
+           buffer.ExtractData(&packet_size, 4);
+
+           // 패킷 데이터 추출
+           std::vector<uint8_t> packet_data(packet_size - 4);
+           buffer.ExtractData(packet_data.data(), packet_size - 4);
+           // 패킷 처리
+       }
+   }
 */

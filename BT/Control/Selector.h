@@ -15,7 +15,7 @@ namespace bt
     {
     public:
         Selector(const std::string& name) : Node(name, NodeType::SELECTOR) {}
-        
+
         NodeStatus Execute(Context& context) override
         {
             for (auto& child : children_)

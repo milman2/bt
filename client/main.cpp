@@ -41,8 +41,8 @@ int main(int argc, char* argv[])
 
     // 기본 설정
     PlayerAIConfig config;
-    int duration = 0;  // 0 = 무제한
-    bool verbose = false;
+    int            duration = 0; // 0 = 무제한
+    bool           verbose  = false;
 
     // 명령행 인수 파싱
     for (int i = 1; i < argc; i++)
@@ -140,7 +140,7 @@ int main(int argc, char* argv[])
     // AI 플레이어 클라이언트 생성 (shared_ptr로 생성)
     auto client = std::make_shared<TestClient>(config);
     client->SetVerbose(verbose);
-    
+
     // shared_from_this() 사용을 위해 context에 AI 설정
     client->SetContextAI();
 
@@ -158,26 +158,27 @@ int main(int argc, char* argv[])
         client->StartAI();
 
         // AI 루프 실행
-        auto start_time = std::chrono::steady_clock::now();
+        auto start_time  = std::chrono::steady_clock::now();
         auto last_update = start_time;
-        
+
         std::cout << "AI 플레이어가 동작 중입니다. 종료하려면 Ctrl+C를 누르세요.\n\n";
 
         while (client->IsConnected())
         {
             auto current_time = std::chrono::steady_clock::now();
-            auto delta_time = std::chrono::duration<float>(current_time - last_update).count();
-            last_update = current_time;
+            auto delta_time   = std::chrono::duration<float>(current_time - last_update).count();
+            last_update       = current_time;
 
             // AI 업데이트
             client->UpdateAI(delta_time);
-            
+
             // 디버깅: 연결 상태 확인
             static int loop_count = 0;
             loop_count++;
             if (loop_count % 100 == 0)
             {
-                std::cout << "메인 루프 실행 중... (카운트: " << loop_count << ", 연결상태: " << (client->IsConnected() ? "true" : "false") << ")" << std::endl;
+                std::cout << "메인 루프 실행 중... (카운트: " << loop_count
+                          << ", 연결상태: " << (client->IsConnected() ? "true" : "false") << ")" << std::endl;
             }
 
             // 실행 시간 체크

@@ -15,15 +15,17 @@ namespace bt
     {
     public:
         Repeat(const std::string& name, int count = -1) // -1은 무한 반복
-            : Node(name, NodeType::REPEAT), repeat_count_(count), current_count_(0) {}
-            
+            : Node(name, NodeType::REPEAT), repeat_count_(count), current_count_(0)
+        {
+        }
+
         NodeStatus Execute(Context& context) override
         {
             if (children_.empty())
             {
                 return NodeStatus::SUCCESS;
             }
-            
+
             // 무한 반복인 경우
             if (repeat_count_ == -1)
             {
@@ -35,7 +37,7 @@ namespace bt
                 }
                 return child_status;
             }
-            
+
             // 제한된 반복인 경우
             if (current_count_ < repeat_count_)
             {
@@ -57,7 +59,7 @@ namespace bt
                 }
                 return NodeStatus::RUNNING;
             }
-            
+
             current_count_ = 0; // 리셋
             return NodeStatus::SUCCESS;
         }

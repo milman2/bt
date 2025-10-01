@@ -2,9 +2,9 @@
 #include <iostream>
 #include <random>
 
-#include "PlayerManager.h"
-#include "Network/WebSocket/BeastHttpWebSocketServer.h"
 #include "Common/LockOrder.h"
+#include "Network/WebSocket/BeastHttpWebSocketServer.h"
+#include "PlayerManager.h"
 
 namespace bt
 {
@@ -23,7 +23,7 @@ namespace bt
     void PlayerManager::RemovePlayer(uint32_t player_id)
     {
         LOCK_PLAYERS(players_mutex_);
-        auto                        it = players_.find(player_id);
+        auto it = players_.find(player_id);
         if (it != players_.end())
         {
             std::cout << "플레이어 제거: " << it->second->GetName() << " (ID: " << player_id << ")" << std::endl;
@@ -34,7 +34,7 @@ namespace bt
     std::shared_ptr<Player> PlayerManager::GetPlayer(uint32_t player_id)
     {
         LOCK_PLAYERS(players_mutex_);
-        auto                        it = players_.find(player_id);
+        auto it = players_.find(player_id);
         if (it != players_.end())
         {
             return it->second;
@@ -53,8 +53,7 @@ namespace bt
         return result;
     }
 
-    std::vector<std::shared_ptr<Player>> PlayerManager::GetPlayersInRange(const MonsterPosition& position,
-                                                                             float                  range)
+    std::vector<std::shared_ptr<Player>> PlayerManager::GetPlayersInRange(const MonsterPosition& position, float range)
     {
         std::lock_guard<std::mutex>          lock(players_mutex_);
         std::vector<std::shared_ptr<Player>> result;
@@ -102,8 +101,8 @@ namespace bt
     }
 
     std::shared_ptr<Player> PlayerManager::CreatePlayerForClient(uint32_t               client_id,
-                                                                    const std::string&     name,
-                                                                    const MonsterPosition& position)
+                                                                 const std::string&     name,
+                                                                 const MonsterPosition& position)
     {
         uint32_t player_id = next_player_id_.fetch_add(1);
         auto     player    = std::make_shared<Player>(player_id, name);
@@ -351,8 +350,8 @@ namespace bt
 
         // 스탯 복구
         PlayerGameStats stats = player->GetStats();
-        stats.health      = stats.max_health;
-        stats.mana        = stats.max_mana;
+        stats.health          = stats.max_health;
+        stats.mana            = stats.max_mana;
         player->SetStats(stats);
 
         std::cout << "플레이어 " << player_id << " 리스폰: (" << respawn_pos.x << ", " << respawn_pos.y << ", "

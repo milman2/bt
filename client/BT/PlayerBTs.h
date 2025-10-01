@@ -1,7 +1,8 @@
 #pragma once
 
-#include "../../BT/Tree.h"
 #include <memory>
+
+#include "../../BT/Tree.h"
 
 namespace bt
 {
@@ -12,13 +13,13 @@ namespace bt
     public:
         // 기본 플레이어 BT 생성
         static std::shared_ptr<Tree> CreatePlayerBT();
-        
+
         // 전사 플레이어 BT 생성
         static std::shared_ptr<Tree> CreateWarriorBT();
-        
+
         // 궁수 플레이어 BT 생성
         static std::shared_ptr<Tree> CreateArcherBT();
-        
+
         // 마법사 플레이어 BT 생성
         static std::shared_ptr<Tree> CreateMageBT();
     };

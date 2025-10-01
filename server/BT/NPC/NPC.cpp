@@ -1,6 +1,6 @@
-#include "NPC.h"
-
 #include <iostream>
+
+#include "NPC.h"
 
 namespace bt
 {

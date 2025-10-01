@@ -11,24 +11,22 @@ namespace bt
     {
         // 기본 핸들러 등록
         RegisterHandler(PacketType::CONNECT_REQUEST,
-                         [this](int socket_fd, const Packet& packet)
-                         {
-                             HandleConnectRequest(socket_fd, packet);
-                         });
-
+                        [this](int socket_fd, const Packet& packet)
+                        {
+                            HandleConnectRequest(socket_fd, packet);
+                        });
 
         RegisterHandler(PacketType::PLAYER_MOVE,
-                         [this](int socket_fd, const Packet& packet)
-                         {
-                             HandlePlayerMove(socket_fd, packet);
-                         });
-
+                        [this](int socket_fd, const Packet& packet)
+                        {
+                            HandlePlayerMove(socket_fd, packet);
+                        });
 
         RegisterHandler(PacketType::DISCONNECT,
-                         [this](int socket_fd, const Packet& packet)
-                         {
-                             HandleDisconnect(socket_fd, packet);
-                         });
+                        [this](int socket_fd, const Packet& packet)
+                        {
+                            HandleDisconnect(socket_fd, packet);
+                        });
     }
 
     PacketHandler::~PacketHandler() {}
@@ -60,12 +58,10 @@ namespace bt
         // 실제로는 서버 인스턴스에 접근해서 전송해야 함
     }
 
-
     void PacketHandler::HandlePlayerMove(int socket_fd, const Packet& packet)
     {
         std::cout << "플레이어 이동 요청 수신: 소켓 " << socket_fd << std::endl;
     }
-
 
     void PacketHandler::HandleDisconnect(int socket_fd, const Packet& packet)
     {

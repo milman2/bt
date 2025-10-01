@@ -21,9 +21,11 @@ namespace bt
             FAIL_ON_ONE     // 하나라도 실패하면 실패
         };
 
-        Parallel(const std::string& name, Policy policy = Policy::SUCCEED_ON_ONE) 
-            : Node(name, NodeType::PARALLEL), policy_(policy) {}
-            
+        Parallel(const std::string& name, Policy policy = Policy::SUCCEED_ON_ONE)
+            : Node(name, NodeType::PARALLEL), policy_(policy)
+        {
+        }
+
         NodeStatus Execute(Context& context) override
         {
             if (children_.empty())
@@ -57,18 +59,24 @@ namespace bt
             switch (policy_)
             {
                 case Policy::SUCCEED_ON_ONE:
-                    if (success_count > 0) return NodeStatus::SUCCESS;
-                    if (running_count > 0) return NodeStatus::RUNNING;
+                    if (success_count > 0)
+                        return NodeStatus::SUCCESS;
+                    if (running_count > 0)
+                        return NodeStatus::RUNNING;
                     return NodeStatus::FAILURE;
 
                 case Policy::SUCCEED_ON_ALL:
-                    if (failure_count > 0) return NodeStatus::FAILURE;
-                    if (running_count > 0) return NodeStatus::RUNNING;
+                    if (failure_count > 0)
+                        return NodeStatus::FAILURE;
+                    if (running_count > 0)
+                        return NodeStatus::RUNNING;
                     return NodeStatus::SUCCESS;
 
                 case Policy::FAIL_ON_ONE:
-                    if (failure_count > 0) return NodeStatus::FAILURE;
-                    if (running_count > 0) return NodeStatus::RUNNING;
+                    if (failure_count > 0)
+                        return NodeStatus::FAILURE;
+                    if (running_count > 0)
+                        return NodeStatus::RUNNING;
                     return NodeStatus::SUCCESS;
 
                 default:

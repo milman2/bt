@@ -1,6 +1,6 @@
-#include "Map.h"
-
 #include <iostream>
+
+#include "Map.h"
 
 namespace bt
 {

@@ -15,25 +15,27 @@ namespace bt
     class Delay : public Node
     {
     public:
-        Delay(const std::string& name, std::chrono::milliseconds delay) 
-            : Node(name, NodeType::DELAY), delay_(delay), started_(false) {}
-            
+        Delay(const std::string& name, std::chrono::milliseconds delay)
+            : Node(name, NodeType::DELAY), delay_(delay), started_(false)
+        {
+        }
+
         NodeStatus Execute(Context& context) override
         {
             auto now = std::chrono::steady_clock::now();
-            
+
             if (!started_)
             {
                 start_time_ = now;
-                started_ = true;
+                started_    = true;
                 return NodeStatus::RUNNING;
             }
-            
+
             auto elapsed = now - start_time_;
             if (elapsed >= delay_)
             {
                 started_ = false; // 다음 실행을 위해 리셋
-                
+
                 // 자식 노드가 있으면 실행
                 if (!children_.empty())
                 {
@@ -41,7 +43,7 @@ namespace bt
                 }
                 return NodeStatus::SUCCESS;
             }
-            
+
             return NodeStatus::RUNNING;
         }
 

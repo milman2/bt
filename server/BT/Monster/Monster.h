@@ -6,8 +6,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include "MonsterTypes.h"
 #include "../../BT/EnvironmentInfo.h"
+#include "MonsterTypes.h"
 
 // 전방 선언
 namespace bt
@@ -80,7 +80,7 @@ namespace bt
         // 환경 인지
         EnvironmentInfo GetEnvironmentInfo() const { return environment_info_; }
         void            UpdateEnvironmentInfo(const std::vector<std::shared_ptr<Player>>&  players,
-                                                const std::vector<std::shared_ptr<Monster>>& monsters);
+                                              const std::vector<std::shared_ptr<Monster>>& monsters);
 
         // 환경 인지 헬퍼 메서드들
         bool     HasEnemyInRange(float range) const;

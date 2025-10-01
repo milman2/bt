@@ -3,8 +3,8 @@
 #include <memory>
 #include <string>
 
-#include "MonsterTypes.h"
 #include "Monster.h"
+#include "MonsterTypes.h"
 
 namespace bt
 {
@@ -14,8 +14,8 @@ namespace bt
     {
     public:
         static std::shared_ptr<Monster> CreateMonster(MonsterType            type,
-                                                       const std::string&     name,
-                                                       const MonsterPosition& position);
+                                                      const std::string&     name,
+                                                      const MonsterPosition& position);
         static std::shared_ptr<Monster> CreateMonster(const MonsterSpawnConfig& config);
 
         // 몬스터별 기본 통계 설정

@@ -63,12 +63,12 @@ namespace bt
 
         // 통계 관련
         const PlayerGameStats& GetStats() const { return stats_; }
-        void               SetStats(const PlayerGameStats& stats) { stats_ = stats; }
-        void               AddExperience(uint32_t exp);
-        void               LevelUp();
-        void               TakeDamage(uint32_t damage);
-        void               Heal(uint32_t amount);
-        bool               IsAlive() const { return stats_.health > 0; }
+        void                   SetStats(const PlayerGameStats& stats) { stats_ = stats; }
+        void                   AddExperience(uint32_t exp);
+        void                   LevelUp();
+        void                   TakeDamage(uint32_t damage);
+        void                   Heal(uint32_t amount);
+        bool                   IsAlive() const { return stats_.health > 0; }
 
         // 맵 관련
         uint32_t GetCurrentMapID() const { return current_map_id_; }

@@ -19,7 +19,7 @@ namespace bt
         ~Tree() = default;
 
         // 트리 구성
-        void SetRoot(std::shared_ptr<Node> root) { root_ = root; }
+        void                  SetRoot(std::shared_ptr<Node> root) { root_ = root; }
         std::shared_ptr<Node> GetRoot() const { return root_; }
 
         // 트리 실행
@@ -36,15 +36,15 @@ namespace bt
 
             // 트리 실행
             last_status_ = root_->Execute(context);
-            is_running_ = (last_status_ == NodeStatus::RUNNING);
-            
+            is_running_  = (last_status_ == NodeStatus::RUNNING);
+
             return last_status_;
         }
 
         // 트리 정보
         const std::string& GetName() const { return name_; }
-        NodeStatus GetLastStatus() const { return last_status_; }
-        bool IsRunning() const { return is_running_; }
+        NodeStatus         GetLastStatus() const { return last_status_; }
+        bool               IsRunning() const { return is_running_; }
 
         // 트리 초기화
         void InitializeTree()
@@ -60,7 +60,7 @@ namespace bt
         {
             if (!node)
                 return;
-                
+
             node->Initialize();
             for (auto& child : node->GetChildren())
             {
@@ -68,10 +68,10 @@ namespace bt
             }
         }
 
-        std::string             name_;
+        std::string           name_;
         std::shared_ptr<Node> root_;
-        NodeStatus             last_status_;
-        bool                   is_running_;
+        NodeStatus            last_status_;
+        bool                  is_running_;
     };
 
 } // namespace bt

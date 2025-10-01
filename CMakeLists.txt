@@ -134,3 +134,67 @@ install(TARGETS BT_MMORPG_Server TestClient
 
 # 설정 파일 설치
 install(DIRECTORY config/ DESTINATION etc/bt_server)
+
+# clang-format 설정
+find_program(CLANG_FORMAT_EXECUTABLE clang-format)
+if(CLANG_FORMAT_EXECUTABLE)
+    message(STATUS "clang-format found: ${CLANG_FORMAT_EXECUTABLE}")
+    
+    # 포맷팅할 소스 파일들 수집
+    file(GLOB_RECURSE ALL_SOURCES
+        "*.cpp"
+        "*.h"
+        "*.hpp"
+        "*.cc"
+        "*.cxx"
+    )
+    
+    # 제외할 디렉토리들
+    list(FILTER ALL_SOURCES EXCLUDE REGEX ".*/build/.*")
+    list(FILTER ALL_SOURCES EXCLUDE REGEX ".*/generated/.*")
+    list(FILTER ALL_SOURCES EXCLUDE REGEX ".*/vcpkg_installed/.*")
+    list(FILTER ALL_SOURCES EXCLUDE REGEX ".*/conan/.*")
+    list(FILTER ALL_SOURCES EXCLUDE REGEX ".*/CMakeFiles/.*")
+    
+    # 포맷팅 타겟
+    add_custom_target(format
+        COMMAND ${CLANG_FORMAT_EXECUTABLE} -i ${ALL_SOURCES}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "포맷팅 중..."
+    )
+    
+    # 포맷팅 체크 타겟 (실제로 변경하지 않고 체크만)
+    add_custom_target(format-check
+        COMMAND ${CLANG_FORMAT_EXECUTABLE} --dry-run --Werror ${ALL_SOURCES}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "포맷팅 체크 중..."
+    )
+    
+    # 포맷팅 적용 (빌드 전 자동 실행)
+    option(AUTO_FORMAT "자동으로 포맷팅 적용" OFF)
+    if(AUTO_FORMAT)
+        add_custom_target(format-before-build
+            COMMAND ${CLANG_FORMAT_EXECUTABLE} -i ${ALL_SOURCES}
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            COMMENT "빌드 전 자동 포맷팅..."
+        )
+        add_dependencies(SharedProtocol format-before-build)
+    endif()
+    
+    message(STATUS "포맷팅 타겟 추가됨:")
+    message(STATUS "  make format        - 코드 포맷팅 적용")
+    message(STATUS "  make format-check  - 포맷팅 체크 (CI용)")
+    if(AUTO_FORMAT)
+        message(STATUS "  AUTO_FORMAT=ON     - 빌드 전 자동 포맷팅 활성화됨")
+    else()
+        message(STATUS "  AUTO_FORMAT=OFF    - 빌드 전 자동 포맷팅 비활성화됨")
+    endif()
+    
+else()
+    message(WARNING "clang-format를 찾을 수 없습니다. 포맷팅 타겟을 사용할 수 없습니다.")
+    message(STATUS "clang-format 설치 방법:")
+    message(STATUS "  Ubuntu/Debian: sudo apt install clang-format")
+    message(STATUS "  CentOS/RHEL:   sudo yum install clang-tools-extra")
+    message(STATUS "  macOS:         brew install clang-format")
+    message(STATUS "  Windows:       vcpkg install clang-format")
+endif()

@@ -15,16 +15,16 @@ namespace bt
     {
     public:
         Invert(const std::string& name) : Node(name, NodeType::INVERT) {}
-        
+
         NodeStatus Execute(Context& context) override
         {
             if (children_.empty())
             {
                 return NodeStatus::SUCCESS; // 자식이 없으면 성공 반환
             }
-            
+
             NodeStatus child_status = children_[0]->Execute(context);
-            
+
             // 결과 반전
             switch (child_status)
             {

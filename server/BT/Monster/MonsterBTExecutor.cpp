@@ -1,7 +1,7 @@
-#include "MonsterBTExecutor.h"
-
 #include <iostream>
 #include <map>
+
+#include "MonsterBTExecutor.h"
 
 namespace bt
 {
@@ -21,8 +21,8 @@ namespace bt
 
         if (update_counts[monster_name] % 100 == 0)
         { // 10초마다 로그 출력
-            std::cout << "MonsterBTExecutor::update 호출됨: " << monster_name << " (카운트: " << update_counts[monster_name]
-                      << ")" << std::endl;
+            std::cout << "MonsterBTExecutor::update 호출됨: " << monster_name
+                      << " (카운트: " << update_counts[monster_name] << ")" << std::endl;
         }
 
         if (!active_.load() || !behavior_tree_)

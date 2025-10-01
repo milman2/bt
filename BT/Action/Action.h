@@ -17,9 +17,8 @@ namespace bt
     public:
         using ActionFunction = std::function<NodeStatus(Context&)>;
 
-        Action(const std::string& name, ActionFunction func) 
-            : Node(name, NodeType::ACTION), action_func_(func) {}
-            
+        Action(const std::string& name, ActionFunction func) : Node(name, NodeType::ACTION), action_func_(func) {}
+
         NodeStatus Execute(Context& context) override
         {
             if (action_func_)

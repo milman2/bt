@@ -1,14 +1,15 @@
-#include "Monster.h"
-#include "MonsterBTExecutor.h"
-#include "MonsterFactory.h"
-
 #include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <random>
 #include <sstream>
+
 #include <cmath>
 #include <nlohmann/json.hpp>
+
+#include "Monster.h"
+#include "MonsterBTExecutor.h"
+#include "MonsterFactory.h"
 
 namespace bt
 {
@@ -54,14 +55,14 @@ namespace bt
         // 이전 위치 저장
         float old_x = position_.x;
         float old_z = position_.z;
-        
+
         // 새 위치 설정
         SetPosition(x, y, z, rotation);
-        
+
         // 실제로 위치가 변경되었는지 확인
         if (std::abs(old_x - x) > 0.01f || std::abs(old_z - z) > 0.01f)
         {
-            // std::cout << "몬스터 " << name_ << " 이동: (" << old_x << ", " << old_z << ") -> (" 
+            // std::cout << "몬스터 " << name_ << " 이동: (" << old_x << ", " << old_z << ") -> ("
             //           << x << ", " << z << ")" << std::endl;
         }
     }
@@ -110,7 +111,7 @@ namespace bt
     }
 
     void Monster::UpdateEnvironmentInfo(const std::vector<std::shared_ptr<Player>>&  players,
-                                          const std::vector<std::shared_ptr<Monster>>& monsters)
+                                        const std::vector<std::shared_ptr<Monster>>& monsters)
     {
         environment_info_ = EnvironmentInfo();
 

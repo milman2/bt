@@ -2,43 +2,49 @@
 #include <iostream>
 #include <sstream>
 
-#include "Server.h"
-#include "../../BT/Tree.h"
 #include "../../BT/Action/Action.h"
 #include "../../BT/Condition/Condition.h"
-#include "../../BT/Control/Sequence.h"
 #include "../../BT/Control/Selector.h"
-#include "BT/Monster/MonsterTypes.h"
-#include "BT/Monster/MonsterBTExecutor.h"
-#include "Player.h"
+#include "../../BT/Control/Sequence.h"
+#include "../../BT/Tree.h"
 #include "BT/Monster/MessageBasedMonsterManager.h"
-#include "Player/MessageBasedPlayerManager.h"
+#include "BT/Monster/MonsterBTExecutor.h"
+#include "BT/Monster/MonsterTypes.h"
 #include "Network/WebSocket/BeastHttpWebSocketServer.h"
 #include "Network/WebSocket/NetworkMessageHandler.h"
+#include "Player.h"
+#include "Player/MessageBasedPlayerManager.h"
+#include "Server.h"
 
 namespace bt
 {
 
     Server::Server(const AsioServerConfig& config)
-        : config_(config), running_(false), acceptor_(io_context_), total_packets_sent_(0), total_packets_received_(0), server_start_time_(std::chrono::steady_clock::now()), broadcast_running_(false)
+        : config_(config)
+        , running_(false)
+        , acceptor_(io_context_)
+        , total_packets_sent_(0)
+        , total_packets_received_(0)
+        , server_start_time_(std::chrono::steady_clock::now())
+        , broadcast_running_(false)
     {
         // Behavior Tree 엔진 초기화
         bt_engine_ = std::make_shared<Engine>();
-        
+
         // Behavior Tree 초기화
-        //InitializeBehaviorTrees();
+        // InitializeBehaviorTrees();
 
         // 매니저들 초기화 (메시지 큐 기반)
 
         // 메시지 큐 시스템 초기화
-        message_processor_ = std::make_shared<GameMessageProcessor>();
-        network_handler_ = std::make_shared<NetworkMessageHandler>();
+        message_processor_             = std::make_shared<GameMessageProcessor>();
+        network_handler_               = std::make_shared<NetworkMessageHandler>();
         message_based_monster_manager_ = std::make_shared<MessageBasedMonsterManager>();
-        message_based_player_manager_ = std::make_shared<MessageBasedPlayerManager>();
+        message_based_player_manager_  = std::make_shared<MessageBasedPlayerManager>();
 
         // 통합 HTTP+WebSocket 서버 초기화 (설정에서 포트 가져오기)
         http_websocket_server_ = std::make_shared<BeastHttpWebSocketServer>(config_.http_websocket_port, io_context_);
-        
+
         // HTTP 핸들러 등록
         RegisterHttpHandlers();
 
@@ -62,7 +68,6 @@ namespace bt
         //     std::unique_ptr<IGameMessageHandler>(message_based_monster_manager_.get()));
         // message_processor_->RegisterNetworkHandler(
         //     std::unique_ptr<IGameMessageHandler>(network_handler_.get()));
-
 
         LogMessage("Server 인스턴스가 생성되었습니다.");
     }
@@ -95,19 +100,19 @@ namespace bt
             {
                 LogMessage("호스트 주소 설정 실패: " + std::string(e.what()), true);
                 LogMessage("서버를 종료합니다.", true);
-            return false;
-        }
+                return false;
+            }
 
             // 어셉터 설정
             try
             {
                 acceptor_.open(endpoint.protocol());
                 acceptor_.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
-                
+
                 // 바인딩 시도
                 acceptor_.bind(endpoint);
                 LogMessage("포트 " + std::to_string(config_.port) + "에 바인딩 성공");
-                
+
                 acceptor_.listen();
                 LogMessage("포트 " + std::to_string(config_.port) + "에서 리스닝 시작");
             }
@@ -174,14 +179,15 @@ namespace bt
             {
                 http_websocket_server_->start();
             }
-        
-        // 브로드캐스팅 루프 시작
-        StartBroadcastLoop();
 
-        LogMessage("서버가 성공적으로 시작되었습니다. 포트: " + std::to_string(config_.port));
-            LogMessage("통합 HTTP+WebSocket 서버: http://localhost:" + std::to_string(config_.http_websocket_port) + " (대시보드 + API + WebSocket)");
+            // 브로드캐스팅 루프 시작
+            StartBroadcastLoop();
 
-        return true;
+            LogMessage("서버가 성공적으로 시작되었습니다. 포트: " + std::to_string(config_.port));
+            LogMessage("통합 HTTP+WebSocket 서버: http://localhost:" + std::to_string(config_.http_websocket_port) +
+                       " (대시보드 + API + WebSocket)");
+
+            return true;
         }
         catch (const std::exception& e)
         {
@@ -205,15 +211,15 @@ namespace bt
             // 어셉터 닫기
             acceptor_.close();
 
-        // 모든 클라이언트 연결 종료
-        {
+            // 모든 클라이언트 연결 종료
+            {
                 boost::lock_guard<boost::mutex> lock(clients_mutex_);
                 for (auto& [client, info] : clients_)
-            {
+                {
                     client->Stop();
+                }
+                clients_.clear();
             }
-            clients_.clear();
-        }
 
             // IO 컨텍스트 중지
             io_context_.stop();
@@ -221,9 +227,9 @@ namespace bt
             // 워커 스레드 종료
             worker_threads_.join_all();
 
-        // 브로드캐스팅 루프 중지
-        StopBroadcastLoop();
-        
+            // 브로드캐스팅 루프 중지
+            StopBroadcastLoop();
+
             // 메시지 기반 몬스터 매니저 중지
             if (message_based_monster_manager_)
             {
@@ -295,8 +301,7 @@ namespace bt
 
         if (!error)
         {
-            LogMessage("클라이언트 연결 성공, IP: " + client->GetIPAddress() + ":" +
-                        std::to_string(client->GetPort()));
+            LogMessage("클라이언트 연결 성공, IP: " + client->GetIPAddress() + ":" + std::to_string(client->GetPort()));
 
             // 클라이언트 수 제한 확인
             {
@@ -314,8 +319,7 @@ namespace bt
             AddClient(client);
             client->Start();
 
-            LogMessage("새 클라이언트 연결 완료: " + client->GetIPAddress() + ":" +
-                        std::to_string(client->GetPort()));
+            LogMessage("새 클라이언트 연결 완료: " + client->GetIPAddress() + ":" + std::to_string(client->GetPort()));
         }
         else
         {
@@ -409,7 +413,8 @@ namespace bt
     {
         if (client && client->IsConnected())
         {
-            LogMessage("패킷 전송: type=" + std::to_string(packet.type) + ", size=" + std::to_string(packet.data.size()));
+            LogMessage("패킷 전송: type=" + std::to_string(packet.type) +
+                       ", size=" + std::to_string(packet.data.size()));
             client->SendPacket(packet);
             total_packets_sent_.fetch_add(1);
         }
@@ -418,11 +423,9 @@ namespace bt
     void Server::ProcessPacket(boost::shared_ptr<Client> client, const Packet& packet)
     {
         total_packets_received_.fetch_add(1);
-        
-        LogMessage("패킷 수신: 타입=" + std::to_string(packet.type) + 
-                  ", 크기=" + std::to_string(packet.size) + 
-                  ", 데이터크기=" + std::to_string(packet.data.size()) + 
-                  ", 클라이언트=" + client->GetIPAddress());
+
+        LogMessage("패킷 수신: 타입=" + std::to_string(packet.type) + ", 크기=" + std::to_string(packet.size) +
+                   ", 데이터크기=" + std::to_string(packet.data.size()) + ", 클라이언트=" + client->GetIPAddress());
 
         // 패킷 타입에 따른 처리
         switch (static_cast<PacketType>(packet.type))
@@ -436,18 +439,17 @@ namespace bt
 
             case PacketType::PLAYER_JOIN:
                 // 플레이어 참여 요청 처리
-                LogMessage("플레이어 참여 요청 수신: " + client->GetIPAddress() + 
-                          ", 데이터 크기: " + std::to_string(packet.data.size()));
+                LogMessage("플레이어 참여 요청 수신: " + client->GetIPAddress() +
+                           ", 데이터 크기: " + std::to_string(packet.data.size()));
                 HandlePlayerJoin(client, packet);
                 break;
 
             case PacketType::PLAYER_MOVE:
                 // 플레이어 이동 요청 처리
-                LogMessage("플레이어 이동 요청 수신: " + client->GetIPAddress() + 
-                          ", 데이터 크기: " + std::to_string(packet.data.size()));
+                LogMessage("플레이어 이동 요청 수신: " + client->GetIPAddress() +
+                           ", 데이터 크기: " + std::to_string(packet.data.size()));
                 HandlePlayerMove(client, packet);
                 break;
-
 
             case PacketType::MONSTER_UPDATE:
                 // 몬스터 업데이트 처리
@@ -636,23 +638,23 @@ namespace bt
     {
         try
         {
-            LogMessage("HandlePlayerJoin 시작: 클라이언트=" + client->GetIPAddress() + 
-                      ", 패킷 데이터 크기=" + std::to_string(packet.data.size()));
-            
+            LogMessage("HandlePlayerJoin 시작: 클라이언트=" + client->GetIPAddress() +
+                       ", 패킷 데이터 크기=" + std::to_string(packet.data.size()));
+
             // 패킷 데이터 파싱
-            const uint8_t* data = packet.data.data();
-            size_t offset = 0;
+            const uint8_t* data   = packet.data.data();
+            size_t         offset = 0;
 
             // 이름 길이 읽기
             uint32_t name_len = *reinterpret_cast<const uint32_t*>(data + offset);
             offset += sizeof(uint32_t);
-            
+
             LogMessage("이름 길이: " + std::to_string(name_len));
 
             // 이름 읽기
             std::string player_name(data + offset, data + offset + name_len);
             offset += name_len;
-            
+
             LogMessage("플레이어 이름: " + player_name);
 
             // 위치 읽기
@@ -664,25 +666,25 @@ namespace bt
             offset += sizeof(float);
             float rotation = *reinterpret_cast<const float*>(data + offset);
 
-            LogMessage("플레이어 참여 요청: " + player_name + " 위치(" + 
-                      std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z) + ")");
+            LogMessage("플레이어 참여 요청: " + player_name + " 위치(" + std::to_string(x) + ", " + std::to_string(y) +
+                       ", " + std::to_string(z) + ")");
 
             // 플레이어 매니저를 통해 플레이어 생성
             if (message_based_player_manager_)
             {
                 // MonsterPosition 구조체 생성
                 MonsterPosition position;
-                position.x = x;
-                position.y = y;
-                position.z = z;
+                position.x        = x;
+                position.y        = y;
+                position.z        = z;
                 position.rotation = rotation;
-                
+
                 auto player = message_based_player_manager_->CreatePlayer(player_name, position);
                 if (player)
                 {
                     // 성공 응답 전송
                     SendPlayerJoinResponse(client, true, player->GetID());
-                    
+
                     LogMessage("플레이어 생성 성공: " + player_name + " (ID: " + std::to_string(player->GetID()) + ")");
                 }
                 else
@@ -710,17 +712,17 @@ namespace bt
     {
         try
         {
-            LogMessage("HandlePlayerMove 시작: 클라이언트=" + client->GetIPAddress() + 
-                      ", 패킷 데이터 크기=" + std::to_string(packet.data.size()));
-            
+            LogMessage("HandlePlayerMove 시작: 클라이언트=" + client->GetIPAddress() +
+                       ", 패킷 데이터 크기=" + std::to_string(packet.data.size()));
+
             // 패킷 데이터 파싱
-            const uint8_t* data = packet.data.data();
-            size_t offset = 0;
+            const uint8_t* data   = packet.data.data();
+            size_t         offset = 0;
 
             // 플레이어 ID 읽기
             uint32_t player_id = *reinterpret_cast<const uint32_t*>(data + offset);
             offset += sizeof(uint32_t);
-            
+
             // 위치 읽기
             float x = *reinterpret_cast<const float*>(data + offset);
             offset += sizeof(float);
@@ -730,8 +732,8 @@ namespace bt
             offset += sizeof(float);
             float rotation = *reinterpret_cast<const float*>(data + offset);
 
-            LogMessage("플레이어 이동 요청: ID=" + std::to_string(player_id) + 
-                      " 위치(" + std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z) + ")");
+            LogMessage("플레이어 이동 요청: ID=" + std::to_string(player_id) + " 위치(" + std::to_string(x) + ", " +
+                       std::to_string(y) + ", " + std::to_string(z) + ")");
 
             // 플레이어 매니저를 통해 플레이어 위치 업데이트
             if (message_based_player_manager_)
@@ -761,19 +763,23 @@ namespace bt
 
     void Server::SendPlayerJoinResponse(boost::shared_ptr<Client> client, bool success, uint32_t player_id)
     {
-        LogMessage("PLAYER_JOIN_RESPONSE 전송 시작: success=" + std::to_string(success) + ", player_id=" + std::to_string(player_id));
-        
+        LogMessage("PLAYER_JOIN_RESPONSE 전송 시작: success=" + std::to_string(success) +
+                   ", player_id=" + std::to_string(player_id));
+
         std::vector<uint8_t> data;
-        
+
         // 성공 여부
-        data.insert(data.end(), reinterpret_cast<uint8_t*>(&success), reinterpret_cast<uint8_t*>(&success) + sizeof(bool));
-        
+        data.insert(
+            data.end(), reinterpret_cast<uint8_t*>(&success), reinterpret_cast<uint8_t*>(&success) + sizeof(bool));
+
         // 플레이어 ID
-        data.insert(data.end(), reinterpret_cast<uint8_t*>(&player_id), reinterpret_cast<uint8_t*>(&player_id) + sizeof(uint32_t));
-        
+        data.insert(data.end(),
+                    reinterpret_cast<uint8_t*>(&player_id),
+                    reinterpret_cast<uint8_t*>(&player_id) + sizeof(uint32_t));
+
         Packet response(static_cast<uint16_t>(PacketType::PLAYER_JOIN_RESPONSE), data);
         SendPacket(client, response);
-        
+
         LogMessage("PLAYER_JOIN_RESPONSE 전송 완료");
     }
 
@@ -783,8 +789,10 @@ namespace bt
             return;
 
         // 루트 경로 - 대시보드 HTML
-        http_websocket_server_->register_get_handler("/", [this](const http_request& req, http_response& res) {
-            std::string html = R"(
+        http_websocket_server_->register_get_handler("/",
+                                                     [this](const http_request& req, http_response& res)
+                                                     {
+                                                         std::string html = R"(
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -916,90 +924,117 @@ namespace bt
 </body>
 </html>
             )";
-            res = http_websocket_server_->create_http_response(boost::beast::http::status::ok, html, "text/html");
-        });
+                                                         res = http_websocket_server_->create_http_response(
+                                                             boost::beast::http::status::ok, html, "text/html");
+                                                     });
 
         // API 엔드포인트들
-        http_websocket_server_->register_get_handler("/api/monsters", [this](const http_request& req, http_response& res) {
-            if (!message_based_monster_manager_) {
-                res = http_websocket_server_->create_error_response(boost::beast::http::status::internal_server_error, "MonsterManager not available");
-                return;
-            }
-            
-            // MonsterType을 문자열로 변환하는 함수
-            auto monster_type_to_string = [](MonsterType type) -> std::string {
-                switch (type) {
-                    case MonsterType::GOBLIN: return "GOBLIN";
-                    case MonsterType::ORC: return "ORC";
-                    case MonsterType::DRAGON: return "DRAGON";
-                    case MonsterType::SKELETON: return "SKELETON";
-                    case MonsterType::ZOMBIE: return "ZOMBIE";
-                    case MonsterType::NPC_MERCHANT: return "NPC_MERCHANT";
-                    case MonsterType::NPC_GUARD: return "NPC_GUARD";
-                    default: return "UNKNOWN";
+        http_websocket_server_->register_get_handler(
+            "/api/monsters",
+            [this](const http_request& req, http_response& res)
+            {
+                if (!message_based_monster_manager_)
+                {
+                    res = http_websocket_server_->create_error_response(
+                        boost::beast::http::status::internal_server_error, "MonsterManager not available");
+                    return;
                 }
-            };
-            
-            // 실제 몬스터 정보를 JSON으로 반환
-            auto monsters = message_based_monster_manager_->GetAllMonsters();
-            std::string json = "{\"monsters\":[";
-            
-            bool first = true;
-            for (const auto& monster : monsters) {
-                if (!first) json += ",";
-                json += "{";
-                json += "\"id\":" + std::to_string(monster->GetID()) + ",";
-                json += "\"name\":\"" + monster->GetName() + "\",";
-                json += "\"type\":\"" + monster_type_to_string(monster->GetType()) + "\",";
-                json += "\"position\":{\"x\":" + std::to_string(monster->GetPosition().x) + 
-                       ",\"y\":" + std::to_string(monster->GetPosition().y) + 
-                       ",\"z\":" + std::to_string(monster->GetPosition().z) + "},";
-                json += "\"health\":" + std::to_string(monster->GetStats().health) + ",";
-                json += "\"max_health\":" + std::to_string(monster->GetMaxHealth()) + ",";
-                json += "\"is_active\":" + std::string(monster->IsAlive() ? "true" : "false");
-                json += "}";
-                first = false;
-            }
-            
-            json += "],\"total\":" + std::to_string(monsters.size()) + "}";
-            res = http_websocket_server_->create_json_response(json);
-        });
 
-        http_websocket_server_->register_get_handler("/api/stats", [this](const http_request& req, http_response& res) {
-            // 실제 서버 통계 정보를 JSON으로 반환
-            auto monsters = message_based_monster_manager_ ? message_based_monster_manager_->GetAllMonsters() : std::vector<std::shared_ptr<Monster>>();
-            auto players = message_based_player_manager_ ? message_based_player_manager_->GetAllPlayers() : std::vector<std::shared_ptr<Player>>();
-            
-            int active_monsters = 0;
-            for (const auto& monster : monsters) {
-                if (monster && monster->IsAlive()) {
-                    active_monsters++;
+                // MonsterType을 문자열로 변환하는 함수
+                auto monster_type_to_string = [](MonsterType type) -> std::string
+                {
+                    switch (type)
+                    {
+                        case MonsterType::GOBLIN:
+                            return "GOBLIN";
+                        case MonsterType::ORC:
+                            return "ORC";
+                        case MonsterType::DRAGON:
+                            return "DRAGON";
+                        case MonsterType::SKELETON:
+                            return "SKELETON";
+                        case MonsterType::ZOMBIE:
+                            return "ZOMBIE";
+                        case MonsterType::NPC_MERCHANT:
+                            return "NPC_MERCHANT";
+                        case MonsterType::NPC_GUARD:
+                            return "NPC_GUARD";
+                        default:
+                            return "UNKNOWN";
+                    }
+                };
+
+                // 실제 몬스터 정보를 JSON으로 반환
+                auto        monsters = message_based_monster_manager_->GetAllMonsters();
+                std::string json     = "{\"monsters\":[";
+
+                bool first = true;
+                for (const auto& monster : monsters)
+                {
+                    if (!first)
+                        json += ",";
+                    json += "{";
+                    json += "\"id\":" + std::to_string(monster->GetID()) + ",";
+                    json += "\"name\":\"" + monster->GetName() + "\",";
+                    json += "\"type\":\"" + monster_type_to_string(monster->GetType()) + "\",";
+                    json += "\"position\":{\"x\":" + std::to_string(monster->GetPosition().x) +
+                            ",\"y\":" + std::to_string(monster->GetPosition().y) +
+                            ",\"z\":" + std::to_string(monster->GetPosition().z) + "},";
+                    json += "\"health\":" + std::to_string(monster->GetStats().health) + ",";
+                    json += "\"max_health\":" + std::to_string(monster->GetMaxHealth()) + ",";
+                    json += "\"is_active\":" + std::string(monster->IsAlive() ? "true" : "false");
+                    json += "}";
+                    first = false;
                 }
-            }
-            
-            int active_players = 0;
-            for (const auto& player : players) {
-                if (player && player->IsAlive()) {
-                    active_players++;
+
+                json += "],\"total\":" + std::to_string(monsters.size()) + "}";
+                res = http_websocket_server_->create_json_response(json);
+            });
+
+        http_websocket_server_->register_get_handler(
+            "/api/stats",
+            [this](const http_request& req, http_response& res)
+            {
+                // 실제 서버 통계 정보를 JSON으로 반환
+                auto monsters = message_based_monster_manager_ ? message_based_monster_manager_->GetAllMonsters()
+                                                               : std::vector<std::shared_ptr<Monster>>();
+                auto players  = message_based_player_manager_ ? message_based_player_manager_->GetAllPlayers()
+                                                              : std::vector<std::shared_ptr<Player>>();
+
+                int active_monsters = 0;
+                for (const auto& monster : monsters)
+                {
+                    if (monster && monster->IsAlive())
+                    {
+                        active_monsters++;
+                    }
                 }
-            }
-            
-            // 서버 업타임 계산 (초 단위)
-            auto now = std::chrono::steady_clock::now();
-            auto uptime_duration = std::chrono::duration_cast<std::chrono::seconds>(now - server_start_time_);
-            int uptime_seconds = static_cast<int>(uptime_duration.count());
-            
-            std::string json = "{";
-            json += "\"total_monsters\":" + std::to_string(monsters.size()) + ",";
-            json += "\"active_monsters\":" + std::to_string(active_monsters) + ",";
-            json += "\"total_players\":" + std::to_string(players.size()) + ",";
-            json += "\"active_players\":" + std::to_string(active_players) + ",";
-            json += "\"server_uptime\":" + std::to_string(uptime_seconds) + ",";
-            json += "\"connected_clients\":" + std::to_string(clients_.size());
-            json += "}";
-            
-            res = http_websocket_server_->create_json_response(json);
-        });
+
+                int active_players = 0;
+                for (const auto& player : players)
+                {
+                    if (player && player->IsAlive())
+                    {
+                        active_players++;
+                    }
+                }
+
+                // 서버 업타임 계산 (초 단위)
+                auto now             = std::chrono::steady_clock::now();
+                auto uptime_duration = std::chrono::duration_cast<std::chrono::seconds>(now - server_start_time_);
+                int  uptime_seconds  = static_cast<int>(uptime_duration.count());
+
+                std::string json = "{";
+                json += "\"total_monsters\":" + std::to_string(monsters.size()) + ",";
+                json += "\"active_monsters\":" + std::to_string(active_monsters) + ",";
+                json += "\"total_players\":" + std::to_string(players.size()) + ",";
+                json += "\"active_players\":" + std::to_string(active_players) + ",";
+                json += "\"server_uptime\":" + std::to_string(uptime_seconds) + ",";
+                json += "\"connected_clients\":" + std::to_string(clients_.size());
+                json += "}";
+
+                res = http_websocket_server_->create_json_response(json);
+            });
 
         LogMessage("HTTP 핸들러 등록 완료");
     }
@@ -1011,8 +1046,8 @@ namespace bt
 
         broadcast_running_.store(true);
         last_broadcast_time_ = std::chrono::steady_clock::now();
-        broadcast_thread_ = boost::thread(&Server::BroadcastLoopThread, this);
-        
+        broadcast_thread_    = boost::thread(&Server::BroadcastLoopThread, this);
+
         LogMessage("월드 상태 브로드캐스팅 루프 시작됨 (FPS: 10)");
     }
 
@@ -1022,24 +1057,24 @@ namespace bt
             return;
 
         broadcast_running_.store(false);
-        
+
         if (broadcast_thread_.joinable())
         {
             broadcast_thread_.join();
         }
-        
+
         LogMessage("월드 상태 브로드캐스팅 루프 중지됨");
     }
 
     void Server::BroadcastLoopThread()
     {
         const float target_frame_time = 1.0f / 10.0f; // 10 FPS
-        
+
         while (broadcast_running_.load())
         {
             auto current_time = std::chrono::steady_clock::now();
-            auto delta_time = std::chrono::duration<float>(current_time - last_broadcast_time_).count();
-            
+            auto delta_time   = std::chrono::duration<float>(current_time - last_broadcast_time_).count();
+
             if (delta_time >= target_frame_time)
             {
                 BroadcastWorldState();
@@ -1064,12 +1099,13 @@ namespace bt
 
         // 월드 상태 수집
         bt::WorldStateBroadcast world_state;
-        world_state.set_timestamp(std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::system_clock::now().time_since_epoch()).count());
+        world_state.set_timestamp(
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
+                .count());
 
         // 플레이어 상태 수집
         std::vector<bt::PlayerState> players;
-            // TODO: 실제 플레이어 데이터 수집 구현
+        // TODO: 실제 플레이어 데이터 수집 구현
         world_state.set_player_count(0);
 
         // 몬스터 상태 수집 (MessageBasedMonsterManager에서)
@@ -1086,86 +1122,86 @@ namespace bt
 
         // 월드 상태 직렬화
         std::vector<uint8_t> serialized_data;
-        
+
         // 타임스탬프
         uint64_t timestamp = world_state.timestamp();
-        serialized_data.insert(serialized_data.end(), 
-                              reinterpret_cast<uint8_t*>(&timestamp), 
-                              reinterpret_cast<uint8_t*>(&timestamp) + sizeof(timestamp));
-        
+        serialized_data.insert(serialized_data.end(),
+                               reinterpret_cast<uint8_t*>(&timestamp),
+                               reinterpret_cast<uint8_t*>(&timestamp) + sizeof(timestamp));
+
         // 플레이어 수
         uint32_t player_count = world_state.player_count();
-        serialized_data.insert(serialized_data.end(), 
-                              reinterpret_cast<uint8_t*>(&player_count), 
-                              reinterpret_cast<uint8_t*>(&player_count) + sizeof(player_count));
-        
+        serialized_data.insert(serialized_data.end(),
+                               reinterpret_cast<uint8_t*>(&player_count),
+                               reinterpret_cast<uint8_t*>(&player_count) + sizeof(player_count));
+
         // 몬스터 수
         uint32_t monster_count = world_state.monster_count();
-        serialized_data.insert(serialized_data.end(), 
-                              reinterpret_cast<uint8_t*>(&monster_count), 
-                              reinterpret_cast<uint8_t*>(&monster_count) + sizeof(monster_count));
+        serialized_data.insert(serialized_data.end(),
+                               reinterpret_cast<uint8_t*>(&monster_count),
+                               reinterpret_cast<uint8_t*>(&monster_count) + sizeof(monster_count));
 
         // 플레이어 데이터 추가
         for (const auto& player : players)
         {
             uint32_t id = player.id();
-            serialized_data.insert(serialized_data.end(), 
-                                  reinterpret_cast<const uint8_t*>(&id), 
-                                  reinterpret_cast<const uint8_t*>(&id) + sizeof(id));
-            
+            serialized_data.insert(serialized_data.end(),
+                                   reinterpret_cast<const uint8_t*>(&id),
+                                   reinterpret_cast<const uint8_t*>(&id) + sizeof(id));
+
             float x = player.x(), y = player.y(), z = player.z();
-            serialized_data.insert(serialized_data.end(), 
-                                  reinterpret_cast<const uint8_t*>(&x), 
-                                  reinterpret_cast<const uint8_t*>(&x) + sizeof(x));
-            serialized_data.insert(serialized_data.end(), 
-                                  reinterpret_cast<const uint8_t*>(&y), 
-                                  reinterpret_cast<const uint8_t*>(&y) + sizeof(y));
-            serialized_data.insert(serialized_data.end(), 
-                                  reinterpret_cast<const uint8_t*>(&z), 
-                                  reinterpret_cast<const uint8_t*>(&z) + sizeof(z));
-            
+            serialized_data.insert(serialized_data.end(),
+                                   reinterpret_cast<const uint8_t*>(&x),
+                                   reinterpret_cast<const uint8_t*>(&x) + sizeof(x));
+            serialized_data.insert(serialized_data.end(),
+                                   reinterpret_cast<const uint8_t*>(&y),
+                                   reinterpret_cast<const uint8_t*>(&y) + sizeof(y));
+            serialized_data.insert(serialized_data.end(),
+                                   reinterpret_cast<const uint8_t*>(&z),
+                                   reinterpret_cast<const uint8_t*>(&z) + sizeof(z));
+
             uint32_t health = player.health();
-            serialized_data.insert(serialized_data.end(), 
-                                  reinterpret_cast<const uint8_t*>(&health), 
-                                  reinterpret_cast<const uint8_t*>(&health) + sizeof(health));
+            serialized_data.insert(serialized_data.end(),
+                                   reinterpret_cast<const uint8_t*>(&health),
+                                   reinterpret_cast<const uint8_t*>(&health) + sizeof(health));
         }
 
         // 몬스터 데이터 추가
         for (const auto& monster : monsters)
         {
             uint32_t id = monster.id();
-            serialized_data.insert(serialized_data.end(), 
-                                  reinterpret_cast<const uint8_t*>(&id), 
-                                  reinterpret_cast<const uint8_t*>(&id) + sizeof(id));
-            
+            serialized_data.insert(serialized_data.end(),
+                                   reinterpret_cast<const uint8_t*>(&id),
+                                   reinterpret_cast<const uint8_t*>(&id) + sizeof(id));
+
             float x = monster.x(), y = monster.y(), z = monster.z();
-            serialized_data.insert(serialized_data.end(), 
-                                  reinterpret_cast<const uint8_t*>(&x), 
-                                  reinterpret_cast<const uint8_t*>(&x) + sizeof(x));
-            serialized_data.insert(serialized_data.end(), 
-                                  reinterpret_cast<const uint8_t*>(&y), 
-                                  reinterpret_cast<const uint8_t*>(&y) + sizeof(y));
-            serialized_data.insert(serialized_data.end(), 
-                                  reinterpret_cast<const uint8_t*>(&z), 
-                                  reinterpret_cast<const uint8_t*>(&z) + sizeof(z));
-            
+            serialized_data.insert(serialized_data.end(),
+                                   reinterpret_cast<const uint8_t*>(&x),
+                                   reinterpret_cast<const uint8_t*>(&x) + sizeof(x));
+            serialized_data.insert(serialized_data.end(),
+                                   reinterpret_cast<const uint8_t*>(&y),
+                                   reinterpret_cast<const uint8_t*>(&y) + sizeof(y));
+            serialized_data.insert(serialized_data.end(),
+                                   reinterpret_cast<const uint8_t*>(&z),
+                                   reinterpret_cast<const uint8_t*>(&z) + sizeof(z));
+
             uint32_t health = monster.health();
-            serialized_data.insert(serialized_data.end(), 
-                                  reinterpret_cast<const uint8_t*>(&health), 
-                                  reinterpret_cast<const uint8_t*>(&health) + sizeof(health));
+            serialized_data.insert(serialized_data.end(),
+                                   reinterpret_cast<const uint8_t*>(&health),
+                                   reinterpret_cast<const uint8_t*>(&health) + sizeof(health));
         }
 
         // 패킷 생성 및 브로드캐스팅
         Packet world_packet(static_cast<uint16_t>(PacketType::WORLD_STATE_BROADCAST), serialized_data);
         BroadcastPacket(world_packet);
-        
+
         // 디버그 로그 (1초마다)
         static auto last_log_time = std::chrono::steady_clock::now();
-        auto now = std::chrono::steady_clock::now();
+        auto        now           = std::chrono::steady_clock::now();
         if (std::chrono::duration_cast<std::chrono::seconds>(now - last_log_time).count() >= 1)
         {
-            LogMessage("월드 상태 브로드캐스팅: 플레이어 " + std::to_string(world_state.player_count()) + 
-                      "명, 몬스터 " + std::to_string(world_state.monster_count()) + "마리");
+            LogMessage("월드 상태 브로드캐스팅: 플레이어 " + std::to_string(world_state.player_count()) +
+                       "명, 몬스터 " + std::to_string(world_state.monster_count()) + "마리");
             last_log_time = now;
         }
     }
