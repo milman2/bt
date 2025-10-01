@@ -19,7 +19,7 @@ namespace bt
 {
 
     AsioServer::AsioServer(const AsioServerConfig& config)
-        : config_(config), running_(false), acceptor_(io_context_), total_packets_sent_(0), total_packets_received_(0)
+        : config_(config), running_(false), acceptor_(io_context_), total_packets_sent_(0), total_packets_received_(0), server_start_time_(std::chrono::steady_clock::now())
     {
         // Behavior Tree 엔진 초기화
         bt_engine_ = std::make_unique<Engine>();
@@ -784,21 +784,78 @@ namespace bt
                 return;
             }
             
-            // 몬스터 정보를 JSON으로 반환
-            std::string json = "{\"monsters\":[],\"total\":0}"; // 기본값
-            // TODO: 실제 몬스터 정보를 JSON으로 변환
+            // MonsterType을 문자열로 변환하는 함수
+            auto monster_type_to_string = [](MonsterType type) -> std::string {
+                switch (type) {
+                    case MonsterType::GOBLIN: return "GOBLIN";
+                    case MonsterType::ORC: return "ORC";
+                    case MonsterType::DRAGON: return "DRAGON";
+                    case MonsterType::SKELETON: return "SKELETON";
+                    case MonsterType::ZOMBIE: return "ZOMBIE";
+                    case MonsterType::NPC_MERCHANT: return "NPC_MERCHANT";
+                    case MonsterType::NPC_GUARD: return "NPC_GUARD";
+                    default: return "UNKNOWN";
+                }
+            };
+            
+            // 실제 몬스터 정보를 JSON으로 반환
+            auto monsters = monster_manager_->GetAllMonsters();
+            std::string json = "{\"monsters\":[";
+            
+            bool first = true;
+            for (const auto& monster : monsters) {
+                if (!first) json += ",";
+                json += "{";
+                json += "\"id\":" + std::to_string(monster->GetID()) + ",";
+                json += "\"name\":\"" + monster->GetName() + "\",";
+                json += "\"type\":\"" + monster_type_to_string(monster->GetType()) + "\",";
+                json += "\"position\":{\"x\":" + std::to_string(monster->GetPosition().x) + 
+                       ",\"y\":" + std::to_string(monster->GetPosition().y) + 
+                       ",\"z\":" + std::to_string(monster->GetPosition().z) + "},";
+                json += "\"health\":" + std::to_string(monster->GetStats().health) + ",";
+                json += "\"max_health\":" + std::to_string(monster->GetMaxHealth()) + ",";
+                json += "\"is_active\":" + std::string(monster->IsAlive() ? "true" : "false");
+                json += "}";
+                first = false;
+            }
+            
+            json += "],\"total\":" + std::to_string(monsters.size()) + "}";
             res = http_websocket_server_->create_json_response(json);
         });
 
         http_websocket_server_->register_get_handler("/api/stats", [this](const http_request& req, http_response& res) {
-            std::string json = R"({
-                "total_monsters": 0,
-                "active_monsters": 0,
-                "total_players": 0,
-                "active_players": 0,
-                "server_uptime": 0,
-                "connected_clients": 0
-            })";
+            // 실제 서버 통계 정보를 JSON으로 반환
+            auto monsters = monster_manager_ ? monster_manager_->GetAllMonsters() : std::vector<std::shared_ptr<Monster>>();
+            auto players = player_manager_ ? player_manager_->GetAllPlayers() : std::vector<std::shared_ptr<Player>>();
+            
+            int active_monsters = 0;
+            for (const auto& monster : monsters) {
+                if (monster && monster->IsAlive()) {
+                    active_monsters++;
+                }
+            }
+            
+            int active_players = 0;
+            for (const auto& player : players) {
+                if (player && player->IsAlive()) {
+                    active_players++;
+                }
+            }
+            
+            // 서버 업타임 계산 (초 단위)
+            auto now = std::chrono::steady_clock::now();
+            auto uptime_duration = std::chrono::duration_cast<std::chrono::seconds>(now - server_start_time_);
+            int uptime_seconds = static_cast<int>(uptime_duration.count());
+            
+            std::string json = "{";
+            json += "\"total_monsters\":" + std::to_string(monsters.size()) + ",";
+            json += "\"active_monsters\":" + std::to_string(active_monsters) + ",";
+            json += "\"total_players\":" + std::to_string(players.size()) + ",";
+            json += "\"active_players\":" + std::to_string(active_players) + ",";
+            json += "\"server_uptime\":" + std::to_string(uptime_seconds) + ",";
+            json += "\"connected_clients\":" + std::to_string(clients_.size());
+            json += "}";
+            
             res = http_websocket_server_->create_json_response(json);
         });
 

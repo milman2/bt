@@ -216,17 +216,18 @@ namespace bt
 
         std::cout << "새로운 연결 수락됨" << std::endl;
 
-        // HTTP 요청 읽기
+        // 소켓을 shared_ptr로 관리하여 안전하게 처리
+        auto socket_ptr = std::make_shared<boost::asio::ip::tcp::socket>(std::move(socket));
         auto req = std::make_shared<http_request>();
         auto buffer = std::make_shared<boost::beast::flat_buffer>();
         
         std::cout << "HTTP 요청 읽기 시작..." << std::endl;
         
         boost::beast::http::async_read(
-            socket,
+            *socket_ptr,
             *buffer,
             *req,
-            [this, socket = std::move(socket), req, buffer](boost::beast::error_code ec, std::size_t bytes_transferred) mutable
+            [this, socket_ptr, req, buffer](boost::beast::error_code ec, std::size_t bytes_transferred) mutable
             {
                 if (ec)
                 {
@@ -252,12 +253,12 @@ namespace bt
                 if (boost::beast::websocket::is_upgrade(*req))
                 {
                     std::cout << "WebSocket 업그레이드 요청 감지" << std::endl;
-                    handle_websocket_upgrade(std::move(socket), *req);
+                    handle_websocket_upgrade(std::move(*socket_ptr), *req);
                 }
                 else
                 {
                     std::cout << "일반 HTTP 요청 처리" << std::endl;
-                    handle_http_request(std::move(socket), *req);
+                    handle_http_request(std::move(*socket_ptr), *req);
                 }
             });
 
@@ -272,7 +273,8 @@ namespace bt
     {
         total_requests_.fetch_add(1);
 
-        http_response res;
+        // 응답 객체를 shared_ptr로 관리하여 생명주기 보장
+        auto res = std::make_shared<http_response>();
         std::string path = std::string(req.target());
         std::string method = std::string(req.method_string());
 
@@ -289,30 +291,44 @@ namespace bt
         if (it != http_handlers_.end())
         {
             std::cout << "핸들러 찾음, 실행 중..." << std::endl;
-            it->second(req, res);
+            it->second(req, *res);
             std::cout << "핸들러 실행 완료" << std::endl;
         }
         else
         {
             std::cout << "핸들러를 찾을 수 없음, 404 응답 생성" << std::endl;
             // 기본 404 응답
-            res = create_error_response(boost::beast::http::status::not_found, "Not Found");
+            *res = create_error_response(boost::beast::http::status::not_found, "Not Found");
         }
 
         // 응답 전송
-        res.version(req.version());
-        res.keep_alive(req.keep_alive());
+        res->version(req.version());
+        res->keep_alive(req.keep_alive());
+
+        // 소켓을 shared_ptr로 관리하여 생명주기 보장
+        auto socket_ptr = std::make_shared<boost::asio::ip::tcp::socket>(std::move(socket));
 
         boost::beast::http::async_write(
-            socket,
-            res,
-            [socket = std::move(socket)](boost::beast::error_code ec, std::size_t bytes_transferred) mutable
+            *socket_ptr,
+            *res,
+            [socket_ptr, res](boost::beast::error_code ec, std::size_t bytes_transferred) mutable
             {
                 if (ec)
                 {
                     std::cerr << "HTTP write error: " << ec.message() << std::endl;
                 }
-                socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+                else
+                {
+                    std::cout << "HTTP 응답 전송 완료: " << bytes_transferred << " bytes" << std::endl;
+                }
+                
+                // 소켓 종료
+                boost::beast::error_code shutdown_ec;
+                socket_ptr->shutdown(boost::asio::ip::tcp::socket::shutdown_both, shutdown_ec);
+                if (shutdown_ec)
+                {
+                    std::cerr << "Socket shutdown error: " << shutdown_ec.message() << std::endl;
+                }
             });
     }
 
