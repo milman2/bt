@@ -48,29 +48,29 @@ namespace bt
     enum class PacketType : uint16_t
     {
         // 연결 관련
-        CONNECT_REQUEST  = 0x0001,
-        CONNECT_RESPONSE = 0x0002,
-        DISCONNECT       = 0x0003,
+        CONNECT_REQ     = 0x0001, // 클라이언트 → 서버: 연결 요청
+        CONNECT_RES     = 0x0002, // 서버 → 클라이언트: 연결 응답
+        DISCONNECT_EVT  = 0x0003, // 서버 → 클라이언트: 연결 종료 알림
 
         // 플레이어 관련
-        PLAYER_JOIN          = 0x1000,
-        PLAYER_JOIN_RESPONSE = 0x1001,
-        PLAYER_MOVE          = 0x2000,
-        PLAYER_ATTACK        = 0x2001,
-        PLAYER_STATS         = 0x0203,
+        PLAYER_JOIN_REQ = 0x1000, // 클라이언트 → 서버: 게임 참여 요청
+        PLAYER_JOIN_RES = 0x1001, // 서버 → 클라이언트: 게임 참여 응답
+        PLAYER_MOVE_REQ = 0x2000, // 클라이언트 → 서버: 플레이어 이동 요청
+        PLAYER_ATTACK_REQ = 0x2001, // 클라이언트 → 서버: 플레이어 공격 요청
+        PLAYER_STATS_EVT = 0x0203, // 서버 → 클라이언트: 플레이어 상태 업데이트
 
         // 몬스터 관련
-        MONSTER_UPDATE = 0x3000,
+        MONSTER_UPDATE_EVT = 0x3000, // 서버 → 클라이언트: 몬스터 상태 업데이트
 
         // Behavior Tree 관련
-        BT_EXECUTE = 0x4000,
-        BT_RESULT  = 0x4001,
+        BT_EXECUTE_REQ = 0x4000, // 서버 → 클라이언트: BT 실행 요청
+        BT_RESULT_EVT  = 0x4001, // 클라이언트 → 서버: BT 실행 결과
 
         // 게임 월드 관련
-        WORLD_STATE_BROADCAST = 0x0301, // 서버에서 클라이언트로 월드 상태 브로드캐스팅
+        WORLD_STATE_BROADCAST_EVT = 0x0301, // 서버 → 클라이언트: 월드 상태 브로드캐스팅
 
         // 에러 관련
-        ERROR_MESSAGE = 0xFF00
+        ERROR_MESSAGE_EVT = 0xFF00 // 서버 → 클라이언트: 오류 메시지
     };
 
     // 공통 패킷 생성 유틸리티 함수들

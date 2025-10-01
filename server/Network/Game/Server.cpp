@@ -100,8 +100,8 @@ namespace bt
             {
                 LogMessage("호스트 주소 설정 실패: " + std::string(e.what()), true);
                 LogMessage("서버를 종료합니다.", true);
-                return false;
-            }
+            return false;
+        }
 
             // 어셉터 설정
             try
@@ -179,15 +179,15 @@ namespace bt
             {
                 http_websocket_server_->start();
             }
+        
+        // 브로드캐스팅 루프 시작
+        StartBroadcastLoop();
 
-            // 브로드캐스팅 루프 시작
-            StartBroadcastLoop();
-
-            LogMessage("서버가 성공적으로 시작되었습니다. 포트: " + std::to_string(config_.port));
+        LogMessage("서버가 성공적으로 시작되었습니다. 포트: " + std::to_string(config_.port));
             LogMessage("통합 HTTP+WebSocket 서버: http://localhost:" + std::to_string(config_.http_websocket_port) +
                        " (대시보드 + API + WebSocket)");
 
-            return true;
+        return true;
         }
         catch (const std::exception& e)
         {
@@ -211,15 +211,15 @@ namespace bt
             // 어셉터 닫기
             acceptor_.close();
 
-            // 모든 클라이언트 연결 종료
-            {
+        // 모든 클라이언트 연결 종료
+        {
                 boost::lock_guard<boost::mutex> lock(clients_mutex_);
                 for (auto& [client, info] : clients_)
-                {
+            {
                     client->Stop();
-                }
-                clients_.clear();
             }
+            clients_.clear();
+        }
 
             // IO 컨텍스트 중지
             io_context_.stop();
@@ -227,9 +227,9 @@ namespace bt
             // 워커 스레드 종료
             worker_threads_.join_all();
 
-            // 브로드캐스팅 루프 중지
-            StopBroadcastLoop();
-
+        // 브로드캐스팅 루프 중지
+        StopBroadcastLoop();
+        
             // 메시지 기반 몬스터 매니저 중지
             if (message_based_monster_manager_)
             {
@@ -430,35 +430,35 @@ namespace bt
         // 패킷 타입에 따른 처리
         switch (static_cast<PacketType>(packet.type))
         {
-            case PacketType::CONNECT_REQUEST:
+            case PacketType::CONNECT_REQ:
                 // 연결 요청 처리
                 LogMessage("연결 요청 수신: " + client->GetIPAddress());
                 // 연결 응답 전송
                 SendConnectResponse(client);
                 break;
 
-            case PacketType::PLAYER_JOIN:
+            case PacketType::PLAYER_JOIN_REQ:
                 // 플레이어 참여 요청 처리
                 LogMessage("플레이어 참여 요청 수신: " + client->GetIPAddress() +
                            ", 데이터 크기: " + std::to_string(packet.data.size()));
                 HandlePlayerJoin(client, packet);
                 break;
 
-            case PacketType::PLAYER_MOVE:
+            case PacketType::PLAYER_MOVE_REQ:
                 // 플레이어 이동 요청 처리
                 LogMessage("플레이어 이동 요청 수신: " + client->GetIPAddress() +
                            ", 데이터 크기: " + std::to_string(packet.data.size()));
                 HandlePlayerMove(client, packet);
                 break;
 
-            case PacketType::MONSTER_UPDATE:
+            case PacketType::MONSTER_UPDATE_EVT:
                 // 몬스터 업데이트 처리
                 LogMessage("몬스터 업데이트 요청 수신");
                 // 몬스터 업데이트 응답 전송
                 SendMonsterUpdateResponse(client, true);
                 break;
 
-            case PacketType::BT_EXECUTE:
+            case PacketType::BT_EXECUTE_REQ:
                 // Behavior Tree 실행 요청 처리
                 LogMessage("BT 실행 요청 수신");
                 if (bt_engine_)
@@ -476,14 +476,14 @@ namespace bt
                 LogMessage("알 수 없는 패킷 타입: " + std::to_string(packet.type), true);
                 // 에러 응답 전송
                 SendErrorResponse(client, "알 수 없는 패킷 타입");
-                break;
-        }
-    }
+                    break;
+                }
+            }
 
     void Server::SendConnectResponse(boost::shared_ptr<Client> client)
     {
         Packet response;
-        response.type = static_cast<uint32_t>(PacketType::CONNECT_RESPONSE);
+        response.type = static_cast<uint32_t>(PacketType::CONNECT_RES);
         response.size = sizeof(uint32_t) * 2; // type + success
         response.data.resize(response.size);
 
@@ -499,7 +499,7 @@ namespace bt
     void Server::SendMonsterSpawnResponse(boost::shared_ptr<Client> client, bool success)
     {
         Packet response;
-        response.type = static_cast<uint32_t>(PacketType::CONNECT_RESPONSE);
+        response.type = static_cast<uint32_t>(PacketType::CONNECT_RES);
         response.size = sizeof(uint32_t) * 2; // type + success
         response.data.resize(response.size);
 
@@ -515,7 +515,7 @@ namespace bt
     void Server::SendMonsterUpdateResponse(boost::shared_ptr<Client> client, bool success)
     {
         Packet response;
-        response.type = static_cast<uint32_t>(PacketType::CONNECT_RESPONSE);
+        response.type = static_cast<uint32_t>(PacketType::CONNECT_RES);
         response.size = sizeof(uint32_t) * 2; // type + success
         response.data.resize(response.size);
 
@@ -531,7 +531,7 @@ namespace bt
     void Server::SendBTExecuteResponse(boost::shared_ptr<Client> client, bool success)
     {
         Packet response;
-        response.type = static_cast<uint32_t>(PacketType::CONNECT_RESPONSE);
+        response.type = static_cast<uint32_t>(PacketType::CONNECT_RES);
         response.size = sizeof(uint32_t) * 2; // type + success
         response.data.resize(response.size);
 
@@ -547,7 +547,7 @@ namespace bt
     void Server::SendErrorResponse(boost::shared_ptr<Client> client, const std::string& error_message)
     {
         Packet response;
-        response.type = static_cast<uint32_t>(PacketType::ERROR_MESSAGE);
+        response.type = static_cast<uint32_t>(PacketType::ERROR_MESSAGE_EVT);
         response.size = sizeof(uint32_t) + error_message.length(); // type + message
         response.data.resize(response.size);
 
@@ -777,7 +777,7 @@ namespace bt
                     reinterpret_cast<uint8_t*>(&player_id),
                     reinterpret_cast<uint8_t*>(&player_id) + sizeof(uint32_t));
 
-        Packet response(static_cast<uint16_t>(PacketType::PLAYER_JOIN_RESPONSE), data);
+        Packet response(static_cast<uint16_t>(PacketType::PLAYER_JOIN_RES), data);
         SendPacket(client, response);
 
         LogMessage("PLAYER_JOIN_RESPONSE 전송 완료");
@@ -1047,7 +1047,7 @@ namespace bt
         broadcast_running_.store(true);
         last_broadcast_time_ = std::chrono::steady_clock::now();
         broadcast_thread_    = boost::thread(&Server::BroadcastLoopThread, this);
-
+        
         LogMessage("월드 상태 브로드캐스팅 루프 시작됨 (FPS: 10)");
     }
 
@@ -1057,24 +1057,24 @@ namespace bt
             return;
 
         broadcast_running_.store(false);
-
+        
         if (broadcast_thread_.joinable())
         {
             broadcast_thread_.join();
         }
-
+        
         LogMessage("월드 상태 브로드캐스팅 루프 중지됨");
     }
 
     void Server::BroadcastLoopThread()
     {
         const float target_frame_time = 1.0f / 10.0f; // 10 FPS
-
+        
         while (broadcast_running_.load())
         {
             auto current_time = std::chrono::steady_clock::now();
             auto delta_time   = std::chrono::duration<float>(current_time - last_broadcast_time_).count();
-
+            
             if (delta_time >= target_frame_time)
             {
                 BroadcastWorldState();
@@ -1105,7 +1105,7 @@ namespace bt
 
         // 플레이어 상태 수집
         std::vector<bt::PlayerState> players;
-        // TODO: 실제 플레이어 데이터 수집 구현
+            // TODO: 실제 플레이어 데이터 수집 구현
         world_state.set_player_count(0);
 
         // 몬스터 상태 수집 (MessageBasedMonsterManager에서)
@@ -1122,79 +1122,79 @@ namespace bt
 
         // 월드 상태 직렬화
         std::vector<uint8_t> serialized_data;
-
+        
         // 타임스탬프
         uint64_t timestamp = world_state.timestamp();
-        serialized_data.insert(serialized_data.end(),
-                               reinterpret_cast<uint8_t*>(&timestamp),
-                               reinterpret_cast<uint8_t*>(&timestamp) + sizeof(timestamp));
-
+        serialized_data.insert(serialized_data.end(), 
+                              reinterpret_cast<uint8_t*>(&timestamp), 
+                              reinterpret_cast<uint8_t*>(&timestamp) + sizeof(timestamp));
+        
         // 플레이어 수
         uint32_t player_count = world_state.player_count();
-        serialized_data.insert(serialized_data.end(),
-                               reinterpret_cast<uint8_t*>(&player_count),
-                               reinterpret_cast<uint8_t*>(&player_count) + sizeof(player_count));
-
+        serialized_data.insert(serialized_data.end(), 
+                              reinterpret_cast<uint8_t*>(&player_count), 
+                              reinterpret_cast<uint8_t*>(&player_count) + sizeof(player_count));
+        
         // 몬스터 수
         uint32_t monster_count = world_state.monster_count();
-        serialized_data.insert(serialized_data.end(),
-                               reinterpret_cast<uint8_t*>(&monster_count),
-                               reinterpret_cast<uint8_t*>(&monster_count) + sizeof(monster_count));
+        serialized_data.insert(serialized_data.end(), 
+                              reinterpret_cast<uint8_t*>(&monster_count), 
+                              reinterpret_cast<uint8_t*>(&monster_count) + sizeof(monster_count));
 
         // 플레이어 데이터 추가
         for (const auto& player : players)
         {
             uint32_t id = player.id();
-            serialized_data.insert(serialized_data.end(),
-                                   reinterpret_cast<const uint8_t*>(&id),
-                                   reinterpret_cast<const uint8_t*>(&id) + sizeof(id));
-
+            serialized_data.insert(serialized_data.end(), 
+                                  reinterpret_cast<const uint8_t*>(&id), 
+                                  reinterpret_cast<const uint8_t*>(&id) + sizeof(id));
+            
             float x = player.x(), y = player.y(), z = player.z();
-            serialized_data.insert(serialized_data.end(),
-                                   reinterpret_cast<const uint8_t*>(&x),
-                                   reinterpret_cast<const uint8_t*>(&x) + sizeof(x));
-            serialized_data.insert(serialized_data.end(),
-                                   reinterpret_cast<const uint8_t*>(&y),
-                                   reinterpret_cast<const uint8_t*>(&y) + sizeof(y));
-            serialized_data.insert(serialized_data.end(),
-                                   reinterpret_cast<const uint8_t*>(&z),
-                                   reinterpret_cast<const uint8_t*>(&z) + sizeof(z));
-
+            serialized_data.insert(serialized_data.end(), 
+                                  reinterpret_cast<const uint8_t*>(&x), 
+                                  reinterpret_cast<const uint8_t*>(&x) + sizeof(x));
+            serialized_data.insert(serialized_data.end(), 
+                                  reinterpret_cast<const uint8_t*>(&y), 
+                                  reinterpret_cast<const uint8_t*>(&y) + sizeof(y));
+            serialized_data.insert(serialized_data.end(), 
+                                  reinterpret_cast<const uint8_t*>(&z), 
+                                  reinterpret_cast<const uint8_t*>(&z) + sizeof(z));
+            
             uint32_t health = player.health();
-            serialized_data.insert(serialized_data.end(),
-                                   reinterpret_cast<const uint8_t*>(&health),
-                                   reinterpret_cast<const uint8_t*>(&health) + sizeof(health));
+            serialized_data.insert(serialized_data.end(), 
+                                  reinterpret_cast<const uint8_t*>(&health), 
+                                  reinterpret_cast<const uint8_t*>(&health) + sizeof(health));
         }
 
         // 몬스터 데이터 추가
         for (const auto& monster : monsters)
         {
             uint32_t id = monster.id();
-            serialized_data.insert(serialized_data.end(),
-                                   reinterpret_cast<const uint8_t*>(&id),
-                                   reinterpret_cast<const uint8_t*>(&id) + sizeof(id));
-
+            serialized_data.insert(serialized_data.end(), 
+                                  reinterpret_cast<const uint8_t*>(&id), 
+                                  reinterpret_cast<const uint8_t*>(&id) + sizeof(id));
+            
             float x = monster.x(), y = monster.y(), z = monster.z();
-            serialized_data.insert(serialized_data.end(),
-                                   reinterpret_cast<const uint8_t*>(&x),
-                                   reinterpret_cast<const uint8_t*>(&x) + sizeof(x));
-            serialized_data.insert(serialized_data.end(),
-                                   reinterpret_cast<const uint8_t*>(&y),
-                                   reinterpret_cast<const uint8_t*>(&y) + sizeof(y));
-            serialized_data.insert(serialized_data.end(),
-                                   reinterpret_cast<const uint8_t*>(&z),
-                                   reinterpret_cast<const uint8_t*>(&z) + sizeof(z));
-
+            serialized_data.insert(serialized_data.end(), 
+                                  reinterpret_cast<const uint8_t*>(&x), 
+                                  reinterpret_cast<const uint8_t*>(&x) + sizeof(x));
+            serialized_data.insert(serialized_data.end(), 
+                                  reinterpret_cast<const uint8_t*>(&y), 
+                                  reinterpret_cast<const uint8_t*>(&y) + sizeof(y));
+            serialized_data.insert(serialized_data.end(), 
+                                  reinterpret_cast<const uint8_t*>(&z), 
+                                  reinterpret_cast<const uint8_t*>(&z) + sizeof(z));
+            
             uint32_t health = monster.health();
-            serialized_data.insert(serialized_data.end(),
-                                   reinterpret_cast<const uint8_t*>(&health),
-                                   reinterpret_cast<const uint8_t*>(&health) + sizeof(health));
+            serialized_data.insert(serialized_data.end(), 
+                                  reinterpret_cast<const uint8_t*>(&health), 
+                                  reinterpret_cast<const uint8_t*>(&health) + sizeof(health));
         }
 
         // 패킷 생성 및 브로드캐스팅
-        Packet world_packet(static_cast<uint16_t>(PacketType::WORLD_STATE_BROADCAST), serialized_data);
+        Packet world_packet(static_cast<uint16_t>(PacketType::WORLD_STATE_BROADCAST_EVT), serialized_data);
         BroadcastPacket(world_packet);
-
+        
         // 디버그 로그 (1초마다)
         static auto last_log_time = std::chrono::steady_clock::now();
         auto        now           = std::chrono::steady_clock::now();

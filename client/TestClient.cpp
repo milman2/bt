@@ -804,7 +804,7 @@ namespace bt
     {
         std::vector<uint8_t> data;
         data.insert(data.end(), config_.player_name.begin(), config_.player_name.end());
-        return Packet(static_cast<uint16_t>(PacketType::CONNECT_REQUEST), data);
+        return Packet(static_cast<uint16_t>(PacketType::CONNECT_REQ), data);
     }
 
     Packet TestClient::CreatePlayerJoinPacket(const std::string& name)
@@ -832,7 +832,7 @@ namespace bt
                     reinterpret_cast<uint8_t*>(&position_.rotation),
                     reinterpret_cast<uint8_t*>(&position_.rotation) + sizeof(float));
 
-        return Packet(static_cast<uint16_t>(PacketType::PLAYER_JOIN), data);
+        return Packet(static_cast<uint16_t>(PacketType::PLAYER_JOIN_REQ), data);
     }
 
     Packet TestClient::CreatePlayerMovePacket(float x, float y, float z)
@@ -849,7 +849,7 @@ namespace bt
                     reinterpret_cast<uint8_t*>(&position_.rotation),
                     reinterpret_cast<uint8_t*>(&position_.rotation) + sizeof(float));
 
-        return Packet(static_cast<uint16_t>(PacketType::PLAYER_MOVE), data);
+        return Packet(static_cast<uint16_t>(PacketType::PLAYER_MOVE_REQ), data);
     }
 
     Packet TestClient::CreatePlayerAttackPacket(uint32_t target_id)
@@ -866,7 +866,7 @@ namespace bt
                     reinterpret_cast<uint8_t*>(&config_.damage),
                     reinterpret_cast<uint8_t*>(&config_.damage) + sizeof(uint32_t));
 
-        return Packet(static_cast<uint16_t>(PacketType::PLAYER_ATTACK), data);
+        return Packet(static_cast<uint16_t>(PacketType::PLAYER_ATTACK_REQ), data);
     }
 
     Packet TestClient::CreateDisconnectPacket()
@@ -875,7 +875,7 @@ namespace bt
         data.insert(data.end(),
                     reinterpret_cast<uint8_t*>(&player_id_),
                     reinterpret_cast<uint8_t*>(&player_id_) + sizeof(uint32_t));
-        return Packet(static_cast<uint16_t>(PacketType::DISCONNECT), data);
+        return Packet(static_cast<uint16_t>(PacketType::DISCONNECT_EVT), data);
     }
 
     bool TestClient::ParsePacketResponse(const Packet& packet)
@@ -885,7 +885,7 @@ namespace bt
 
         switch (static_cast<PacketType>(packet.type))
         {
-            case PacketType::CONNECT_RESPONSE:
+            case PacketType::CONNECT_RES:
             {
                 if (packet.data.size() >= sizeof(uint8_t) + sizeof(uint32_t))
                 {
@@ -905,7 +905,7 @@ namespace bt
             }
             break;
 
-            case PacketType::PLAYER_JOIN_RESPONSE:
+            case PacketType::PLAYER_JOIN_RES:
             {
                 if (packet.data.size() >= sizeof(bool) + sizeof(uint32_t))
                 {
@@ -925,20 +925,32 @@ namespace bt
             }
             break;
 
-            case PacketType::MONSTER_UPDATE:
+            case PacketType::MONSTER_UPDATE_EVT:
                 HandleMonsterUpdate(packet);
                 break;
 
-            case PacketType::PLAYER_STATS:
+            case PacketType::PLAYER_STATS_EVT:
                 HandlePlayerUpdate(packet);
                 break;
 
-            case PacketType::BT_RESULT:
+            case PacketType::BT_RESULT_EVT:
                 HandleCombatResult(packet);
                 break;
 
-            case PacketType::WORLD_STATE_BROADCAST:
+            case PacketType::WORLD_STATE_BROADCAST_EVT:
                 HandleWorldStateBroadcast(packet);
+                break;
+
+            case PacketType::DISCONNECT_EVT:
+                HandleDisconnectEvent(packet);
+                break;
+
+            case PacketType::BT_EXECUTE_REQ:
+                HandleBTExecuteRequest(packet);
+                break;
+
+            case PacketType::ERROR_MESSAGE_EVT:
+                HandleErrorMessage(packet);
                 break;
 
             default:
@@ -1271,6 +1283,30 @@ namespace bt
             }
             last_log_time = now;
         }
+    }
+
+    void TestClient::HandleDisconnectEvent(const Packet& packet)
+    {
+        LogMessage("서버에서 연결 종료 알림 수신", true);
+        connected_.store(false);
+        // 연결 종료 처리 로직 추가 가능
+    }
+
+    void TestClient::HandleBTExecuteRequest(const Packet& packet)
+    {
+        LogMessage("서버에서 BT 실행 요청 수신");
+        // BT 실행 요청 처리 로직 추가 가능
+        // 예: 특정 BT 노드 실행, AI 상태 변경 등
+    }
+
+    void TestClient::HandleErrorMessage(const Packet& packet)
+    {
+        if (packet.data.empty())
+            return;
+
+        // 오류 메시지 파싱 (간단한 문자열로 가정)
+        std::string error_message(packet.data.begin(), packet.data.end());
+        LogMessage("서버 오류 메시지: " + error_message, true);
     }
 
     // 비동기 네트워크 메서드들
@@ -1677,17 +1713,22 @@ namespace bt
         // 패킷 타입 이름 가져오기
         std::string packet_name = "UNKNOWN";
         PacketType ptype = static_cast<PacketType>(packet_type);
-        switch (ptype) {
-            case PacketType::PLAYER_JOIN: packet_name = "PLAYER_JOIN"; break;
-            case PacketType::PLAYER_JOIN_RESPONSE: packet_name = "PLAYER_JOIN_RESPONSE"; break;
-            case PacketType::PLAYER_MOVE: packet_name = "PLAYER_MOVE"; break;
-            case PacketType::PLAYER_ATTACK: packet_name = "PLAYER_ATTACK"; break;
-            case PacketType::PLAYER_STATS: packet_name = "PLAYER_STATS"; break;
-            case PacketType::MONSTER_UPDATE: packet_name = "MONSTER_UPDATE"; break;
-            case PacketType::WORLD_STATE_BROADCAST: packet_name = "WORLD_STATE_BROADCAST"; break;
-            case PacketType::DISCONNECT: packet_name = "DISCONNECT"; break;
-            default: packet_name = "UNKNOWN(" + std::to_string(packet_type) + ")"; break;
-        }
+           switch (ptype) {
+               case PacketType::CONNECT_REQ: packet_name = "CONNECT_REQ"; break;
+               case PacketType::CONNECT_RES: packet_name = "CONNECT_RES"; break;
+               case PacketType::DISCONNECT_EVT: packet_name = "DISCONNECT_EVT"; break;
+               case PacketType::PLAYER_JOIN_REQ: packet_name = "PLAYER_JOIN_REQ"; break;
+               case PacketType::PLAYER_JOIN_RES: packet_name = "PLAYER_JOIN_RES"; break;
+               case PacketType::PLAYER_MOVE_REQ: packet_name = "PLAYER_MOVE_REQ"; break;
+               case PacketType::PLAYER_ATTACK_REQ: packet_name = "PLAYER_ATTACK_REQ"; break;
+               case PacketType::PLAYER_STATS_EVT: packet_name = "PLAYER_STATS_EVT"; break;
+               case PacketType::MONSTER_UPDATE_EVT: packet_name = "MONSTER_UPDATE_EVT"; break;
+               case PacketType::BT_EXECUTE_REQ: packet_name = "BT_EXECUTE_REQ"; break;
+               case PacketType::BT_RESULT_EVT: packet_name = "BT_RESULT_EVT"; break;
+               case PacketType::WORLD_STATE_BROADCAST_EVT: packet_name = "WORLD_STATE_BROADCAST_EVT"; break;
+               case PacketType::ERROR_MESSAGE_EVT: packet_name = "ERROR_MESSAGE_EVT"; break;
+               default: packet_name = "UNKNOWN(" + std::to_string(packet_type) + ")"; break;
+           }
         
         // 로그 기록
         std::lock_guard<boost::mutex> lock(log_mutex_);

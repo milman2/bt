@@ -187,6 +187,9 @@ namespace bt
         void HandlePlayerUpdate(const Packet& packet);
         void HandleCombatResult(const Packet& packet);
         void HandleWorldStateBroadcast(const Packet& packet);
+        void HandleDisconnectEvent(const Packet& packet);
+        void HandleBTExecuteRequest(const Packet& packet);
+        void HandleErrorMessage(const Packet& packet);
 
     private:
         PlayerAIConfig                                  config_;

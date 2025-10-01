@@ -54,7 +54,7 @@ namespace bt
         // 패킷 타입에 따른 처리
         switch (static_cast<PacketType>(packet_type))
         {
-            case PacketType::PLAYER_JOIN_RESPONSE:
+            case PacketType::PLAYER_JOIN_RES:
                 // 플레이어 참여 응답 처리
                 if (data.size() >= sizeof(uint32_t))
                 {
@@ -64,7 +64,7 @@ namespace bt
                 }
                 break;
 
-            case PacketType::MONSTER_UPDATE:
+            case PacketType::MONSTER_UPDATE_EVT:
                 // 몬스터 업데이트 처리
                 if (data.size() >= sizeof(uint32_t))
                 {
@@ -101,7 +101,7 @@ namespace bt
                 }
                 break;
 
-            case PacketType::BT_RESULT:
+            case PacketType::BT_RESULT_EVT:
                 // 전투 결과 처리
                 if (data.size() >= sizeof(uint32_t) * 4)
                 {
@@ -117,7 +117,7 @@ namespace bt
                 }
                 break;
 
-            case PacketType::WORLD_STATE_BROADCAST:
+            case PacketType::WORLD_STATE_BROADCAST_EVT:
                 // 월드 상태 브로드캐스트 처리
                 HandleWorldStateBroadcast(data);
                 break;

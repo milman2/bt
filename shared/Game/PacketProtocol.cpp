@@ -18,7 +18,7 @@ namespace bt
             request.set_client_name(client_name);
             request.set_version(version);
 
-            return Packet::FromProtobuf(static_cast<uint16_t>(PacketType::CONNECT_REQUEST), request);
+            return Packet::FromProtobuf(static_cast<uint16_t>(PacketType::CONNECT_REQ), request);
         }
 
         // CONNECT_RESPONSE 패킷 생성 (protobuf 기반)
@@ -29,7 +29,7 @@ namespace bt
             response.set_message(message);
             response.set_client_id(client_id);
 
-            return Packet::FromProtobuf(static_cast<uint16_t>(PacketType::CONNECT_RESPONSE), response);
+            return Packet::FromProtobuf(static_cast<uint16_t>(PacketType::CONNECT_RES), response);
         }
 
         // ERROR_MESSAGE 패킷 생성 (protobuf 기반)
@@ -39,7 +39,7 @@ namespace bt
             error_msg.set_error(error);
             error_msg.set_error_code(error_code);
 
-            return Packet::FromProtobuf(static_cast<uint16_t>(PacketType::ERROR_MESSAGE), error_msg);
+            return Packet::FromProtobuf(static_cast<uint16_t>(PacketType::ERROR_MESSAGE_EVT), error_msg);
         }
 
         // PLAYER_MOVE 패킷 생성 (protobuf 기반)
@@ -52,7 +52,7 @@ namespace bt
             move.set_z(z);
             move.set_rotation(rotation);
 
-            return Packet::FromProtobuf(static_cast<uint16_t>(PacketType::PLAYER_MOVE), move);
+            return Packet::FromProtobuf(static_cast<uint16_t>(PacketType::PLAYER_MOVE_REQ), move);
         }
 
         // PLAYER_ATTACK 패킷 생성 (protobuf 기반)
@@ -63,7 +63,7 @@ namespace bt
             attack.set_target_id(target_id);
             attack.set_damage(damage);
 
-            return Packet::FromProtobuf(static_cast<uint16_t>(PacketType::PLAYER_ATTACK), attack);
+            return Packet::FromProtobuf(static_cast<uint16_t>(PacketType::PLAYER_ATTACK_REQ), attack);
         }
 
         // MONSTER_UPDATE 패킷 생성 (protobuf 기반)
@@ -90,7 +90,7 @@ namespace bt
             update.set_level(level);
             update.set_type(type);
 
-            return Packet::FromProtobuf(static_cast<uint16_t>(PacketType::MONSTER_UPDATE), update);
+            return Packet::FromProtobuf(static_cast<uint16_t>(PacketType::MONSTER_UPDATE_EVT), update);
         }
 
         // BT_EXECUTE 패킷 생성 (protobuf 기반)
@@ -108,7 +108,7 @@ namespace bt
                 execute.mutable_parameters()->insert({param.first, param.second});
             }
 
-            return Packet::FromProtobuf(static_cast<uint16_t>(PacketType::BT_EXECUTE), execute);
+            return Packet::FromProtobuf(static_cast<uint16_t>(PacketType::BT_EXECUTE_REQ), execute);
         }
 
         // BT_RESULT 패킷 생성 (protobuf 기반)
@@ -130,7 +130,7 @@ namespace bt
                 result.mutable_state_changes()->insert({change.first, change.second});
             }
 
-            return Packet::FromProtobuf(static_cast<uint16_t>(PacketType::BT_RESULT), result);
+            return Packet::FromProtobuf(static_cast<uint16_t>(PacketType::BT_RESULT_EVT), result);
         }
 
         // WORLD_STATE_BROADCAST 패킷 생성 (protobuf 기반)
@@ -157,7 +157,7 @@ namespace bt
                 *broadcast.add_monsters() = monster;
             }
 
-            return Packet::FromProtobuf(static_cast<uint16_t>(PacketType::WORLD_STATE_BROADCAST), broadcast);
+            return Packet::FromProtobuf(static_cast<uint16_t>(PacketType::WORLD_STATE_BROADCAST_EVT), broadcast);
         }
 
         template <typename T>
@@ -165,32 +165,32 @@ namespace bt
         {
             if (offset + sizeof(T) > packet.data.size())
             {
-                throw std::runtime_error("Packet read out of bounds");
-            }
-
-            T value;
-            std::memcpy(&value, packet.data.data() + offset, sizeof(T));
-            return value;
-        }
+        throw std::runtime_error("Packet read out of bounds");
+    }
+    
+    T value;
+    std::memcpy(&value, packet.data.data() + offset, sizeof(T));
+    return value;
+}
 
         template <typename T>
         void write_to_packet(Packet& packet, const T& value)
         {
-            const uint8_t* value_ptr = reinterpret_cast<const uint8_t*>(&value);
-            packet.data.insert(packet.data.end(), value_ptr, value_ptr + sizeof(T));
-        }
+    const uint8_t* value_ptr = reinterpret_cast<const uint8_t*>(&value);
+    packet.data.insert(packet.data.end(), value_ptr, value_ptr + sizeof(T));
+}
 
-        // 템플릿 특수화 선언
-        template uint32_t read_from_packet<uint32_t>(const Packet& packet, size_t offset);
-        template uint16_t read_from_packet<uint16_t>(const Packet& packet, size_t offset);
+// 템플릿 특수화 선언
+template uint32_t read_from_packet<uint32_t>(const Packet& packet, size_t offset);
+template uint16_t read_from_packet<uint16_t>(const Packet& packet, size_t offset);
         template uint8_t  read_from_packet<uint8_t>(const Packet& packet, size_t offset);
         template float    read_from_packet<float>(const Packet& packet, size_t offset);
 
-        template void write_to_packet<uint32_t>(Packet& packet, const uint32_t& value);
-        template void write_to_packet<uint16_t>(Packet& packet, const uint16_t& value);
-        template void write_to_packet<uint8_t>(Packet& packet, const uint8_t& value);
-        template void write_to_packet<float>(Packet& packet, const float& value);
+template void write_to_packet<uint32_t>(Packet& packet, const uint32_t& value);
+template void write_to_packet<uint16_t>(Packet& packet, const uint16_t& value);
+template void write_to_packet<uint8_t>(Packet& packet, const uint8_t& value);
+template void write_to_packet<float>(Packet& packet, const float& value);
 
-    } // namespace PacketUtils
+} // namespace PacketUtils
 
 } // namespace bt

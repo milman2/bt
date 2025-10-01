@@ -10,19 +10,19 @@ namespace bt
     PacketHandler::PacketHandler()
     {
         // 기본 핸들러 등록
-        RegisterHandler(PacketType::CONNECT_REQUEST,
+        RegisterHandler(PacketType::CONNECT_REQ,
                         [this](int socket_fd, const Packet& packet)
                         {
                             HandleConnectRequest(socket_fd, packet);
                         });
 
-        RegisterHandler(PacketType::PLAYER_MOVE,
+        RegisterHandler(PacketType::PLAYER_MOVE_REQ,
                         [this](int socket_fd, const Packet& packet)
                         {
                             HandlePlayerMove(socket_fd, packet);
                         });
 
-        RegisterHandler(PacketType::DISCONNECT,
+        RegisterHandler(PacketType::DISCONNECT_EVT,
                         [this](int socket_fd, const Packet& packet)
                         {
                             HandleDisconnect(socket_fd, packet);
