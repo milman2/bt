@@ -20,7 +20,7 @@
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
 
-#include "PacketProtocol.h"
+#include "Game/PacketProtocol.h"
 #include "../BT/Node.h"
 #include "../BT/Tree.h"
 #include "../BT/Context.h"

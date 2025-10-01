@@ -4,7 +4,7 @@
 #include "../PlayerManager.h"
 #include "MonsterFactory.h"
 #include "MonsterBTExecutor.h"
-#include "../../../shared/PacketProtocol.h"
+#include "../../../shared/Game/PacketProtocol.h"
 #include <iostream>
 #include <fstream>
 #include <random>

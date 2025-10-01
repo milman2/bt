@@ -22,7 +22,7 @@
 #include <boost/thread/condition_variable.hpp>
 #include <boost/thread/mutex.hpp>
 
-#include "PacketProtocol.h"
+#include "Game/PacketProtocol.h"
 
 namespace bt
 {

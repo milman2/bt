@@ -22,7 +22,7 @@
 #include <boost/thread/condition_variable.hpp>
 #include <boost/thread/mutex.hpp>
 
-#include "PacketProtocol.h"
+#include "Game/PacketProtocol.h"
 #include "../../BT/Engine.h"
 #include "AsioClient.h"
 #include "../../Common/GameMessageProcessor.h"

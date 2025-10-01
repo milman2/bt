@@ -18,7 +18,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include "PacketProtocol.h"
+#include "Game/PacketProtocol.h"
 
 namespace bt
 {

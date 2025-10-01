@@ -14,7 +14,7 @@
 #include "Monster.h"
 #include "../../Common/GameMessageProcessor.h"
 #include "../../Common/GameMessages.h"
-#include "../../../shared/PacketProtocol.h"
+#include "../../../shared/Game/PacketProtocol.h"
 
 // 전방 선언
 namespace bt

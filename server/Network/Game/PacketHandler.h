@@ -3,7 +3,7 @@
 #include <functional>
 #include <unordered_map>
 
-#include "PacketProtocol.h"
+#include "Game/PacketProtocol.h"
 
 namespace bt
 {
