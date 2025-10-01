@@ -9,7 +9,7 @@ namespace bt
 
     // BeastWebSocketSession 구현
     BeastWebSocketSession::BeastWebSocketSession(boost::asio::ip::tcp::socket socket, uint32_t session_id)
-        : ws_(std::move(socket)), session_id_(session_id), connected_(false)
+        : ws_(std::move(socket)), session_id_(session_id), connected_(false), writing_(false)
     {
     }
 
@@ -86,10 +86,36 @@ namespace bt
             return;
 
         std::lock_guard<std::mutex> lock(message_mutex_);
-        message_queue_ = message;
+        message_queue_.push(message);
+
+        // 이미 쓰기 작업이 진행 중이면 큐에만 추가하고 리턴
+        if (writing_.load())
+            return;
+
+        // 쓰기 작업 시작
+        writing_.store(true);
+        do_write();
+    }
+
+    void BeastWebSocketSession::do_write()
+    {
+        std::string message;
+        
+        {
+            std::lock_guard<std::mutex> lock(message_mutex_);
+            
+            if (message_queue_.empty())
+            {
+                writing_.store(false);
+                return;
+            }
+
+            message = message_queue_.front();
+            message_queue_.pop();
+        }
 
         ws_.async_write(
-            boost::asio::buffer(message_queue_),
+            boost::asio::buffer(message),
             [self = shared_from_this()](boost::beast::error_code ec, std::size_t bytes_transferred)
             {
                 self->on_write(ec, bytes_transferred);
@@ -103,6 +129,22 @@ namespace bt
             std::cerr << "WebSocket write error: " << ec.message() << std::endl;
             do_close();
             return;
+        }
+
+        // 큐에 남은 메시지가 있으면 계속 처리
+        bool has_more_messages = false;
+        {
+            std::lock_guard<std::mutex> lock(message_mutex_);
+            has_more_messages = !message_queue_.empty();
+        }
+        
+        if (has_more_messages)
+        {
+            do_write();
+        }
+        else
+        {
+            writing_.store(false);
         }
     }
 

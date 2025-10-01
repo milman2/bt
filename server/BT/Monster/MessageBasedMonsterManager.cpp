@@ -3,6 +3,7 @@
 #include "../../BT/Engine.h"
 #include "../PlayerManager.h"
 #include "MonsterFactory.h"
+#include "MonsterBTExecutor.h"
 #include <iostream>
 #include <fstream>
 #include <random>
@@ -143,16 +144,26 @@ std::shared_ptr<Monster> MessageBasedMonsterManager::SpawnMonster(
 {
     uint32_t id = next_monster_id_++;
     
-    auto monster = std::make_shared<Monster>(name, type, position);
+    // MonsterFactory를 사용하여 AI가 포함된 몬스터 생성
+    auto monster = MonsterFactory::CreateMonster(type, name, position);
     if (!monster) {
         std::cerr << "몬스터 생성 실패: " << name << std::endl;
         return nullptr;
     }
     
-    // BT 엔진 설정은 Monster 클래스에서 직접 지원하지 않으므로 주석 처리
-    // if (bt_engine_) {
-    //     monster->SetBTEngine(bt_engine_);
-    // }
+    // Behavior Tree 설정
+    if (bt_engine_ && monster->GetAI()) {
+        std::string bt_name = monster->GetBTName();
+        auto tree = bt_engine_->GetTree(bt_name);
+        if (tree) {
+            monster->GetAI()->SetBehaviorTree(tree);
+            std::cout << "몬스터 생성: " << name << " (타입: " << static_cast<int>(type) << ", BT: " << bt_name << ")" << std::endl;
+        } else {
+            std::cerr << "Behavior Tree를 찾을 수 없음: " << bt_name << std::endl;
+        }
+    } else {
+        std::cerr << "BT 엔진 또는 AI가 없음: " << name << std::endl;
+    }
     
     AddMonster(monster);
     return monster;
@@ -202,27 +213,58 @@ bool MessageBasedMonsterManager::LoadSpawnConfigsFromFile(const std::string& fil
         nlohmann::json config;
         file >> config;
         
+        std::cout << "JSON 파일 로드 성공, 키들: ";
+        for (auto& [key, value] : config.items()) {
+            std::cout << key << " ";
+        }
+        std::cout << std::endl;
+        
         ClearAllSpawnConfigs();
         
-        for (const auto& spawn_config : config["spawns"]) {
-            MonsterSpawnConfig config_obj;
-            config_obj.type = MonsterFactory::StringToMonsterType(spawn_config["type"]);
-            config_obj.name = spawn_config["name"];
-            config_obj.position.x = spawn_config["position"]["x"];
-            config_obj.position.y = spawn_config["position"]["y"];
-            config_obj.position.z = spawn_config["position"]["z"];
-            config_obj.position.rotation = spawn_config["position"]["rotation"];
-            config_obj.respawn_time = spawn_config["respawn_time"];
-            config_obj.max_count = spawn_config["max_count"];
-            config_obj.spawn_radius = spawn_config["spawn_radius"];
-            config_obj.auto_spawn = spawn_config["auto_spawn"];
-            
-            // 순찰 경로 파싱
-            if (spawn_config.contains("patrol_points")) {
-                ParsePatrolPoints(spawn_config["patrol_points"].dump(), config_obj.patrol_points);
+        if (!config.contains("monster_spawns")) {
+            std::cerr << "JSON에 'monster_spawns' 키가 없습니다!" << std::endl;
+            return false;
+        }
+        
+        int config_count = 0;
+        for (const auto& spawn_config : config["monster_spawns"]) {
+            try {
+                std::cout << "스폰 설정 " << config_count << " 파싱 중..." << std::endl;
+                
+                MonsterSpawnConfig config_obj;
+                std::cout << "  - type 파싱 중..." << std::endl;
+                config_obj.type = MonsterFactory::StringToMonsterType(spawn_config["type"]);
+                std::cout << "  - name 파싱 중..." << std::endl;
+                config_obj.name = spawn_config["name"];
+                std::cout << "  - position 파싱 중..." << std::endl;
+                config_obj.position.x = spawn_config["position"]["x"];
+                config_obj.position.y = spawn_config["position"]["y"];
+                config_obj.position.z = spawn_config["position"]["z"];
+                config_obj.position.rotation = spawn_config["position"]["rotation"];
+                std::cout << "  - respawn_time 파싱 중..." << std::endl;
+                config_obj.respawn_time = spawn_config["respawn_time"];
+                std::cout << "  - max_count 파싱 중..." << std::endl;
+                config_obj.max_count = spawn_config["max_count"];
+                std::cout << "  - spawn_radius 파싱 중..." << std::endl;
+                config_obj.spawn_radius = spawn_config["spawn_radius"];
+                std::cout << "  - auto_spawn 파싱 중..." << std::endl;
+                config_obj.auto_spawn = spawn_config["auto_spawn"];
+                
+                // 순찰 경로 파싱
+                if (spawn_config.contains("patrol_points")) {
+                    std::cout << "  - patrol_points 파싱 중..." << std::endl;
+                    ParsePatrolPoints(spawn_config["patrol_points"].dump(), config_obj.patrol_points);
+                }
+                
+                std::cout << "  - AddSpawnConfig 호출 중..." << std::endl;
+                AddSpawnConfig(config_obj);
+                std::cout << "스폰 설정 " << config_count << " 추가 완료: " << config_obj.name << std::endl;
+                config_count++;
+                
+            } catch (const std::exception& e) {
+                std::cerr << "스폰 설정 " << config_count << " 파싱 오류: " << e.what() << std::endl;
+                config_count++;
             }
-            
-            AddSpawnConfig(config_obj);
         }
         
         std::cout << "스폰 설정 로드 완료: " << spawn_configs_.size() << "개 설정" << std::endl;
@@ -428,7 +470,8 @@ void MessageBasedMonsterManager::ParsePatrolPoints(const std::string& points_con
             pos.x = point["x"];
             pos.y = point["y"];
             pos.z = point["z"];
-            pos.rotation = point["rotation"];
+            // rotation은 기본값 0.0으로 설정 (JSON에 없음)
+            pos.rotation = point.contains("rotation") ? point["rotation"].get<float>() : 0.0f;
             points.push_back(pos);
         }
     } catch (const std::exception& e) {

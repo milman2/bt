@@ -61,8 +61,8 @@ namespace bt
         // 실제로 위치가 변경되었는지 확인
         if (std::abs(old_x - x) > 0.01f || std::abs(old_z - z) > 0.01f)
         {
-            std::cout << "몬스터 " << name_ << " 이동: (" << old_x << ", " << old_z << ") -> (" 
-                      << x << ", " << z << ")" << std::endl;
+            // std::cout << "몬스터 " << name_ << " 이동: (" << old_x << ", " << old_z << ") -> (" 
+            //           << x << ", " << z << ")" << std::endl;
         }
     }
 

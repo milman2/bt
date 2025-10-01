@@ -12,6 +12,7 @@
 #include <atomic>
 #include <unordered_map>
 #include <functional>
+#include <queue>
 
 namespace bt
 {
@@ -55,6 +56,7 @@ namespace bt
     private:
         void do_read();
         void on_read(boost::beast::error_code ec, std::size_t bytes_transferred);
+        void do_write();
         void on_write(boost::beast::error_code ec, std::size_t bytes_transferred);
         void do_close();
 
@@ -65,8 +67,9 @@ namespace bt
         uint32_t session_id_;
         static std::atomic<uint32_t> next_session_id_;
 
-        std::string message_queue_;
+        std::queue<std::string> message_queue_;
         std::mutex message_mutex_;
+        std::atomic<bool> writing_;
     };
 
     // 통합 HTTP + WebSocket 서버 클래스

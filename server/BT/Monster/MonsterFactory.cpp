@@ -2,6 +2,8 @@
 #include "MonsterBTExecutor.h"
 
 #include <iostream>
+#include <algorithm>
+#include <cctype>
 
 #include "../../BT/Tree.h"
 
@@ -196,19 +198,23 @@ namespace bt
 
     MonsterType MonsterFactory::StringToMonsterType(const std::string& str)
     {
-        if (str == "goblin")
+        // 대소문자 구분 없이 처리
+        std::string lower_str = str;
+        std::transform(lower_str.begin(), lower_str.end(), lower_str.begin(), ::tolower);
+        
+        if (lower_str == "goblin")
             return MonsterType::GOBLIN;
-        if (str == "orc")
+        if (lower_str == "orc")
             return MonsterType::ORC;
-        if (str == "dragon")
+        if (lower_str == "dragon")
             return MonsterType::DRAGON;
-        if (str == "skeleton")
+        if (lower_str == "skeleton")
             return MonsterType::SKELETON;
-        if (str == "zombie")
+        if (lower_str == "zombie")
             return MonsterType::ZOMBIE;
-        if (str == "merchant")
+        if (lower_str == "merchant" || lower_str == "npc_merchant")
             return MonsterType::NPC_MERCHANT;
-        if (str == "guard")
+        if (lower_str == "guard" || lower_str == "npc_guard")
             return MonsterType::NPC_GUARD;
         return MonsterType::GOBLIN; // 기본값
     }

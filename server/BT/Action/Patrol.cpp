@@ -51,8 +51,8 @@ namespace action
 
         if (distance <= arrival_threshold)
         {
-            std::cout << "Goblin " << monster->GetName() << " reached patrol point: (" 
-                      << target_point.x << ", " << target_point.y << ", " << target_point.z << ")" << std::endl;
+            // std::cout << "Goblin " << monster->GetName() << " reached patrol point: (" 
+            //           << target_point.x << ", " << target_point.y << ", " << target_point.z << ")" << std::endl;
             // 도착 지점에 도달했을 때도 정확한 위치로 이동
             monster->MoveTo(target_point.x, target_point.y, target_point.z, current_pos.rotation);
             // 다음 순찰점으로 인덱스 이동
@@ -75,8 +75,8 @@ namespace action
             
             monster->MoveTo(new_x, current_pos.y, new_z, current_pos.rotation);
             
-            std::cout << "Goblin " << monster->GetName() << " moving to patrol point: (" 
-                      << new_x << ", " << current_pos.y << ", " << new_z << ")" << std::endl;
+            // std::cout << "Goblin " << monster->GetName() << " moving to patrol point: (" 
+            //           << new_x << ", " << current_pos.y << ", " << new_z << ")" << std::endl;
             
             return NodeStatus::RUNNING;
         }
