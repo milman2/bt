@@ -1098,7 +1098,7 @@ namespace bt
         }
 
         // 월드 상태 수집
-        bt::WorldStateBroadcast world_state;
+        bt::WorldStateBroadcastEvt world_state;
         world_state.set_timestamp(
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
                 .count());

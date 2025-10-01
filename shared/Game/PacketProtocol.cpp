@@ -14,7 +14,7 @@ namespace bt
         // CONNECT_REQUEST 패킷 생성 (protobuf 기반)
         Packet create_connect_request(const std::string& client_name, uint32_t version)
         {
-            bt::ConnectRequest request;
+            bt::ConnectReq request;
             request.set_client_name(client_name);
             request.set_version(version);
 
@@ -24,7 +24,7 @@ namespace bt
         // CONNECT_RESPONSE 패킷 생성 (protobuf 기반)
         Packet create_connect_response(bool success, const std::string& message, uint32_t client_id)
         {
-            bt::ConnectResponse response;
+            bt::ConnectRes response;
             response.set_success(success);
             response.set_message(message);
             response.set_client_id(client_id);
@@ -35,7 +35,7 @@ namespace bt
         // ERROR_MESSAGE 패킷 생성 (protobuf 기반)
         Packet create_error_message(const std::string& error, uint32_t error_code)
         {
-            bt::ErrorMessage error_msg;
+            bt::ErrorMessageEvt error_msg;
             error_msg.set_error(error);
             error_msg.set_error_code(error_code);
 
@@ -45,7 +45,7 @@ namespace bt
         // PLAYER_MOVE 패킷 생성 (protobuf 기반)
         Packet create_player_move(uint32_t player_id, float x, float y, float z, float rotation)
         {
-            bt::PlayerMove move;
+            bt::PlayerMoveReq move;
             move.set_player_id(player_id);
             move.set_x(x);
             move.set_y(y);
@@ -58,7 +58,7 @@ namespace bt
         // PLAYER_ATTACK 패킷 생성 (protobuf 기반)
         Packet create_player_attack(uint32_t attacker_id, uint32_t target_id, uint32_t damage)
         {
-            bt::PlayerAttack attack;
+            bt::PlayerAttackReq attack;
             attack.set_attacker_id(attacker_id);
             attack.set_target_id(target_id);
             attack.set_damage(damage);
@@ -78,7 +78,7 @@ namespace bt
                                      uint32_t           level,
                                      uint32_t           type)
         {
-            bt::MonsterUpdate update;
+            bt::MonsterUpdateEvt update;
             update.set_monster_id(monster_id);
             update.set_name(name);
             update.set_x(x);
@@ -98,7 +98,7 @@ namespace bt
                                  const std::string&                        bt_name,
                                  const std::map<std::string, std::string>& parameters)
         {
-            bt::BTExecute execute;
+            bt::BTExecuteReq execute;
             execute.set_monster_id(monster_id);
             execute.set_bt_name(bt_name);
 
@@ -118,7 +118,7 @@ namespace bt
                                 const std::string&                        result_message,
                                 const std::map<std::string, std::string>& state_changes)
         {
-            bt::BTResult result;
+            bt::BTResultEvt result;
             result.set_monster_id(monster_id);
             result.set_bt_name(bt_name);
             result.set_success(success);
@@ -140,7 +140,7 @@ namespace bt
                                             const std::vector<bt::PlayerState>&  players,
                                             const std::vector<bt::MonsterState>& monsters)
         {
-            bt::WorldStateBroadcast broadcast;
+            bt::WorldStateBroadcastEvt broadcast;
             broadcast.set_timestamp(timestamp);
             broadcast.set_player_count(player_count);
             broadcast.set_monster_count(monster_count);

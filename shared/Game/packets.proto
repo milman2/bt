@@ -3,37 +3,37 @@ syntax = "proto3";
 package bt;
 
 // 연결 관련 패킷
-message ConnectRequest {
+message ConnectReq {
     string client_name = 1;
     uint32 version = 2;
 }
 
-message ConnectResponse {
+message ConnectRes {
     bool success = 1;
     string message = 2;
     uint32 client_id = 3;
 }
 
-message Disconnect {
+message DisconnectEvt {
     uint32 client_id = 1;
     string reason = 2;
 }
 
 // 플레이어 관련 패킷
-message PlayerJoin {
+message PlayerJoinReq {
     string player_name = 1;
     float x = 2;
     float y = 3;
     float z = 4;
 }
 
-message PlayerJoinResponse {
+message PlayerJoinRes {
     bool success = 1;
     uint32 player_id = 2;
     string message = 3;
 }
 
-message PlayerMove {
+message PlayerMoveReq {
     uint32 player_id = 1;
     float x = 2;
     float y = 3;
@@ -41,13 +41,13 @@ message PlayerMove {
     float rotation = 5;
 }
 
-message PlayerAttack {
+message PlayerAttackReq {
     uint32 attacker_id = 1;
     uint32 target_id = 2;
     uint32 damage = 3;
 }
 
-message PlayerStats {
+message PlayerStatsEvt {
     uint32 player_id = 1;
     uint32 health = 2;
     uint32 max_health = 3;
@@ -55,7 +55,7 @@ message PlayerStats {
 }
 
 // 몬스터 관련 패킷
-message MonsterUpdate {
+message MonsterUpdateEvt {
     uint32 monster_id = 1;
     string name = 2;
     float x = 3;
@@ -69,13 +69,13 @@ message MonsterUpdate {
 }
 
 // Behavior Tree 관련 패킷
-message BTExecute {
+message BTExecuteReq {
     uint32 monster_id = 1;
     string bt_name = 2;
     map<string, string> parameters = 3;
 }
 
-message BTResult {
+message BTResultEvt {
     uint32 monster_id = 1;
     string bt_name = 2;
     bool success = 3;
@@ -84,7 +84,7 @@ message BTResult {
 }
 
 // 게임 월드 관련 패킷
-message WorldStateBroadcast {
+message WorldStateBroadcastEvt {
     uint64 timestamp = 1;
     uint32 player_count = 2;
     uint32 monster_count = 3;
@@ -118,7 +118,7 @@ message MonsterState {
 }
 
 // 에러 관련 패킷
-message ErrorMessage {
+message ErrorMessageEvt {
     string error = 1;
     uint32 error_code = 2;
 }
